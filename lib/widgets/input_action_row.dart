@@ -4,12 +4,13 @@ class InputActionRow extends StatelessWidget {
   final String labelText;
   final String buttonText;
   final VoidCallback onPressed;
-  // final TextEditingController controller;
+  final TextEditingController controller;
   const InputActionRow({
     super.key,
     required this.labelText,
     required this.buttonText,
     required this.onPressed,
+    required this.controller,
     // required this.controller,
   });
 
@@ -19,7 +20,7 @@ class InputActionRow extends StatelessWidget {
       children: [
         Expanded(
           child: TextField(
-            // controller: controller,
+            controller: controller,
             decoration: InputDecoration(
               labelText: labelText,
               border: OutlineInputBorder(),
