@@ -2,7 +2,7 @@ import 'package:carty_app/widgets/input_action_row.dart';
 import 'package:carty_app/widgets/cart_item_tile.dart';
 import 'package:carty_app/widgets/summary_row.dart';
 import 'package:flutter/material.dart';
-import 'models/cart_item.dart';
+import 'utils/controllers/cart_controller.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,47 +31,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _budgetController = TextEditingController();
-  final TextEditingController _itemController = TextEditingController();
-  final List<CartItem> _cartItems = [];
-  double? _budget;
-
-  void _setBudget() {
-    final entered = _budgetController.text;
-    final value = double.tryParse(entered);
-    if (value != null) {
-      setState(() {
-        _budget = value;
-      });
-      _budgetController.clear();
-    }
-  }
-
-  void _addItemToCart() {
-    final name = _itemController.text;
-    if (name.isNotEmpty) {
-      setState(() {
-        _cartItems.add(CartItem(name: name, price: '£2.00'));
-      });
-      _itemController.clear();
-    }
-  }
-
-  double get _total => _cartItems.fold(0.0, (sum, item) {
-    final price = double.tryParse(item.price.replaceAll('£', '')) ?? 0.0;
-    return sum + price;
-  });
+  final CartController controller = CartController();
 
   @override
   void dispose() {
-    _budgetController.dispose();
-    _itemController.dispose();
+    controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final remaining = _budget != null ? (_budget! - _total) : null;
+    final remaining =
+        controller.budget != null
+            ? (controller.budget! - controller.total)
+            : null;
     return Scaffold(
       appBar: AppBar(title: Text("Carty"), backgroundColor: Colors.blue),
       body: SingleChildScrollView(
@@ -83,31 +56,30 @@ class _HomePageState extends State<HomePage> {
               InputActionRow(
                 labelText: 'Enter budget',
                 buttonText: 'Set budget',
-                onPressed: _setBudget,
-                controller: _budgetController,
+                onPressed: () => controller.setBudget(() => setState(() {})),
+                controller: controller.budgetController,
               ),
               SizedBox(height: 20),
               InputActionRow(
                 labelText: 'Item name',
                 buttonText: 'Add to Cart',
-                onPressed: _addItemToCart,
-                controller: _itemController,
+                onPressed:
+                    () => controller.addItemToCart(() => setState(() {})),
+                controller: controller.itemController,
+                priceController: controller.priceController,
               ),
               SizedBox(height: 30),
               SizedBox(
                 height: 300,
                 child: ListView.builder(
-                  itemCount: _cartItems.length,
+                  itemCount: controller.cartItems.length,
                   itemBuilder: (context, index) {
-                    final item = _cartItems[index];
+                    final item = controller.cartItems[index];
                     return CartItemTile(
                       itemName: item.name,
                       price: item.price,
                       onDelete: () {
-                        setState(() {
-                          _cartItems.removeAt(index);
-                        });
-                        ;
+                        controller.removeItem(index, () => setState(() {}));
                       },
                     );
                   },
@@ -123,13 +95,13 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       SummaryRow(
                         label: 'Total:',
-                        value: '£${_total.toStringAsFixed(2)}',
+                        value: '£${controller.total.toStringAsFixed(2)}',
                       ),
                       SummaryRow(
                         label: 'Budget:',
                         value:
-                            _budget != null
-                                ? '£${_budget!.toStringAsFixed(2)}'
+                            controller.budget != null
+                                ? '£${controller.budget!.toStringAsFixed(2)}'
                                 : '-',
                       ),
                       SummaryRow(
