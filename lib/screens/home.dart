@@ -13,6 +13,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final CartController controller = CartController();
+  String? _priceError;
+  String? _budgetError;
 
   @override
   void dispose() {
@@ -37,35 +39,93 @@ class _HomePageState extends State<HomePage> {
               InputActionRow(
                 labelText: 'Enter budget',
                 buttonText: 'Set budget',
-                onPressed: () => controller.setBudget(() => setState(() {})),
+                onPressed: () {
+                  final error = controller.setBudget(() => setState(() {}));
+                  setState(() {
+                    _budgetError = error;
+                  });
+                },
                 controller: controller.budgetController,
+                inputErrorText: _budgetError,
               ),
               SizedBox(height: 20),
               InputActionRow(
                 labelText: 'Item name',
                 buttonText: 'Add to Cart',
-                onPressed:
-                    () => controller.addItemToCart(() => setState(() {})),
+                onPressed: () {
+                  final error = controller.addItemToCart(() => setState(() {}));
+                  setState(() {
+                    _priceError = error;
+                  });
+                },
                 controller: controller.itemController,
                 priceController: controller.priceController,
+                inputErrorText: null,
+                priceErrorText: _priceError,
               ),
               SizedBox(height: 30),
               SizedBox(
                 height: 300,
-                child: ListView.builder(
-                  itemCount: controller.cartItems.length,
-                  itemBuilder: (context, index) {
-                    final item = controller.cartItems[index];
-                    return CartItemTile(
-                      itemName: item.name,
-                      price: item.price,
-                      onDelete: () {
-                        controller.removeItem(index, () => setState(() {}));
-                      },
-                    );
-                  },
-                ),
+                child:
+                    controller.cartItems.isEmpty
+                        ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 80,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              "Your shopping cart is empty",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              "Add your favourite items here.",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        )
+                        : ListView.builder(
+                          itemCount: controller.cartItems.length,
+                          itemBuilder: (context, index) {
+                            final item = controller.cartItems[index];
+                            return CartItemTile(
+                              itemName: item.name,
+                              price: item.price,
+                              onDelete: () {
+                                controller.removeItem(
+                                  index,
+                                  () => setState(() {}),
+                                );
+                              },
+                            );
+                          },
+                        ),
               ),
+              SizedBox(height: 20),
+              if (controller.cartItems.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        controller.cartItems.clear();
+                      });
+                    },
+                    icon: Icon(Icons.delete_forever),
+                    label: Text('Clear Cart'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                  ),
+                ),
+              SizedBox(height: 20),
               Card(
                 elevation: 2,
                 margin: EdgeInsets.only(top: 20),

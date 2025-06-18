@@ -9,28 +9,51 @@ class CartController {
   double? budget;
   final List<CartItem> cartItems = [];
 
-  void setBudget(VoidCallback refresh) {
-    final entered = budgetController.text;
+  String? setBudget(VoidCallback refresh) {
+    final entered = budgetController.text.trim();
     final value = double.tryParse(entered);
-    if (value != null) {
-      budget = value;
-      budgetController.clear();
-      refresh();
+
+    if (entered.isEmpty) {
+      return "Budget cannot be empty";
     }
+
+    if (value == null) {
+      return "Enter a valid number for budget";
+    }
+
+    if (value <= 0) {
+      return "Budget must be greater than 0";
+    }
+
+    budget = value;
+    budgetController.clear();
+    refresh();
+    return null;
   }
 
-  void addItemToCart(VoidCallback refresh) {
-    final name = itemController.text;
-    final rawPrice = priceController.text;
-    final parsedPrice = double.tryParse(rawPrice) ?? 0.0;
+  String? addItemToCart(VoidCallback refresh) {
+    final name = itemController.text.trim();
+    final rawPrice = priceController.text.trim();
 
-    if (name.isNotEmpty) {
-      final formattedPrice = '£${parsedPrice.toStringAsFixed(2)}';
-      cartItems.add(CartItem(name: name, price: formattedPrice));
-      itemController.clear();
-      priceController.clear();
-      refresh();
+    if (name.isEmpty) {
+      return "Item name cannot be empty";
     }
+
+    final parsedPrice = double.tryParse(rawPrice);
+    if (parsedPrice == null) {
+      return "Enter a valid number for price";
+    }
+
+    if (parsedPrice <= 0) {
+      return "Price must be greater than 0";
+    }
+
+    final formattedPrice = '£${parsedPrice.toStringAsFixed(2)}';
+    cartItems.add(CartItem(name: name, price: formattedPrice));
+    itemController.clear();
+    priceController.clear();
+    refresh();
+    return null;
   }
 
   void removeItem(int index, VoidCallback refresh) {

@@ -6,6 +6,8 @@ class InputActionRow extends StatelessWidget {
   final VoidCallback onPressed;
   final TextEditingController controller;
   final TextEditingController? priceController;
+  final String? inputErrorText;
+  final String? priceErrorText;
   const InputActionRow({
     super.key,
     required this.labelText,
@@ -13,36 +15,54 @@ class InputActionRow extends StatelessWidget {
     required this.onPressed,
     required this.controller,
     this.priceController,
+    this.inputErrorText,
+    this.priceErrorText,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              labelText: labelText,
-              border: OutlineInputBorder(),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: labelText,
+                  border: OutlineInputBorder(),
+                  errorText: inputErrorText,
+                ),
+              ),
             ),
-          ),
+            SizedBox(width: 20),
+            if (priceController != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: IsPrice(controller: priceController!),
+              ),
+            ElevatedButton(
+              onPressed: onPressed,
+              style: ButtonStyle(
+                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+              child: Text(buttonText),
+            ),
+          ],
         ),
-        SizedBox(width: 20),
-        if (priceController != null)
+        if (priceErrorText != null && priceErrorText!.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: IsPrice(controller: priceController!),
-          ),
-        ElevatedButton(
-          onPressed: onPressed,
-          style: ButtonStyle(
-            shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            padding: const EdgeInsets.only(top: 4, left: 8),
+            child: Text(
+              priceErrorText!,
+              style: TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
-          child: Text(buttonText),
-        ),
       ],
     );
   }
@@ -50,18 +70,20 @@ class InputActionRow extends StatelessWidget {
 
 class IsPrice extends StatelessWidget {
   final TextEditingController controller;
-  const IsPrice({super.key, required this.controller});
+  final String? errorText;
+  const IsPrice({super.key, required this.controller, this.errorText});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 80,
+      width: 120,
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: "Price",
           border: OutlineInputBorder(),
+          errorText: errorText,
         ),
       ),
     );
