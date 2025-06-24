@@ -20,16 +20,18 @@ class ClearCartButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onClear,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.red,
+          backgroundColor: AppColors.clearCartColor,
+          foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.red),
           ),
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         ),
-        child: Text('Clear Cart', style: AppTextStyles.buttonText),
+        child: Text(
+          'Clear Cart',
+          style: AppTextStyles.buttonText.copyWith(color: Colors.white),
+        ),
       ),
     );
   }

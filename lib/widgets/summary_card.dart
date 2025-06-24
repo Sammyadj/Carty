@@ -1,5 +1,6 @@
 import 'package:carty_app/widgets/summary_row.dart';
 import 'package:flutter/material.dart';
+import '../base/res/styles/app_styles.dart';
 
 class SummaryCard extends StatelessWidget {
   final double total;
@@ -16,10 +17,15 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
-      margin: EdgeInsets.only(top: 20),
+      elevation: 4,
+      margin: EdgeInsets.only(top: 20, bottom: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.borderColor),
+      ),
+      color: AppColors.tileBackground,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 6),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

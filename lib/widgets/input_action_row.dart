@@ -34,7 +34,17 @@ class InputActionRow extends StatelessWidget {
                 style: AppTextStyles.body,
                 decoration: InputDecoration(
                   labelText: labelText,
-                  border: OutlineInputBorder(),
+                  hintText: labelText,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+                  ),
                   errorText: inputErrorText,
                 ),
               ),
@@ -47,12 +57,13 @@ class InputActionRow extends StatelessWidget {
               ),
             ElevatedButton(
               onPressed: onPressed,
-              style: ButtonStyle(
-                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               ),
               child: Text(buttonText),
             ),
@@ -86,7 +97,17 @@ class IsPrice extends StatelessWidget {
         style: AppTextStyles.body,
         decoration: InputDecoration(
           labelText: "Price",
-          border: OutlineInputBorder(),
+          hintText: "Price",
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: AppColors.borderColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+          ),
           errorText: errorText,
         ),
       ),

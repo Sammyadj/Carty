@@ -39,9 +39,11 @@ class CartSection extends StatelessWidget {
           ],
           Expanded(
             child: Card(
-              margin: EdgeInsets.only(top: 16),
+              margin: EdgeInsets.only(top: 16, bottom: 16),
+              color: AppColors.tileBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: AppColors.borderColor),
               ),
               child: ListView.builder(
                 padding: EdgeInsets.all(8),

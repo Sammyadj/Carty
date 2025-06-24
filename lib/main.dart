@@ -2,6 +2,7 @@ import 'package:carty_app/screens/home.dart';
 import 'package:flutter/material.dart';
 
 import 'base/res/styles/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +17,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Carty app',
-        theme: AppTheme.lightTheme,
+      theme: AppTheme.lightTheme.copyWith(
+        textTheme: GoogleFonts.poppinsTextTheme(),
+      ),
       home: HomePage(),
     );
   }
