@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../base/res/styles/app_styles.dart';
+
 class InputActionRow extends StatelessWidget {
   final String labelText;
   final String buttonText;
@@ -29,6 +31,7 @@ class InputActionRow extends StatelessWidget {
             Expanded(
               child: TextField(
                 controller: controller,
+                style: AppTextStyles.body,
                 decoration: InputDecoration(
                   labelText: labelText,
                   border: OutlineInputBorder(),
@@ -80,6 +83,7 @@ class IsPrice extends StatelessWidget {
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.numberWithOptions(decimal: true),
+        style: AppTextStyles.body,
         decoration: InputDecoration(
           labelText: "Price",
           border: OutlineInputBorder(),
