@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../base/res/styles/app_styles.dart';
 import '../base/utils/controllers/cart_controller.dart';
 import '../widgets/cart_item_tile.dart';
+import '../widgets/cart_section.dart';
 import '../widgets/input_action_row.dart';
 import '../widgets/summary_card.dart';
 
@@ -70,64 +71,8 @@ class _HomePageState extends State<HomePage> {
                 priceErrorText: _priceError,
               ),
               SizedBox(height: 30),
-              SizedBox(
-                height: 350,
-                child:
-                    controller.cartItems.isEmpty
-                        ? EmptyCartMessage()
-                        : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (controller.cartItems.isNotEmpty) ...[
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Your Cart',
-                                    style: AppTextStyles.subhead,
-                                  ),
-                                  Text(
-                                    '(${controller.cartItems.length} items)',
-                                    style: AppTextStyles.body,
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 8),
-                            ],
-                            Expanded(
-                              child: Card(
-                                margin: EdgeInsets.only(top: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListView.builder(
-                                  padding: EdgeInsets.all(8),
-                                  itemCount: controller.cartItems.length,
-                                  itemBuilder: (context, index) {
-                                    final item = controller.cartItems[index];
-                                    return ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minHeight: 60,
-                                      ),
-                                      child: CartItemTile(
-                                        itemName: item.name,
-                                        price: item.price,
-                                        onDelete: () {
-                                          controller.removeItem(
-                                            index,
-                                            () => setState(() {}),
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-              ),
+              CartSection(controller: controller, onItemRemoved: () {setState(() {
+              });}),
               SizedBox(height: 20),
               ClearCartButton(
                 onClear: () {
