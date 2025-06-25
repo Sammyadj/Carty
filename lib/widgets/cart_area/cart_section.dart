@@ -2,6 +2,7 @@ import 'package:carty_app/base/utils/controllers/cart_controller.dart';
 import 'package:flutter/material.dart';
 
 import '../../base/res/styles/app_styles.dart';
+import '../../screens/cart_full_screen.dart';
 import 'cart_item_tile.dart';
 import 'empty_cart_message.dart';
 
@@ -29,9 +30,38 @@ class CartSection extends StatelessWidget {
                   'Your Cart',
                   style: AppTextStyles.subhead,
                 ),
-                Text(
-                  '(${controller.cartItems.length} items)',
-                  style: AppTextStyles.body,
+                InkWell(
+                  onTap: (){
+                    Navigator.push(context,
+                      MaterialPageRoute(
+                        builder: (context)=> CartFullScreen(controller:controller),
+                      ),
+                    );
+                  },
+                  child: Text.rich(
+                    TextSpan(
+                      text: '(',
+                      style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                      children: [
+                        TextSpan(
+                          text: '${controller.cartItems.length} items',
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.primaryColor,
+                            // decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(text: ')', style: AppTextStyles.body),
+                      ],
+                    ),
+                  ),
+                  // child: Text(
+                  //   '(${controller.cartItems.length} items)',
+                  //   style: AppTextStyles.body.copyWith(
+                  //     color: AppColors.primaryColor,
+                  //     fontWeight: FontWeight.bold,
+                  //   ),
+                  // ),
                 ),
               ],
             ),
@@ -47,7 +77,6 @@ class CartSection extends StatelessWidget {
               ),
               child: ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.all(8),
                 itemCount: controller.cartItems.length,
                 itemBuilder: (context, index) {
