@@ -1,10 +1,10 @@
-import 'package:carty_app/widgets/clear_cart_button.dart';
+import 'package:carty_app/widgets/cart_area/clear_cart_button.dart';
 import 'package:flutter/material.dart';
 import '../base/res/styles/app_styles.dart';
 import '../base/utils/controllers/cart_controller.dart';
-import '../widgets/cart_section.dart';
-import '../widgets/input_area.dart';
-import '../widgets/summary_card.dart';
+import '../widgets/cart_area/cart_section.dart';
+import '../widgets/input_area/input_area.dart';
+import '../widgets/summary_area/summary_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

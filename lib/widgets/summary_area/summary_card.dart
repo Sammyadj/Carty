@@ -1,6 +1,6 @@
-import 'package:carty_app/widgets/summary_row.dart';
+import 'package:carty_app/widgets/summary_area/summary_row.dart';
 import 'package:flutter/material.dart';
-import '../base/res/styles/app_styles.dart';
+import '../../base/res/styles/app_styles.dart';
 
 class SummaryCard extends StatelessWidget {
   final double total;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../../base/res/styles/app_styles.dart';
+import '../primary_button.dart';
+import 'price_input.dart';
 
 class InputActionRow extends StatelessWidget {
   final String labelText;
@@ -49,23 +51,18 @@ class InputActionRow extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(width: 20),
-            if (priceController != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: IsPrice(controller: priceController!),
+            SizedBox(width: 15),
+            if (priceController != null) ...[
+              PriceInput(
+                controller: priceController!,
+                errorText: priceErrorText,
               ),
-            ElevatedButton(
+              SizedBox(width: 15),
+            ],
+            PrimaryButton(
+              text: buttonText,
               onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              ),
-              child: Text(buttonText),
+              width: 135,
             ),
           ],
         ),
@@ -78,39 +75,6 @@ class InputActionRow extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class IsPrice extends StatelessWidget {
-  final TextEditingController controller;
-  final String? errorText;
-  const IsPrice({super.key, required this.controller, this.errorText});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 120,
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: true),
-        style: AppTextStyles.body,
-        decoration: InputDecoration(
-          labelText: "Price",
-          hintText: "Price",
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: AppColors.borderColor),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
-          ),
-          errorText: errorText,
-        ),
-      ),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:carty_app/base/utils/controllers/cart_controller.dart';
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../../base/res/styles/app_styles.dart';
 import 'cart_item_tile.dart';
 import 'empty_cart_message.dart';
 
@@ -46,6 +46,8 @@ class CartSection extends StatelessWidget {
                 side: BorderSide(color: AppColors.borderColor),
               ),
               child: ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.all(8),
                 itemCount: controller.cartItems.length,
                 itemBuilder: (context, index) {

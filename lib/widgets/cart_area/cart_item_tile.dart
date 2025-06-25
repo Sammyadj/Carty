@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../../base/res/styles/app_styles.dart';
 
 class CartItemTile extends StatelessWidget {
   final String itemName;

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import '../base/utils/controllers/cart_controller.dart';
-import 'input_action_row.dart';
+import '../../base/utils/controllers/cart_controller.dart';
+import 'budget_input_row.dart';
+import 'item_input_row.dart';
 
 class InputArea extends StatelessWidget {
   final CartController controller;
@@ -22,22 +23,16 @@ class InputArea extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        InputActionRow(
-          labelText: 'Enter budget',
-          buttonText: 'Set budget',
+        BudgetInputRow(
+          controller: controller,
+          error: budgetError,
           onPressed: onBudgetSet,
-          controller: controller.budgetController,
-          inputErrorText: budgetError,
         ),
         SizedBox(height: 20),
-        InputActionRow(
-          labelText: 'Item name',
-          buttonText: 'Add to Cart',
+        ItemInputRow(
+          controller: controller,
+          error: priceError,
           onPressed: onItemAdded,
-          controller: controller.itemController,
-          priceController: controller.priceController,
-          inputErrorText: null,
-          priceErrorText: priceError,
         ),
       ],
     );
