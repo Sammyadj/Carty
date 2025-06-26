@@ -19,11 +19,20 @@ class CartFullScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final item = controller.cartItems[index];
           return CartItemTile(
-            itemName: item.name,
-            price: item.price,
+            item: item,
             onDelete: () {
               controller.removeItem(index, () {
-                Navigator.pop(context); // return to Home and refresh
+                Navigator.pop(context);
+              });
+            },
+            onIncrement: () {
+              controller.incrementQuantity(index, () {
+                Navigator.pop(context);
+              });
+            },
+            onDecrement: () {
+              controller.decrementQuantity(index, () {
+                Navigator.pop(context);
               });
             },
           );

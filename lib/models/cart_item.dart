@@ -1,6 +1,13 @@
 class CartItem {
-  final String name;
-  final String price;
+  String name;
+  double unitPrice;
+  int quantity;
 
-  CartItem({required this.name, required this.price});
+  CartItem({
+    required this.name,
+    required this.unitPrice,
+    required this.quantity,
+  });
+
+  double get totalPrice => unitPrice * quantity;
 }

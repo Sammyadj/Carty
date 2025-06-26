@@ -24,13 +24,14 @@ class InputArea extends StatelessWidget {
     return Column(
       children: [
         BudgetInputRow(
-          controller: controller,
+          budgetController: controller.budgetController,
           error: budgetError,
           onPressed: onBudgetSet,
         ),
         SizedBox(height: 20),
         ItemInputRow(
-          controller: controller,
+          priceController: controller.priceController,
+          itemController: controller.itemController,
           error: priceError,
           onPressed: onItemAdded,
         ),

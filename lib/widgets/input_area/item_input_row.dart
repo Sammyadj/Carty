@@ -1,17 +1,16 @@
 import 'package:carty_app/widgets/input_area/input_action_row.dart';
 import 'package:flutter/material.dart';
-import '../../base/utils/controllers/cart_controller.dart';
 
 class ItemInputRow extends StatelessWidget {
-  final CartController controller;
+  final TextEditingController itemController;
+  final TextEditingController priceController;
   final String? error;
   final VoidCallback onPressed;
 
   const ItemInputRow({
     super.key,
-    required this.controller,
     required this.error,
-    required this.onPressed,
+    required this.onPressed, required this.itemController, required this.priceController,
   });
 
   @override
@@ -20,8 +19,8 @@ class ItemInputRow extends StatelessWidget {
       labelText: 'Item name',
       buttonText: 'Add to Cart',
       onPressed: onPressed,
-      controller: controller.itemController,
-      priceController: controller.priceController,
+      mainController: itemController,
+      priceController: priceController,
       inputErrorText: null,
       priceErrorText: error,
     );

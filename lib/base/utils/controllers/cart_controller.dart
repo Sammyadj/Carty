@@ -49,8 +49,11 @@ class CartController {
       return "Price must be greater than 0";
     }
 
-    final formattedPrice = '£${parsedPrice.toStringAsFixed(2)}';
-    cartItems.add(CartItem(name: name, price: formattedPrice));
+    cartItems.add(CartItem(
+      name: name,
+      unitPrice: parsedPrice,
+      quantity: 1,
+    ));
     itemController.clear();
     priceController.clear();
     refresh();
@@ -62,9 +65,22 @@ class CartController {
     refresh();
   }
 
+  void incrementQuantity(int index, VoidCallback refresh) {
+    if (index >= 0 && index < cartItems.length) {
+      cartItems[index].quantity += 1;
+      refresh();
+    }
+  }
+
+  void decrementQuantity(int index, VoidCallback refresh) {
+    if (index >= 0 && index < cartItems.length && cartItems[index].quantity > 1) {
+      cartItems[index].quantity -= 1;
+      refresh();
+    }
+  }
+
   double get total => cartItems.fold(0.0, (sum, item) {
-    final price = double.tryParse(item.price.replaceAll('£', '')) ?? 0.0;
-    return sum + price;
+    return sum + item.totalPrice;
   });
 
   void dispose() {

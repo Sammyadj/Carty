@@ -55,13 +55,6 @@ class CartSection extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // child: Text(
-                  //   '(${controller.cartItems.length} items)',
-                  //   style: AppTextStyles.body.copyWith(
-                  //     color: AppColors.primaryColor,
-                  //     fontWeight: FontWeight.bold,
-                  //   ),
-                  // ),
                 ),
               ],
             ),
@@ -86,12 +79,17 @@ class CartSection extends StatelessWidget {
                       minHeight: 60,
                     ),
                     child: CartItemTile(
-                      itemName: item.name,
-                      price: item.price,
+                      item: item,
                       onDelete: () {
                         controller.removeItem(
                           index, onItemRemoved
                         );
+                      },
+                      onIncrement: () {
+                        controller.incrementQuantity(index, onItemRemoved);
+                      },
+                      onDecrement: () {
+                        controller.decrementQuantity(index, onItemRemoved);
                       },
                     ),
                   );

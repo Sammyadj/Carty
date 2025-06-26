@@ -1,7 +1,7 @@
 import 'package:carty_app/models/cart_item.dart';
 
 final List<CartItem> cartItemsData = [
-  CartItem(name: 'Bread', price: '£2.50'),
-  CartItem(name: 'Milk', price: '£1.20'),
-  CartItem(name: 'Eggs', price: '£3.00'),
+  CartItem(name: 'Bread', unitPrice: 2.50, quantity: 1),
+  CartItem(name: 'Milk', unitPrice: 1.20, quantity: 1),
+  CartItem(name: 'Eggs', unitPrice: 3.00, quantity: 1),
 ];

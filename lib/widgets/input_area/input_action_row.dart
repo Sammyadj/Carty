@@ -8,7 +8,7 @@ class InputActionRow extends StatelessWidget {
   final String labelText;
   final String buttonText;
   final VoidCallback onPressed;
-  final TextEditingController controller;
+  final TextEditingController mainController;
   final TextEditingController? priceController;
   final String? inputErrorText;
   final String? priceErrorText;
@@ -17,7 +17,7 @@ class InputActionRow extends StatelessWidget {
     required this.labelText,
     required this.buttonText,
     required this.onPressed,
-    required this.controller,
+    required this.mainController,
     this.priceController,
     this.inputErrorText,
     this.priceErrorText,
@@ -32,7 +32,7 @@ class InputActionRow extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
-                controller: controller,
+                controller: mainController,
                 style: AppTextStyles.body,
                 decoration: InputDecoration(
                   labelText: labelText,
