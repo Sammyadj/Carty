@@ -38,48 +38,54 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         title: Text("Carty", style: AppTextStyles.headline),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            children: [
-              SizedBox(height: 20),
-            InputArea(
-              controller: controller,
-              budgetError: _budgetError,
-              priceError: _priceError,
-              onBudgetSet: () {
-                final error = controller.setBudget(() => setState(() {}));
-                setState(() {
-                  _budgetError = error;
-                });
-              },
-              onItemAdded: () {
-                final error = controller.addItemToCart(() => setState(() {}));
-                setState(() {
-                  _priceError = error;
-                });
-              },
-            ),
-              SizedBox(height: 30),
-              CartSection(controller: controller, onItemRemoved: () {setState(() {
-              });}),
-              SizedBox(height: 30),
-              ClearCartButton(
-                onClear: () {
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                SizedBox(height: 20),
+                InputArea(
+                  controller: controller,
+                  budgetError: _budgetError,
+                  priceError: _priceError,
+                  onBudgetSet: () {
+                    final error = controller.setBudget(() => setState(() {}));
+                    setState(() {
+                      _budgetError = error;
+                    });
+                  },
+                  onItemAdded: () {
+                    final error = controller.addItemToCart(() => setState(() {}));
+                    setState(() {
+                      _priceError = error;
+                    });
+                  },
+                ),
+                SizedBox(height: 30),
+                CartSection(controller: controller, onItemRemoved: () {
                   setState(() {
-                    controller.cartItems.clear();
                   });
-                },
-                showButton: controller.cartItems.isNotEmpty,
-              ),
-              SizedBox(height: 20),
-              SummaryCard(
-                total: controller.total,
-                budget: controller.budget,
-                remaining: remaining,
-              ),
-            ],
+                }),
+                SizedBox(height: 30),
+                ClearCartButton(
+                  onClear: () {
+                    setState(() {
+                      controller.cartItems.clear();
+                    });
+                  },
+                  showButton: controller.cartItems.isNotEmpty,
+                ),
+                SizedBox(height: 20),
+                SummaryCard(
+                  total: controller.total,
+                  budget: controller.budget,
+                  remaining: remaining,
+                ),
+              ],
+            ),
           ),
         ),
       ),

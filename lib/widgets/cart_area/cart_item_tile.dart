@@ -29,12 +29,28 @@ class _CartItemTileState extends State<CartItemTile> {
   late TextEditingController priceController;
   late TextEditingController qtyController;
 
+  late FocusNode qtyFocusNode;
+  late FocusNode priceFocusNode;
+
   @override
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.item.name);
     priceController = TextEditingController(text: widget.item.unitPrice.toStringAsFixed(2));
     qtyController = TextEditingController(text: widget.item.quantity.toString());
+
+    qtyFocusNode = FocusNode();
+    qtyFocusNode.addListener(() {
+      if (!qtyFocusNode.hasFocus && isEditingQty) {
+        saveEdits();
+      }
+    });
+    priceFocusNode = FocusNode();
+    priceFocusNode.addListener(() {
+      if (!priceFocusNode.hasFocus && isEditingPrice) {
+        saveEdits();
+      }
+    });
   }
 
   @override
@@ -42,6 +58,8 @@ class _CartItemTileState extends State<CartItemTile> {
     nameController.dispose();
     priceController.dispose();
     qtyController.dispose();
+    qtyFocusNode.dispose();
+    priceFocusNode.dispose();
     super.dispose();
   }
 
@@ -64,21 +82,42 @@ class _CartItemTileState extends State<CartItemTile> {
     required VoidCallback onTap,
     TextAlign textAlign = TextAlign.start,
     double? width,
+    FocusNode? focusNode,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: isEditing
-          ? SizedBox(
-              width: width ?? 60,
-              child: TextField(
-                controller: controller,
-                onSubmitted: (_) => saveEdits(),
-                textAlign: textAlign,
-                autofocus: true,
+    return isEditing
+        ? SizedBox(
+            width: width ?? 60,
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              onSubmitted: (_) {
+                FocusScope.of(context).unfocus();
+                saveEdits();
+              },
+              textAlign: textAlign,
+              autofocus: true,
+              textAlignVertical: TextAlignVertical.center,
+              style: AppTextStyles.body,
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                border: InputBorder.none,
               ),
-            )
-          : Text(value, style: AppTextStyles.body),
-    );
+            ),
+          )
+        : InkWell(
+            onTap: () {
+              onTap();
+              Future.delayed(Duration.zero, () {
+                focusNode?.requestFocus();
+              });
+            },
+            child: Text(
+              value,
+              textAlign: textAlign,
+              style: AppTextStyles.body,
+            ),
+          );
   }
 
   @override
@@ -114,6 +153,7 @@ class _CartItemTileState extends State<CartItemTile> {
                   controller: priceController,
                   onTap: () => setState(() => isEditingPrice = true),
                   textAlign: TextAlign.center,
+                  focusNode: priceFocusNode,
                 ),
               ),
               SizedBox(width: 20),
@@ -126,15 +166,20 @@ class _CartItemTileState extends State<CartItemTile> {
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: Center(
-                        child: editableText(
-                          isEditing: isEditingQty,
-                          value: widget.item.quantity.toString(),
-                          controller: qtyController,
-                          onTap: () => setState(() => isEditingQty = true),
-                          textAlign: TextAlign.center,
-                        ),
+                    SizedBox(
+                      width: 30,
+                      child: editableText(
+                        isEditing: isEditingQty,
+                        value: widget.item.quantity.toString(),
+                        controller: qtyController,
+                        onTap: () {
+                          setState(() => isEditingQty = true);
+                          Future.delayed(Duration.zero, () {
+                            qtyFocusNode.requestFocus();
+                          });
+                        },
+                        textAlign: TextAlign.center,
+                        focusNode: qtyFocusNode,
                       ),
                     ),
                     Column(
