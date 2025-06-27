@@ -186,11 +186,21 @@ class _CartItemTileState extends State<CartItemTile> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         GestureDetector(
-                          onTap: widget.onIncrement,
+                          onTap: () {
+                            widget.onIncrement();
+                            setState(() {
+                              qtyController.text = widget.item.quantity.toString();
+                            });
+                          },
                           child: Icon(Icons.keyboard_arrow_up, size: 16),
                         ),
                         GestureDetector(
-                          onTap: widget.onDecrement,
+                          onTap: () {
+                            widget.onDecrement();
+                            setState(() {
+                              qtyController.text = widget.item.quantity.toString();
+                            });
+                          },
                           child: Icon(Icons.keyboard_arrow_down, size: 16),
                         ),
                       ],
