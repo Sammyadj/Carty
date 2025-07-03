@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../base/res/styles/app_styles.dart';
 import '../../models/cart_item.dart';
+import 'editable_text_field.dart';
+import 'quantity_adjuster.dart';
+import 'item_name_editor.dart';
+import 'price_display.dart';
 
 class CartItemTile extends StatefulWidget {
   final CartItem item;
@@ -75,51 +78,6 @@ class _CartItemTileState extends State<CartItemTile> {
     });
   }
 
-  Widget editableText({
-    required bool isEditing,
-    required String value,
-    required TextEditingController controller,
-    required VoidCallback onTap,
-    TextAlign textAlign = TextAlign.start,
-    double? width,
-    FocusNode? focusNode,
-  }) {
-    return isEditing
-        ? SizedBox(
-            width: width ?? 60,
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              onSubmitted: (_) {
-                FocusScope.of(context).unfocus();
-                saveEdits();
-              },
-              textAlign: textAlign,
-              autofocus: true,
-              textAlignVertical: TextAlignVertical.center,
-              style: AppTextStyles.body,
-              decoration: InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                border: InputBorder.none,
-              ),
-            ),
-          )
-        : InkWell(
-            onTap: () {
-              onTap();
-              Future.delayed(Duration.zero, () {
-                focusNode?.requestFocus();
-              });
-            },
-            child: Text(
-              value,
-              textAlign: textAlign,
-              style: AppTextStyles.body,
-            ),
-          );
-  }
-
   @override
   Widget build(BuildContext context) {
     final totalPrice = widget.item.totalPrice.toStringAsFixed(2);
@@ -139,15 +97,22 @@ class _CartItemTileState extends State<CartItemTile> {
             children: [
               Expanded(
                 flex: 3,
-                child: Text(
-                  widget.item.name,
-                  style: AppTextStyles.itemTitle,
+                child: ItemNameEditor(
+                  isEditing: isEditingName,
+                  value: widget.item.name,
+                  controller: nameController,
+                  focusNode: FocusNode()..addListener(() {
+                    if (!FocusScope.of(context).hasFocus && isEditingName) {
+                      saveEdits();
+                    }
+                  }),
+                  onTap: () => setState(() => isEditingName = true),
                 ),
               ),
               SizedBox(width: 10),
               SizedBox(
                 width: 60,
-                child: editableText(
+                child: EditableTextField(
                   isEditing: isEditingPrice,
                   value: '£${widget.item.unitPrice.toStringAsFixed(2)}',
                   controller: priceController,
@@ -157,66 +122,32 @@ class _CartItemTileState extends State<CartItemTile> {
                 ),
               ),
               SizedBox(width: 20),
-              Container(
-                width: 55,
-                height: 36,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade400),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 30,
-                      child: editableText(
-                        isEditing: isEditingQty,
-                        value: widget.item.quantity.toString(),
-                        controller: qtyController,
-                        onTap: () {
-                          setState(() => isEditingQty = true);
-                          Future.delayed(Duration.zero, () {
-                            qtyFocusNode.requestFocus();
-                          });
-                        },
-                        textAlign: TextAlign.center,
-                        focusNode: qtyFocusNode,
-                      ),
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            widget.onIncrement();
-                            setState(() {
-                              qtyController.text = widget.item.quantity.toString();
-                            });
-                          },
-                          child: Icon(Icons.keyboard_arrow_up, size: 16),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            widget.onDecrement();
-                            setState(() {
-                              qtyController.text = widget.item.quantity.toString();
-                            });
-                          },
-                          child: Icon(Icons.keyboard_arrow_down, size: 16),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              QuantityAdjuster(
+                isEditing: isEditingQty,
+                value: widget.item.quantity,
+                controller: qtyController,
+                focusNode: qtyFocusNode,
+                onIncrement: () {
+                  widget.onIncrement();
+                  setState(() {
+                    qtyController.text = widget.item.quantity.toString();
+                  });
+                },
+                onDecrement: () {
+                  widget.onDecrement();
+                  setState(() {
+                    qtyController.text = widget.item.quantity.toString();
+                  });
+                },
+                onTap: () {
+                  setState(() => isEditingQty = true);
+                  Future.delayed(Duration.zero, () {
+                    qtyFocusNode.requestFocus();
+                  });
+                },
               ),
               SizedBox(width: 20),
-              SizedBox(
-                width: 70,
-                child: Text(
-                  '£$totalPrice',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.itemPrice,
-                ),
-              ),
+              PriceDisplay(value: totalPrice),
               IconButton(
                 onPressed: widget.onDelete,
                 icon: Icon(Icons.delete_outline, color: Colors.red),
