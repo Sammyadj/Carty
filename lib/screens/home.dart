@@ -1,6 +1,7 @@
 import 'package:carty_app/widgets/cart_area/clear_cart_button.dart';
 import 'package:flutter/material.dart';
 import '../base/res/styles/app_styles.dart';
+import '../base/utils/cart_dialogs.dart';
 import '../base/utils/controllers/cart_controller.dart';
 import '../widgets/cart_area/cart_section.dart';
 import '../widgets/input_area/input_area.dart';
@@ -71,7 +72,11 @@ class _HomePageState extends State<HomePage> {
                 }),
                 SizedBox(height: 30),
                 ClearCartButton(
-                  onClear: () => controller.clearCart(() => setState(() {})),
+                  onClear: () => confirmAndClearCart(
+                    context: context,
+                    controller: controller,
+                    refresh: () => setState(() {}),
+                  ),
                   showButton: controller.cartItems.isNotEmpty,
                 ),
                 SizedBox(height: 20),

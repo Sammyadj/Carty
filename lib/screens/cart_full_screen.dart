@@ -1,5 +1,6 @@
 import 'package:carty_app/widgets/cart_area/clear_cart_button.dart';
 import 'package:flutter/material.dart';
+import '../base/utils/cart_dialogs.dart';
 import '../base/utils/controllers/cart_controller.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/summary_area/summary_card.dart';
@@ -15,7 +16,11 @@ class CartFullScreen extends StatefulWidget {
 
 class _CartFullScreenState extends State<CartFullScreen> {
   void onClear() {
-    widget.controller.clearCart(() => setState(() {}));
+    confirmAndClearCart(
+      context: context,
+      controller: widget.controller,
+      refresh: () => setState(() {}),
+    );
   }
 
   bool get showButton => widget.controller.cartItems.isNotEmpty;
