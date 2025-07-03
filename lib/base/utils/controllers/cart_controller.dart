@@ -83,6 +83,11 @@ class CartController {
     return sum + item.totalPrice;
   });
 
+  void clearCart(VoidCallback refresh) {
+    cartItems.clear();
+    refresh();
+  }
+
   void dispose() {
     budgetController.dispose();
     itemController.dispose();

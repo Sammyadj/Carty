@@ -71,11 +71,7 @@ class _HomePageState extends State<HomePage> {
                 }),
                 SizedBox(height: 30),
                 ClearCartButton(
-                  onClear: () {
-                    setState(() {
-                      controller.cartItems.clear();
-                    });
-                  },
+                  onClear: () => controller.clearCart(() => setState(() {})),
                   showButton: controller.cartItems.isNotEmpty,
                 ),
                 SizedBox(height: 20),
