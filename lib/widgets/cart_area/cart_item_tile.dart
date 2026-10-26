@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../base/res/styles/app_styles.dart';
 import '../../core/money.dart';
 import '../../models/cart_item.dart';
+import '../product_avatar.dart';
 
 class CartItemTile extends StatelessWidget {
   const CartItemTile({
@@ -23,80 +25,162 @@ class CartItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.borderColor),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(14, 14, 10, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                ProductAvatar(name: item.name, size: 44),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(item.name, style: theme.textTheme.titleMedium),
-                ),
-                IconButton(
-                  key: Key('item-edit-${item.id}'),
-                  tooltip: 'Edit ${item.name}',
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined),
-                ),
-                IconButton(
-                  key: Key('item-delete-${item.id}'),
-                  tooltip: 'Remove ${item.name}',
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              ],
-            ),
-            Text('${Money.format(item.unitPricePence)} each'),
-            if (item.quantity == 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Not picked yet',
-                  style: TextStyle(color: theme.colorScheme.primary),
-                ),
-              ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton.outlined(
-                      key: Key('item-decrement-${item.id}'),
-                      tooltip: 'Decrease quantity of ${item.name}',
-                      onPressed: item.quantity > 0 ? onDecrement : null,
-                      icon: const Icon(Icons.remove),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Semantics(
-                        label: 'Quantity of ${item.name}: ${item.quantity}',
-                        child: Text('${item.quantity}'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          height: 1.3,
+                        ),
                       ),
-                    ),
-                    IconButton.outlined(
-                      key: Key('item-increment-${item.id}'),
-                      tooltip: 'Increase quantity of ${item.name}',
-                      onPressed:
-                          item.quantity < CartItem.maxQuantity
-                              ? onIncrement
-                              : null,
-                      icon: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-                Text(
-                  Money.format(item.totalPence),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '${Money.format(item.unitPricePence)} each',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            Money.format(item.totalPence),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (item.quantity == 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: Text(
+                            'Not picked yet',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.warning,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.borderColor),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          key: Key('item-decrement-${item.id}'),
+                          tooltip: 'Decrease quantity of ${item.name}',
+                          onPressed: item.quantity > 0 ? onDecrement : null,
+                          constraints: const BoxConstraints(
+                            minWidth: 44,
+                            minHeight: 44,
+                          ),
+                          color: AppColors.primaryColor,
+                          icon: const Icon(Icons.remove, size: 18),
+                        ),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(minWidth: 22),
+                          child: Semantics(
+                            label: 'Quantity of ${item.name}: ${item.quantity}',
+                            child: Text(
+                              '${item.quantity}',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          key: Key('item-increment-${item.id}'),
+                          tooltip: 'Increase quantity of ${item.name}',
+                          onPressed:
+                              item.quantity < CartItem.maxQuantity
+                                  ? onIncrement
+                                  : null,
+                          constraints: const BoxConstraints(
+                            minWidth: 44,
+                            minHeight: 44,
+                          ),
+                          color: AppColors.primaryColor,
+                          icon: const Icon(Icons.add, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        key: Key('item-edit-${item.id}'),
+                        tooltip: 'Edit ${item.name}',
+                        onPressed: onEdit,
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
+                        color: AppColors.textSecondary,
+                        icon: const Icon(Icons.edit_outlined, size: 19),
+                      ),
+                      IconButton(
+                        key: Key('item-delete-${item.id}'),
+                        tooltip: 'Remove ${item.name}',
+                        onPressed: onDelete,
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
+                        color: AppColors.textSecondary,
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),

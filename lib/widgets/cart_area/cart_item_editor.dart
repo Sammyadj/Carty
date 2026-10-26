@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../base/res/styles/app_styles.dart';
 import '../../core/money.dart';
 import '../../models/cart_item.dart';
 
@@ -57,8 +58,53 @@ class _CartItemEditorState extends State<CartItemEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AlertDialog(
-      title: Text(widget.item == null ? 'Add an item' : 'Edit item'),
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.mint,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              widget.item == null
+                  ? Icons.add_shopping_cart_outlined
+                  : Icons.edit_outlined,
+              color: AppColors.primaryColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            widget.item == null ? 'Add an item' : 'Edit item',
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.item == null
+                ? 'Keep track of your shop as you go.'
+                : 'Update the details in your basket.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -75,7 +121,10 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   maxLength: CartItem.maxNameLength,
-                  decoration: const InputDecoration(labelText: 'Item name'),
+                  decoration: _decoration(
+                    'Item name',
+                    hintText: 'e.g. Organic whole milk',
+                  ),
                   validator: (value) {
                     final name = value?.trim() ?? '';
                     if (name.isEmpty) return 'Enter an item name';
@@ -94,11 +143,10 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   ),
                   textInputAction: TextInputAction.next,
                   maxLength: 12,
-                  decoration: const InputDecoration(
-                    labelText: 'Unit price',
+                  decoration: _decoration(
+                    'Unit price',
                     prefixText: '£ ',
                     hintText: '0.00',
-                    counterText: '',
                   ),
                   validator: (value) {
                     final pence = Money.tryParsePence(value ?? '');
@@ -116,7 +164,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _save(),
-                  decoration: const InputDecoration(labelText: 'Quantity'),
+                  decoration: _decoration('Quantity'),
                   validator: (value) {
                     final quantity = int.tryParse(value ?? '');
                     if (quantity == null ||
@@ -127,9 +175,36 @@ class _CartItemEditorState extends State<CartItemEditor> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Use 0 to keep an item on your list until you pick it up.',
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.mint,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.info_outline,
+                          size: 17,
+                          color: AppColors.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Use 0 to keep an item on your list until you pick it up.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.primaryDark,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -139,14 +214,46 @@ class _CartItemEditorState extends State<CartItemEditor> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
           child: const Text('Cancel'),
         ),
         FilledButton(
           key: const Key('item-save'),
           onPressed: _save,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           child: const Text('Save item'),
         ),
       ],
     );
   }
+
+  InputDecoration _decoration(
+    String label, {
+    String? hintText,
+    String? prefixText,
+  }) => InputDecoration(
+    labelText: label,
+    hintText: hintText,
+    prefixText: prefixText,
+    counterText: '',
+    filled: true,
+    fillColor: AppColors.backgroundColor,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.borderColor),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.borderColor),
+    ),
+    errorMaxLines: 3,
+  );
 }
