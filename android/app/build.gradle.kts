@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.Samueladjei.carty_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Match the highest NDK required by our Android plugins.
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
