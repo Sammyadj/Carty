@@ -11,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.5.3
+  # Keep Android dependencies aligned with the Flutter 3.29 toolchain.
+  mobile_scanner: 7.0.0
+  http: ^1.4.0
 
 dev_dependencies:
   flutter_test:

@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../core/money.dart';
+import '../core/retail_barcode.dart';
 import '../data/cart_storage.dart';
 import '../models/cart_item.dart';
+import '../models/product_details.dart';
 import '../models/saved_shopping_list.dart';
 
 /// One source of truth for the active basket and reusable list snapshots.
@@ -135,6 +137,10 @@ class CartStore extends ChangeNotifier {
 
   Future<void> updateItem(CartItem item) async {
     _validateItem(item.name, item.unitPricePence, item.quantity);
+    if (item.product != null &&
+        ProductDetails.fromJson(item.product!.toJson()) == null) {
+      throw ArgumentError.value(item.product, 'product');
+    }
     await load();
     if (_disposed) return;
     final index = _items.indexWhere((current) => current.id == item.id);
@@ -143,6 +149,74 @@ class CartStore extends ChangeNotifier {
     updated[index] = item.copyWith(name: item.name.trim());
     _items = List.unmodifiable(updated);
     await _commit();
+  }
+
+  /// Add a confirmed scan or update the existing line for the same product.
+  ///
+  /// The confirmed price applies to every unit on a merged line.
+  Future<void> addScannedItem({
+    required ProductDetails product,
+    required String name,
+    required int unitPricePence,
+    int quantity = 1,
+  }) async {
+    final trimmedName = name.trim();
+    _validateItem(trimmedName, unitPricePence, quantity);
+    if (quantity < 1) throw ArgumentError.value(quantity, 'quantity');
+    final confirmedProduct = ProductDetails.fromJson(
+      product.copyWith(name: trimmedName).toJson(),
+    );
+    if (confirmedProduct == null) {
+      throw ArgumentError.value(product, 'product');
+    }
+    await load();
+    if (_disposed) return;
+
+    // Look up after loading so concurrent scans also see earlier mutations.
+    final existing = findByBarcode(confirmedProduct.barcode);
+    if (existing == null) {
+      _items = List.unmodifiable([
+        ..._items,
+        CartItem(
+          id: _newId(),
+          name: trimmedName,
+          unitPricePence: unitPricePence,
+          quantity: quantity,
+          product: confirmedProduct,
+        ),
+      ]);
+    } else {
+      final mergedQuantity = existing.quantity + quantity;
+      if (mergedQuantity > CartItem.maxQuantity) {
+        throw ArgumentError.value(mergedQuantity, 'quantity');
+      }
+      _items = List.unmodifiable(
+        _items.map(
+          (item) =>
+              item.id == existing.id
+                  ? item.copyWith(
+                    name: trimmedName,
+                    unitPricePence: unitPricePence,
+                    quantity: mergedQuantity,
+                    product: confirmedProduct,
+                  )
+                  : item,
+        ),
+      );
+    }
+    await _commit();
+  }
+
+  CartItem? findByBarcode(String barcode) {
+    if (RetailBarcode.normalize(barcode) == null) return null;
+    final key = RetailBarcode.key(barcode);
+    for (final item in _items) {
+      final product = item.product;
+      if (product != null && RetailBarcode.key(product.barcode) == key) {
+        return item;
+      }
+    }
+    return null;
   }
 
   Future<void> incrementQuantity(String itemId) async {
@@ -231,6 +305,7 @@ class CartStore extends ChangeNotifier {
           name: item.name,
           unitPricePence: item.unitPricePence,
           quantity: startFresh ? 0 : item.quantity,
+          product: item.product,
         ),
       ),
     );
