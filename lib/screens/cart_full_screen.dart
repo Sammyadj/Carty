@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../base/res/styles/app_styles.dart';
 import '../base/utils/cart_dialogs.dart';
 import '../state/cart_store.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
@@ -8,56 +9,164 @@ import '../widgets/cart_status_bar.dart';
 import '../widgets/storage_notice.dart';
 import '../widgets/summary_area/summary_card.dart';
 
-class CartFullScreen extends StatelessWidget {
+class CartFullScreen extends StatefulWidget {
   const CartFullScreen({super.key, required this.store});
   final CartStore store;
 
   @override
+  State<CartFullScreen> createState() => _CartFullScreenState();
+}
+
+class _CartFullScreenState extends State<CartFullScreen> {
+  final _search = TextEditingController();
+  bool _pendingOnly = false;
+  CartStore get store => widget.store;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: store,
-    builder:
-        (context, _) => Scaffold(
-          appBar: AppBar(title: const Text('Your cart')),
-          bottomNavigationBar: CartStatusBar(store: store),
-          body: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 760),
-                child: CustomScrollView(
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                      sliver: SliverToBoxAdapter(
+    builder: (context, _) {
+      final query = _search.text.trim().toLowerCase();
+      final items =
+          store.items
+              .where(
+                (item) =>
+                    item.name.toLowerCase().contains(query) &&
+                    (!_pendingOnly || item.quantity == 0),
+              )
+              .toList();
+      final pendingCount =
+          store.items.where((item) => item.quantity == 0).length;
+      return Scaffold(
+        appBar: AppBar(title: const Text('Your basket')),
+        bottomNavigationBar: CartStatusBar(store: store),
+        body: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          StorageNotice(store: store),
+                          SummaryCard(
+                            totalPence: store.totalPence,
+                            budgetPence: store.budgetPence,
+                            onEditBudget:
+                                () => showBudgetEditor(
+                                  context: context,
+                                  store: store,
+                                ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'Everything for this shop',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${store.items.length} products · $pendingCount still to pick',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          if (store.items.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            TextField(
+                              key: const Key('cart-search'),
+                              controller: _search,
+                              onChanged: (_) => setState(() {}),
+                              textInputAction: TextInputAction.search,
+                              decoration: InputDecoration(
+                                hintText: 'Search your basket',
+                                prefixIcon: const Icon(Icons.search_rounded),
+                                suffixIcon:
+                                    query.isEmpty
+                                        ? null
+                                        : IconButton(
+                                          tooltip: 'Clear search',
+                                          onPressed: () {
+                                            _search.clear();
+                                            setState(() {});
+                                          },
+                                          icon: const Icon(Icons.close_rounded),
+                                        ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ChoiceChip(
+                                  label: Text('All (${store.items.length})'),
+                                  selected: !_pendingOnly,
+                                  onSelected:
+                                      (_) =>
+                                          setState(() => _pendingOnly = false),
+                                  showCheckmark: false,
+                                ),
+                                ChoiceChip(
+                                  key: const Key('cart-filter-pending'),
+                                  label: Text('To pick ($pendingCount)'),
+                                  selected: _pendingOnly,
+                                  onSelected:
+                                      (_) =>
+                                          setState(() => _pendingOnly = true),
+                                  showCheckmark: false,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (store.items.isEmpty)
+                    const SliverPadding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverToBoxAdapter(child: EmptyCartMessage()),
+                    ),
+                  if (store.items.isNotEmpty && items.isEmpty)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
                         child: Column(
                           children: [
-                            StorageNotice(store: store),
-                            SummaryCard(
-                              totalPence: store.totalPence,
-                              budgetPence: store.budgetPence,
-                              onEditBudget:
-                                  () => showBudgetEditor(
-                                    context: context,
-                                    store: store,
-                                  ),
+                            Icon(
+                              Icons.search_off_rounded,
+                              color: AppColors.textSecondary,
+                              size: 36,
+                            ),
+                            SizedBox(height: 12),
+                            Text('No products match this view.'),
+                            SizedBox(height: 4),
+                            Text(
+                              'Try a different search or choose All.',
+                              style: TextStyle(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    if (store.items.isEmpty)
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: EmptyCartMessage(),
-                        ),
-                      ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverList.builder(
-                        itemCount: store.items.length,
-                        itemBuilder: (context, index) {
-                          final item = store.items[index];
-                          return CartItemTile(
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    sliver: SliverList.builder(
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: CartItemTile(
                             key: ValueKey(item.id),
                             item: item,
                             onEdit:
@@ -69,47 +178,58 @@ class CartFullScreen extends StatelessWidget {
                             onDelete: () => store.removeItem(item.id),
                             onIncrement: () => store.incrementQuantity(item.id),
                             onDecrement: () => store.decrementQuantity(item.id),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            if (store.items.isNotEmpty) ...[
-                              OutlinedButton.icon(
-                                onPressed:
-                                    () => showSaveList(
-                                      context: context,
-                                      store: store,
-                                    ),
-                                icon: const Icon(Icons.bookmark_add_outlined),
-                                label: const Text('Save as list'),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          if (store.items.isNotEmpty) ...[
+                            OutlinedButton.icon(
+                              onPressed:
+                                  () => showSaveList(
+                                    context: context,
+                                    store: store,
+                                  ),
+                              icon: const Icon(
+                                Icons.bookmark_add_outlined,
+                                size: 18,
                               ),
-                              TextButton.icon(
-                                key: const Key('clear-cart'),
-                                onPressed:
-                                    () => confirmAndClearCart(
-                                      context: context,
-                                      store: store,
-                                    ),
-                                icon: const Icon(Icons.delete_sweep_outlined),
-                                label: const Text('Clear cart'),
+                              label: const Text('Save as list'),
+                            ),
+                            TextButton.icon(
+                              key: const Key('clear-cart'),
+                              onPressed:
+                                  () => confirmAndClearCart(
+                                    context: context,
+                                    store: store,
+                                  ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.textSecondary,
                               ),
-                            ],
+                              icon: const Icon(
+                                Icons.delete_sweep_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('Clear cart'),
+                            ),
                           ],
-                        ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
+      );
+    },
   );
 }

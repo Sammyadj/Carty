@@ -1,6 +1,7 @@
 import 'package:carty_app/data/cart_storage.dart';
 import 'package:carty_app/main.dart';
 import 'package:carty_app/state/cart_store.dart';
+import 'package:carty_app/widgets/cart_area/cart_item_tile.dart';
 import 'package:carty_app/widgets/summary_area/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -188,8 +189,10 @@ void main() {
     final saved = store.savedLists.single;
 
     await _tapKey(tester, 'saved-list-load-${saved.id}');
-    await tester.tap(find.text('Start fresh').last);
-    await tester.pumpAndSettle();
+    await _tapKey(tester, 'reuse-fresh');
+    await _tapKey(tester, 'reuse-continue');
+    expect(store.items.single.quantity, 3);
+    await _tapKey(tester, 'reuse-apply');
 
     expect(store.items.single.name, 'Pasta');
     expect(store.items.single.quantity, 0);
@@ -217,6 +220,86 @@ void main() {
     expect(store.savedLists.single.name, 'Weekly groceries');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('lists and tips navigation opens real views and returns home', (
+    tester,
+  ) async {
+    final store = CartStore(storage: InMemoryCartStorage());
+    await store.addItem(name: 'Milk', unitPricePence: 120);
+    await store.saveList('Weekly groceries');
+    await _openApp(tester, store: store);
+
+    await _tapKey(tester, 'nav-lists');
+    expect(find.text('Weekly groceries'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('save-list-from-library')),
+      findsOneWidget,
+    );
+    await _tapKey(tester, 'nav-tips');
+    expect(find.text('A smarter way to shop.'), findsOneWidget);
+    expect(find.text('Compare the price, not just the pack'), findsOneWidget);
+    await _tapKey(tester, 'nav-home');
+    expect(find.byType(SummaryCard), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('near-budget dashboard provides a visible warning', (
+    tester,
+  ) async {
+    final store = CartStore(storage: InMemoryCartStorage());
+    await store.setBudget(1000);
+    await store.addItem(name: 'Weekly essentials', unitPricePence: 850);
+    await _openApp(tester, store: store);
+    expect(find.text('You’re close to your budget.'), findsOneWidget);
+    expect(_summaryAmount('£1.50'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'basket search and pending filter leave stored products unchanged',
+    (tester) async {
+      final store = CartStore(storage: InMemoryCartStorage());
+      await store.addItem(name: 'Milk', unitPricePence: 120);
+      await store.addItem(name: 'Bread', unitPricePence: 150, quantity: 0);
+      await _openApp(tester, store: store);
+      await _tapKey(tester, 'cart-open');
+      await _enter(tester, 'cart-search', 'Bread');
+      await tester.pumpAndSettle();
+      final breadId = store.items.last.id;
+      await tester.scrollUntilVisible(
+        find.byKey(ValueKey('item-edit-$breadId')),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(CartItemTile),
+          matching: find.text('Bread'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Milk'), findsNothing);
+      await _enter(tester, 'cart-search', '');
+      await tester.pumpAndSettle();
+      await _tapKey(tester, 'cart-filter-pending');
+      await tester.scrollUntilVisible(
+        find.byKey(ValueKey('item-edit-$breadId')),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(CartItemTile),
+          matching: find.text('Bread'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Milk'), findsNothing);
+      expect(store.items, hasLength(2));
+      expect(store.totalPence, 120);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('dashboard and editor fit a narrow phone with larger text', (
     tester,

@@ -4,6 +4,7 @@ import '../../core/money.dart';
 import '../../models/cart_item.dart';
 import '../../models/saved_shopping_list.dart';
 import '../../state/cart_store.dart';
+import '../../screens/reuse_list_screen.dart';
 import '../../widgets/cart_area/cart_item_editor.dart';
 
 Future<void> showItemEditor({
@@ -91,35 +92,13 @@ Future<bool> showReuseList({
   required CartStore store,
   required SavedShoppingList list,
 }) async {
-  final startFresh = await showDialog<bool>(
-    context: context,
-    builder:
-        (dialogContext) => AlertDialog(
-          title: Text('Use ${list.name}'),
-          content: const SingleChildScrollView(
-            child: Text(
-              'This replaces your current basket. Your saved list stays untouched.\n\nDuplicate list: keep quantities and budget.\n\nStart fresh: keep products and last entered prices, set quantities to 0 and remove the budget. Check prices on your next trip.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Duplicate list'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Start fresh'),
-            ),
-          ],
-        ),
+  final reused = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute<bool>(
+      builder: (_) => ReuseListScreen(store: store, list: list),
+    ),
   );
-  if (startFresh == null || !context.mounted) return false;
-  await store.startFromList(list.id, startFresh: startFresh);
-  return true;
+  return reused == true;
 }
 
 Future<void> confirmDeleteList({

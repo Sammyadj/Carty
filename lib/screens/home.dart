@@ -1,224 +1,345 @@
 import 'package:flutter/material.dart';
 
+import '../base/res/styles/app_styles.dart';
 import '../base/utils/cart_dialogs.dart';
+import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
+import '../widgets/saved_list_card.dart';
+import '../widgets/saved_lists_view.dart';
+import '../widgets/section_heading.dart';
 import '../widgets/shopping_tips.dart';
 import '../widgets/storage_notice.dart';
 import '../widgets/summary_area/summary_card.dart';
 import 'cart_full_screen.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.store});
   final CartStore store;
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: store,
-      builder:
-          (context, _) => Scaffold(
-            appBar: AppBar(title: const Text('Carty')),
-            bottomNavigationBar:
-                store.isLoading ? null : CartStatusBar(store: store),
-            body:
-                store.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : SafeArea(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 760),
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                            children: [
-                              Text(
-                                'Shop with a clear budget.',
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Build your basket, track spending and reuse your regular lists.',
-                              ),
-                              const SizedBox(height: 20),
-                              StorageNotice(store: store),
-                              SummaryCard(
-                                totalPence: store.totalPence,
-                                budgetPence: store.budgetPence,
-                                onEditBudget:
-                                    () => showBudgetEditor(
-                                      context: context,
-                                      store: store,
-                                    ),
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'Your basket',
-                                      style:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.titleLarge,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    key: const Key('cart-open'),
-                                    onPressed:
-                                        () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute<void>(
-                                            builder:
-                                                (_) => CartFullScreen(
-                                                  store: store,
-                                                ),
-                                          ),
-                                        ),
-                                    child: Text(
-                                      'View all (${store.items.length})',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              if (store.items.isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 24),
-                                  child: EmptyCartMessage(),
-                                ),
-                              for (final item in store.items.take(3))
-                                CartItemTile(
-                                  key: ValueKey(item.id),
-                                  item: item,
-                                  onEdit:
-                                      () => showItemEditor(
-                                        context: context,
-                                        store: store,
-                                        item: item,
-                                      ),
-                                  onDelete: () => store.removeItem(item.id),
-                                  onIncrement:
-                                      () => store.incrementQuantity(item.id),
-                                  onDecrement:
-                                      () => store.decrementQuantity(item.id),
-                                ),
-                              if (store.items.isNotEmpty)
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 4,
-                                  children: [
-                                    OutlinedButton.icon(
-                                      key: const Key('save-list'),
-                                      onPressed:
-                                          () => showSaveList(
-                                            context: context,
-                                            store: store,
-                                          ),
-                                      icon: const Icon(
-                                        Icons.bookmark_add_outlined,
-                                      ),
-                                      label: const Text('Save as list'),
-                                    ),
-                                    TextButton.icon(
-                                      key: const Key('clear-cart'),
-                                      onPressed:
-                                          () => confirmAndClearCart(
-                                            context: context,
-                                            store: store,
-                                          ),
-                                      icon: const Icon(
-                                        Icons.delete_sweep_outlined,
-                                      ),
-                                      label: const Text('Clear cart'),
-                                    ),
-                                  ],
-                                ),
-                              const SizedBox(height: 24),
-                              ShoppingTips(store: store),
-                              const SizedBox(height: 24),
-                              Text(
-                                'Your shopping lists',
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              if (store.savedLists.isEmpty)
-                                const Text(
-                                  'Save your basket as a list to make your next shop quicker.',
-                                ),
-                              for (final list in store.savedLists)
-                                Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          list.name,
-                                          style:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.titleMedium,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${list.items.length} products · last entered prices',
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Wrap(
-                                          spacing: 8,
-                                          runSpacing: 4,
-                                          children: [
-                                            FilledButton.tonal(
-                                              key: Key(
-                                                'saved-list-load-${list.id}',
-                                              ),
-                                              onPressed: () async {
-                                                final reused =
-                                                    await showReuseList(
-                                                      context: context,
-                                                      store: store,
-                                                      list: list,
-                                                    );
-                                                if (!context.mounted ||
-                                                    !reused) {
-                                                  return;
-                                                }
-                                                await Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute<void>(
-                                                    builder:
-                                                        (_) => CartFullScreen(
-                                                          store: store,
-                                                        ),
-                                                  ),
-                                                );
-                                              },
-                                              child: const Text('Use list'),
-                                            ),
-                                            TextButton(
-                                              onPressed:
-                                                  () => confirmDeleteList(
-                                                    context: context,
-                                                    store: store,
-                                                    list: list,
-                                                  ),
-                                              child: const Text('Delete list'),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _tab = 0;
+  CartStore get store => widget.store;
+
+  void _selectTab(int index) => setState(() => _tab = index);
+
+  void _openCart() => Navigator.push(
+    context,
+    MaterialPageRoute<void>(builder: (_) => CartFullScreen(store: store)),
+  );
+
+  Future<void> _reuseList(SavedShoppingList list) async {
+    final reused = await showReuseList(
+      context: context,
+      store: store,
+      list: list,
+    );
+    if (!mounted || !reused) return;
+    _openCart();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: store,
+    builder:
+        (context, _) => Scaffold(
+          appBar: AppBar(
+            toolbarHeight: 76,
+            titleSpacing: 20,
+            title: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.shopping_cart_rounded,
+                    color: Colors.white,
+                    size: 23,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Flexible(
+                  child: Text(
+                    'Carty',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1.1,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                tooltip: 'About Carty',
+                onPressed:
+                    () => showAboutDialog(
+                      context: context,
+                      applicationName: 'Carty',
+                      applicationVersion: '1.0.0',
+                      applicationIcon: const Icon(
+                        Icons.shopping_cart_rounded,
+                        color: AppColors.primaryColor,
+                        size: 36,
+                      ),
+                      children: [
+                        const Text(
+                          'Your smart shopping companion. Plan a basket, stay within budget and reuse your regular lists. Your shopping data is saved on this device.',
                         ),
+                      ],
+                    ),
+                icon: const Icon(
+                  Icons.info_outline_rounded,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          bottomNavigationBar:
+              store.isLoading
+                  ? null
+                  : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_tab == 0)
+                        CartStatusBar(store: store, includeSafeArea: false),
+                      NavigationBar(
+                        selectedIndex: _tab,
+                        onDestinationSelected: _selectTab,
+                        destinations: const [
+                          NavigationDestination(
+                            key: Key('nav-home'),
+                            icon: Icon(Icons.home_outlined),
+                            selectedIcon: Icon(Icons.home_rounded),
+                            label: 'Home',
+                          ),
+                          NavigationDestination(
+                            key: Key('nav-lists'),
+                            icon: Icon(Icons.shopping_bag_outlined),
+                            selectedIcon: Icon(Icons.shopping_bag_rounded),
+                            label: 'Lists',
+                          ),
+                          NavigationDestination(
+                            key: Key('nav-tips'),
+                            icon: Icon(Icons.lightbulb_outline_rounded),
+                            selectedIcon: Icon(Icons.lightbulb_rounded),
+                            label: 'Tips',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+          body:
+              store.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SafeArea(
+                    bottom: false,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 760),
+                        child: switch (_tab) {
+                          1 => SavedListsView(
+                            store: store,
+                            onUseList: _reuseList,
+                            onCreateList:
+                                () => showSaveList(
+                                  context: context,
+                                  store: store,
+                                ),
+                            onDeleteList:
+                                (list) => confirmDeleteList(
+                                  context: context,
+                                  store: store,
+                                  list: list,
+                                ),
+                          ),
+                          2 => _TipsPage(store: store),
+                          _ => _Dashboard(
+                            store: store,
+                            onOpenCart: _openCart,
+                            onOpenLists: () => _selectTab(1),
+                            onOpenTips: () => _selectTab(2),
+                            onReuseList: _reuseList,
+                          ),
+                        },
                       ),
                     ),
+                  ),
+        ),
+  );
+}
+
+class _Dashboard extends StatelessWidget {
+  const _Dashboard({
+    required this.store,
+    required this.onOpenCart,
+    required this.onOpenLists,
+    required this.onOpenTips,
+    required this.onReuseList,
+  });
+  final CartStore store;
+  final VoidCallback onOpenCart;
+  final VoidCallback onOpenLists;
+  final VoidCallback onOpenTips;
+  final ValueChanged<SavedShoppingList> onReuseList;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    key: const PageStorageKey('home-dashboard'),
+    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+    children: [
+      const Text(
+        'Your smart shopping companion',
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+      ),
+      const SizedBox(height: 24),
+      StorageNotice(store: store),
+      SummaryCard(
+        totalPence: store.totalPence,
+        budgetPence: store.budgetPence,
+        onEditBudget: () => showBudgetEditor(context: context, store: store),
+      ),
+      const SizedBox(height: 18),
+      ShoppingTips(store: store, onViewAll: onOpenTips),
+      const SizedBox(height: 28),
+      SectionHeading(
+        title: 'Your shopping list',
+        actionKey: const Key('cart-open'),
+        actionLabel: 'View all (${store.items.length})',
+        onAction: onOpenCart,
+      ),
+      if (store.items.isEmpty) ...[
+        const EmptyCartMessage(),
+        const SizedBox(height: 14),
+        FilledButton.icon(
+          key: const Key('quick-add-item'),
+          onPressed: () => showItemEditor(context: context, store: store),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Add your first item'),
+        ),
+      ],
+      for (final item in store.items.take(3))
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: CartItemTile(
+            key: ValueKey(item.id),
+            item: item,
+            onEdit:
+                () =>
+                    showItemEditor(context: context, store: store, item: item),
+            onDelete: () => store.removeItem(item.id),
+            onIncrement: () => store.incrementQuantity(item.id),
+            onDecrement: () => store.decrementQuantity(item.id),
           ),
-    );
-  }
+        ),
+      if (store.items.isNotEmpty)
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            OutlinedButton.icon(
+              key: const Key('save-list'),
+              onPressed: () => showSaveList(context: context, store: store),
+              icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+              label: const Text('Save as list'),
+            ),
+            TextButton.icon(
+              key: const Key('clear-cart'),
+              onPressed:
+                  () => confirmAndClearCart(context: context, store: store),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textSecondary,
+              ),
+              icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+              label: const Text('Clear cart'),
+            ),
+          ],
+        ),
+      const SizedBox(height: 28),
+      SectionHeading(
+        title: 'Your saved lists',
+        actionLabel: 'See all',
+        onAction: onOpenLists,
+      ),
+      if (store.savedLists.isEmpty)
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.mint,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.bookmarks_outlined, color: AppColors.primaryColor),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Your regular shop, ready to go. Save a basket as a list and reuse it next time.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      for (final list in store.savedLists.take(2))
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: SavedListCard(
+            list: list,
+            compact: true,
+            onUse: () => onReuseList(list),
+            onDelete:
+                () => confirmDeleteList(
+                  context: context,
+                  store: store,
+                  list: list,
+                ),
+          ),
+        ),
+    ],
+  );
+}
+
+class _TipsPage extends StatelessWidget {
+  const _TipsPage({required this.store});
+  final CartStore store;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    key: const PageStorageKey('shopping-tips'),
+    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+    children: [
+      Text(
+        'A smarter way to shop.',
+        style: Theme.of(context).textTheme.headlineMedium,
+      ),
+      const SizedBox(height: 10),
+      const Text(
+        'A few useful pointers, based on your basket and budget.',
+        style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+      ),
+      const SizedBox(height: 24),
+      ShoppingTips(store: store, expanded: true),
+    ],
+  );
 }
