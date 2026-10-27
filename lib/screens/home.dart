@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import '../design/carty_design.dart';
 
 import '../base/utils/cart_dialogs.dart';
+import '../base/utils/shopping_history.dart';
+import '../auth/app_session.dart';
 import '../design/shopping_header.dart';
 import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
 import '../widgets/active_list_banner.dart';
+import '../widgets/cloud_sync_notice.dart';
+import '../widgets/history_view.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
@@ -17,6 +21,7 @@ import '../widgets/shopping_tips.dart';
 import '../widgets/storage_notice.dart';
 import '../widgets/summary_area/summary_card.dart';
 import 'cart_full_screen.dart';
+import 'account_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.store});
@@ -86,6 +91,22 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
+          IconButton(
+            key: const Key('account-open'),
+            tooltip: 'Your account',
+            onPressed: () {
+              final session = AccountScope.maybeOf(context);
+              if (session != null) {
+                Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AccountScreen(session: session),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
           IconButton(
             key: const Key('new-list'),
             tooltip: 'New list',
@@ -158,6 +179,12 @@ class _HomePageState extends State<HomePage> {
                       selectedIcon: Icon(Icons.lightbulb_rounded),
                       label: 'Tips',
                     ),
+                    NavigationDestination(
+                      key: Key('nav-history'),
+                      icon: Icon(Icons.receipt_long_outlined),
+                      selectedIcon: Icon(Icons.receipt_long_rounded),
+                      label: 'History',
+                    ),
                   ],
                 ),
               ],
@@ -189,6 +216,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     2 => _TipsPage(store: store),
+                    3 => HistoryView(store: store),
                     _ => _Dashboard(
                       store: store,
                       onOpenCart: _openCart,
@@ -225,6 +253,7 @@ class _Dashboard extends StatelessWidget {
     children: [
       const ShoppingHeader(),
       StorageNotice(store: store),
+      const CloudSyncNotice(),
       ActiveListBanner(store: store),
       SummaryCard(
         totalPence: store.totalPence,
@@ -275,6 +304,14 @@ class _Dashboard extends StatelessWidget {
           spacing: 8,
           runSpacing: 4,
           children: [
+            if (store.items.any((item) => item.quantity > 0))
+              OutlinedButton.icon(
+                key: const Key('finish-shop'),
+                onPressed: () =>
+                    showFinishShopping(context: context, store: store),
+                icon: const Icon(Icons.task_alt_rounded, size: 18),
+                label: const Text('Finish shopping'),
+              ),
             OutlinedButton.icon(
               key: const Key('save-list'),
               onPressed: () => showSaveList(context: context, store: store),

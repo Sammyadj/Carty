@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../design/carty_design.dart';
 
 import '../base/utils/cart_dialogs.dart';
+import '../base/utils/shopping_history.dart';
 import '../state/cart_store.dart';
 import '../widgets/active_list_banner.dart';
+import '../widgets/cloud_sync_notice.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
@@ -85,6 +87,7 @@ class _CartFullScreenState extends State<CartFullScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           StorageNotice(store: store),
+                          const CloudSyncNotice(),
                           ActiveListBanner(store: store),
                           SummaryCard(
                             totalPence: store.totalPence,
@@ -105,6 +108,19 @@ class _CartFullScreenState extends State<CartFullScreen> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           if (store.items.isNotEmpty) ...[
+                            if (store.items.any((item) => item.quantity > 0))
+                              OutlinedButton.icon(
+                                key: const Key('finish-shop'),
+                                onPressed: () => showFinishShopping(
+                                  context: context,
+                                  store: store,
+                                ),
+                                icon: const Icon(
+                                  Icons.task_alt_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Finish shopping'),
+                              ),
                             const SizedBox(height: 16),
                             TextField(
                               key: const Key('cart-search'),
