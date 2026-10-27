@@ -78,6 +78,8 @@ Native verification depends on the installed toolchain. In this development envi
 
 Passing Dart analysis and Flutter tests does not by itself confirm that native Android or iOS builds pass.
 
+On a physical iPhone running iOS 26, the current Flutter 3.29 / Dart 3.7 debug runtime can abort during startup with `virtual_memory_posix.cc: mprotect failed: 13 (Permission denied)`. This matches [Flutter's tracked JIT compatibility issue](https://github.com/flutter/flutter/issues/163984), before application Dart code starts. A tested Flutter SDK upgrade is required for normal device debugging. For phone testing with the current SDK, stop the paused Xcode run and use `flutter run --release -d <device-id>`; release mode does not support hot reload. The `UIScene` lifecycle warning is separate from this crash.
+
 ## Code structure
 
 ```text
