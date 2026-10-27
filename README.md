@@ -41,7 +41,7 @@ The camera is opened only from the scanner screen. Camera images are processed o
 
 ## Run locally
 
-The project is currently tested with **Flutter 3.29.0 / Dart 3.7.0**. Use that Flutter version to match CI. Install the Android or iOS toolchain for your target device, then run:
+The project is currently tested with **Flutter 3.47.8 / Dart 3.13.7**. Use that Flutter version to match CI. Install the Android or iOS toolchain for your target device, then run:
 
 ```sh
 flutter doctor
@@ -61,7 +61,7 @@ flutter test
 
 GitHub Actions checks formatting, analysis, and tests on pushes and pull requests. Tests should protect user-visible behavior: accurate totals, valid edits, state shared across screens, saved-list reuse, and storage failure handling.
 
-Scanner tests use a fake camera and HTTP client to cover duplicate detections, permission failures, lifecycle changes, product lookup, offline cache, manual fallback, and confirmed cart changes. Camera focus, flashlight behavior, permission settings, and detection speed still need checks on physical Android and iOS devices. Rebuild the app after adding the camera plugin; hot reload alone cannot install native plugins or permission descriptions. `mobile_scanner` is pinned to 7.0.0 to retain compatibility with the current Flutter and Android toolchain.
+Scanner tests use a fake camera and HTTP client to cover duplicate detections, permission failures, lifecycle changes, product lookup, offline cache, manual fallback, and confirmed cart changes. Camera focus, flashlight behavior, permission settings, and detection speed still need checks on physical Android and iOS devices. Rebuild the app after adding the camera plugin; hot reload alone cannot install native plugins or permission descriptions. `mobile_scanner` remains pinned to the tested 7.0.0 version during the SDK migration.
 
 ## Development workflow
 
@@ -75,12 +75,17 @@ Native verification depends on the installed toolchain. In this development envi
 
 - If Android Studio shows undefined colour constants or widget parameters in `home.dart` while `flutter analyze` is clean, open **Dart Analysis** and select **Restart Dart Analysis Server**. This refreshes stale diagnostics after changes made outside the IDE. A hot restart may also be needed after changing a widget from stateless to stateful.
 - An Android debug build selected Android Studio's bundled JBR **25.0.3** and failed in Gradle with the error `25.0.3`. A debug build succeeded using the installed **Java 21** runtime instead. Use a compatible installed JDK for that command: from `android/`, run `JAVA_HOME=/path/to/installed/jdk ./gradlew :app:assembleDebug`, replacing the path with the actual JDK home. This sets Java for that command only. The app pins Android NDK **27.0.12077973** to match its storage plugin; Gradle installs missing SDK components on the first build when the SDK licenses are already accepted.
-- iOS requires **15.0 or newer**. Xcode **27.1** rejects the former iOS 12 deployment target; Runner, Flutter framework metadata, and CocoaPods targets now share the iOS 15 minimum. Change the Podfile and regenerate pods rather than editing generated Pods settings.
-- With Xcode **27.1**, a build targeting the selected iPhone 16 Pro Max simulator succeeds. The previous Xcode 16.2 `AssetCatalogSimulatorAgent` failure did not recur. The generic `flutter build ios --simulator --debug` still fails Flutter 3.29's dual-architecture `lipo -verify_arch` check with this toolchain; use `flutter devices` and `flutter run -d <simulator-id>` for a specific simulator. Physical-device and release builds still need verification.
+- Android uses **Gradle 8.14.3 / AGP 8.11.1 / Kotlin 2.2.20**, with Android SDK 36 required by Flutter. A Java 21 debug build passes. These meet Flutter 3.47's minimum requirements; the tool warns that a future upgrade will need the newer AGP 9 toolchain.
+- iOS requires **15.0 or newer**. Xcode **27.1** rejects the former iOS 12 deployment target. Change the Podfile and regenerate pods rather than editing generated Pods settings.
+- With Flutter **3.47.8** and Xcode **27.1**, the generic `flutter build ios --simulator --debug` succeeds. The previous AssetCatalogSimulatorAgent and dual-architecture `lipo` failures did not recur. The phone Debug build also compiles; physical-device startup and hot reload must be verified with the phone connected and unlocked.
 
 Passing Dart analysis and Flutter tests does not by itself confirm that native Android or iOS builds pass.
 
-On a physical iPhone running iOS 26, the current Flutter 3.29 / Dart 3.7 debug runtime can abort during startup with `virtual_memory_posix.cc: mprotect failed: 13 (Permission denied)`. This matches [Flutter's tracked JIT compatibility issue](https://github.com/flutter/flutter/issues/163984), before application Dart code starts. A tested Flutter SDK upgrade is required for normal device debugging. For phone testing with the current SDK, stop the paused Xcode run and use `flutter run --release -d <device-id>`; release mode does not support hot reload. The `UIScene` lifecycle warning is separate from this crash.
+The old Flutter 3.29 / Dart 3.7 debug runtime aborted on the iOS 26 phone with `mprotect failed: 13 (Permission denied)`, matching [Flutter's tracked JIT compatibility issue](https://github.com/flutter/flutter/issues/163984). The project now uses the updated runtime, Flutter's generated LLDB initialization file, and the UIScene lifecycle. Keep Xcode's Runner scheme on **Run → Info → Debug**, with **Debug executable** enabled. Run `flutter pub get` and build once to regenerate ignored files under `ios/Flutter/ephemeral` after a fresh checkout; keep the shared scheme's LLDB path intact.
+
+Use `flutter run -d <device-id>` for development. Wi-Fi startup on iOS 26 can be slow while Xcode prepares device-support symbols; connect USB for the initial setup if necessary. Accept local-network permission on the phone for debug discovery and hot reload. Release mode remains available for independent phone testing, but is no longer the intended workaround for the old runtime.
+
+Flutter now links the scanner and preferences plugins through its generated Swift package. The existing custom CocoaPods integration remains as a compatibility scaffold and produces a migration advisory; both simulator and Android builds pass. Fully removing CocoaPods is a separate cleanup, not a requirement for this SDK upgrade.
 
 ## Code structure
 
