@@ -79,10 +79,16 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
-              child: ListView(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                children: _review ? _buildReview() : _buildChoice(),
+              child: RadioGroup<bool>(
+                groupValue: _startFresh,
+                onChanged: (value) {
+                  if (value != null) setState(() => _startFresh = value);
+                },
+                child: ListView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  children: _review ? _buildReview() : _buildChoice(),
+                ),
               ),
             ),
           ),
@@ -100,27 +106,25 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
                   children: [
                     FilledButton(
                       key: ValueKey(_review ? 'reuse-apply' : 'reuse-continue'),
-                      onPressed:
-                          _applying ? null : (_review ? _apply : _continue),
+                      onPressed: _applying
+                          ? null
+                          : (_review ? _apply : _continue),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 16,
                         ),
                       ),
-                      child:
-                          _applying
-                              ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : Text(
-                                _review ? 'Use this list' : 'Continue',
-                                textAlign: TextAlign.center,
-                              ),
+                      child: _applying
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              _review ? 'Use this list' : 'Continue',
+                              textAlign: TextAlign.center,
+                            ),
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton(
@@ -165,45 +169,38 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
             'Keep the products, quantities and budget from your saved list.',
         value: false,
         groupValue: _startFresh,
-        onChanged: (value) => setState(() => _startFresh = value),
       ),
       const SizedBox(height: 12),
       _ReuseChoice(
         controlKey: const ValueKey('reuse-fresh'),
         title: 'Start fresh',
-        description:
-            'Keep the same products and stored prices. Reset quantities to zero and clear the budget for this shop.',
+        description: 'Keep the same products and stored prices. Reset quantities to zero and clear the budget for this shop.',
         value: true,
         groupValue: _startFresh,
-        onChanged: (value) => setState(() => _startFresh = value),
       ),
       const SizedBox(height: 18),
       const _Notice(
         icon: Icons.bookmark_border_rounded,
-        message:
-            'Your saved list stays unchanged. You can review everything before replacing your current basket.',
+        message: 'Your saved list stays unchanged. You can review everything before replacing your current basket.',
       ),
     ];
   }
 
   List<Widget> _buildReview() {
-    final total =
-        _startFresh
-            ? 0
-            : widget.list.items.fold(0, (sum, item) => sum + item.totalPence);
+    final total = _startFresh
+        ? 0
+        : widget.list.items.fold(0, (sum, item) => sum + item.totalPence);
     return [
       _ListHeading(list: widget.list),
       const SizedBox(height: 18),
       const _Notice(
         icon: Icons.info_outline_rounded,
-        message:
-            'These are your last entered prices, not live quotes. Check prices as you shop.',
+        message: 'These are your last entered prices, not live quotes. Check prices as you shop.',
       ),
       const SizedBox(height: 12),
       _Notice(
         icon: Icons.swap_horiz_rounded,
-        message:
-            'Using this list replaces your current basket and its budget. Your saved list stays unchanged.',
+        message: 'Using this list replaces your current basket and its budget. Your saved list stays unchanged.',
         warning: true,
       ),
       const SizedBox(height: 24),
@@ -261,10 +258,9 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
             const SizedBox(height: 12),
             _ReviewAmount(
               label: 'Shopping budget',
-              value:
-                  _startFresh || widget.list.budgetPence == null
-                      ? 'Not set'
-                      : Money.format(widget.list.budgetPence!),
+              value: _startFresh || widget.list.budgetPence == null
+                  ? 'Not set'
+                  : Money.format(widget.list.budgetPence!),
             ),
           ],
         ),
@@ -340,7 +336,6 @@ class _ReuseChoice extends StatelessWidget {
     required this.description,
     required this.value,
     required this.groupValue,
-    required this.onChanged,
   });
 
   final Key controlKey;
@@ -348,7 +343,6 @@ class _ReuseChoice extends StatelessWidget {
   final String description;
   final bool value;
   final bool groupValue;
-  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -366,10 +360,6 @@ class _ReuseChoice extends StatelessWidget {
       child: RadioListTile<bool>(
         key: controlKey,
         value: value,
-        groupValue: groupValue,
-        onChanged: (value) {
-          if (value != null) onChanged(value);
-        },
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 12,

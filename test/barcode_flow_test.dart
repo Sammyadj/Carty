@@ -76,14 +76,13 @@ Future<CartStore> _open(
   Widget app = MyApp(
     store: store,
     productRepository: repository,
-    cameraBuilder:
-        (_, onBarcode) => Center(
-          child: FilledButton(
-            key: const Key('test-camera-capture'),
-            onPressed: () => onBarcode(_barcode),
-            child: const Text('Capture test barcode'),
-          ),
-        ),
+    cameraBuilder: (_, onBarcode) => Center(
+      child: FilledButton(
+        key: const Key('test-camera-capture'),
+        onPressed: () => onBarcode(_barcode),
+        child: const Text('Capture test barcode'),
+      ),
+    ),
   );
   if (textScale != null) {
     app = MediaQuery(

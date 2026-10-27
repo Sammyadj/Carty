@@ -14,7 +14,7 @@ import '../models/saved_shopping_list.dart';
 /// Writes are queued in edit order so an earlier slow save cannot overwrite
 /// a more recent basket when someone taps quickly.
 class CartStore extends ChangeNotifier {
-  CartStore({required CartStorage storage}) : _storage = storage;
+  CartStore({required this._storage});
 
   final CartStorage _storage;
   List<CartItem> _items = const [];
@@ -90,8 +90,9 @@ class CartStore extends ChangeNotifier {
     final savedLists = <SavedShoppingList>[];
     final listIds = <String>{};
     for (final raw in rawSavedLists) {
-      final list =
-          raw is Map<String, dynamic> ? SavedShoppingList.fromJson(raw) : null;
+      final list = raw is Map<String, dynamic>
+          ? SavedShoppingList.fromJson(raw)
+          : null;
       if (list == null || !listIds.add(list.id)) {
         throw const FormatException('Invalid shopping list');
       }
@@ -192,15 +193,14 @@ class CartStore extends ChangeNotifier {
       }
       _items = List.unmodifiable(
         _items.map(
-          (item) =>
-              item.id == existing.id
-                  ? item.copyWith(
-                    name: trimmedName,
-                    unitPricePence: unitPricePence,
-                    quantity: mergedQuantity,
-                    product: confirmedProduct,
-                  )
-                  : item,
+          (item) => item.id == existing.id
+              ? item.copyWith(
+                  name: trimmedName,
+                  unitPricePence: unitPricePence,
+                  quantity: mergedQuantity,
+                  product: confirmedProduct,
+                )
+              : item,
         ),
       );
     }
@@ -226,10 +226,9 @@ class CartStore extends ChangeNotifier {
     if (item == null || item.quantity == CartItem.maxQuantity) return;
     _items = List.unmodifiable(
       _items.map(
-        (current) =>
-            current.id == itemId
-                ? current.copyWith(quantity: current.quantity + 1)
-                : current,
+        (current) => current.id == itemId
+            ? current.copyWith(quantity: current.quantity + 1)
+            : current,
       ),
     );
     await _commit();
@@ -242,10 +241,9 @@ class CartStore extends ChangeNotifier {
     if (item == null || item.quantity == 0) return;
     _items = List.unmodifiable(
       _items.map(
-        (current) =>
-            current.id == itemId
-                ? current.copyWith(quantity: current.quantity - 1)
-                : current,
+        (current) => current.id == itemId
+            ? current.copyWith(quantity: current.quantity - 1)
+            : current,
       ),
     );
     await _commit();

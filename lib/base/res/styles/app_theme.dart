@@ -4,19 +4,18 @@ import 'app_styles.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
-    final colors = ColorScheme.fromSeed(
-      seedColor: AppColors.primaryColor,
-    ).copyWith(
-      primary: AppColors.primaryColor,
-      onPrimary: Colors.white,
-      primaryContainer: AppColors.mint,
-      onPrimaryContainer: AppColors.primaryDark,
-      surface: Colors.white,
-      onSurface: AppColors.textPrimary,
-      onSurfaceVariant: AppColors.textSecondary,
-      outlineVariant: AppColors.borderColor,
-      error: AppColors.error,
-    );
+    final colors = ColorScheme.fromSeed(seedColor: AppColors.primaryColor)
+        .copyWith(
+          primary: AppColors.primaryColor,
+          onPrimary: Colors.white,
+          primaryContainer: AppColors.mint,
+          onPrimaryContainer: AppColors.primaryDark,
+          surface: Colors.white,
+          onSurface: AppColors.textPrimary,
+          onSurfaceVariant: AppColors.textSecondary,
+          outlineVariant: AppColors.borderColor,
+          error: AppColors.error,
+        );
     final base = ThemeData(colorScheme: colors, useMaterial3: true);
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.backgroundColor,
@@ -102,22 +101,19 @@ class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             fontSize: 12,
-            fontWeight:
-                states.contains(WidgetState.selected)
-                    ? FontWeight.w700
-                    : FontWeight.w500,
-            color:
-                states.contains(WidgetState.selected)
-                    ? AppColors.primaryDark
-                    : AppColors.textSecondary,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.primaryDark
+                : AppColors.textSecondary,
           ),
         ),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            color:
-                states.contains(WidgetState.selected)
-                    ? AppColors.primaryColor
-                    : AppColors.textSecondary,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.primaryColor
+                : AppColors.textSecondary,
           ),
         ),
       ),

@@ -47,144 +47,136 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: store,
-    builder:
-        (context, _) => Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 76,
-            titleSpacing: 20,
-            title: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor,
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: const Icon(
-                    Icons.shopping_cart_rounded,
-                    color: Colors.white,
-                    size: 23,
-                  ),
+    builder: (context, _) => Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 76,
+        titleSpacing: 20,
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primaryColor,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: const Icon(
+                Icons.shopping_cart_rounded,
+                color: Colors.white,
+                size: 23,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Flexible(
+              child: Text(
+                'Carty',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.1,
+                  color: AppColors.primaryDark,
                 ),
-                const SizedBox(width: 12),
-                const Flexible(
-                  child: Text(
-                    'Carty',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1.1,
-                      color: AppColors.primaryDark,
-                    ),
-                  ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'About Carty',
+            onPressed: () => showAboutDialog(
+              context: context,
+              applicationName: 'Carty',
+              applicationVersion: '1.0.0',
+              applicationIcon: const Icon(
+                Icons.shopping_cart_rounded,
+                color: AppColors.primaryColor,
+                size: 36,
+              ),
+              children: [
+                const Text(
+                  'Your smart shopping companion. Plan a basket, stay within budget and reuse your regular lists. Your shopping data is saved on this device.',
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Barcode product data: Open Food Facts (openfoodfacts.org), under the Open Database License (opendatacommons.org/licenses/odbl/1-0/). Camera images stay on your device. Prices are entered by you.',
                 ),
               ],
             ),
-            actions: [
-              IconButton(
-                tooltip: 'About Carty',
-                onPressed:
-                    () => showAboutDialog(
-                      context: context,
-                      applicationName: 'Carty',
-                      applicationVersion: '1.0.0',
-                      applicationIcon: const Icon(
-                        Icons.shopping_cart_rounded,
-                        color: AppColors.primaryColor,
-                        size: 36,
-                      ),
-                      children: [
-                        const Text(
-                          'Your smart shopping companion. Plan a basket, stay within budget and reuse your regular lists. Your shopping data is saved on this device.',
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Barcode product data: Open Food Facts (openfoodfacts.org), under the Open Database License (opendatacommons.org/licenses/odbl/1-0/). Camera images stay on your device. Prices are entered by you.',
-                        ),
-                      ],
+            icon: const Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      bottomNavigationBar: store.isLoading
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_tab == 0)
+                  CartStatusBar(store: store, includeSafeArea: false),
+                NavigationBar(
+                  selectedIndex: _tab,
+                  onDestinationSelected: _selectTab,
+                  destinations: const [
+                    NavigationDestination(
+                      key: Key('nav-home'),
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: 'Home',
                     ),
-                icon: const Icon(
-                  Icons.info_outline_rounded,
-                  color: AppColors.textSecondary,
+                    NavigationDestination(
+                      key: Key('nav-lists'),
+                      icon: Icon(Icons.shopping_bag_outlined),
+                      selectedIcon: Icon(Icons.shopping_bag_rounded),
+                      label: 'Lists',
+                    ),
+                    NavigationDestination(
+                      key: Key('nav-tips'),
+                      icon: Icon(Icons.lightbulb_outline_rounded),
+                      selectedIcon: Icon(Icons.lightbulb_rounded),
+                      label: 'Tips',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+      body: store.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
+              bottom: false,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 760),
+                  child: switch (_tab) {
+                    1 => SavedListsView(
+                      store: store,
+                      onUseList: _reuseList,
+                      onCreateList: () =>
+                          showSaveList(context: context, store: store),
+                      onDeleteList: (list) => confirmDeleteList(
+                        context: context,
+                        store: store,
+                        list: list,
+                      ),
+                    ),
+                    2 => _TipsPage(store: store),
+                    _ => _Dashboard(
+                      store: store,
+                      onOpenCart: _openCart,
+                      onOpenLists: () => _selectTab(1),
+                      onOpenTips: () => _selectTab(2),
+                      onReuseList: _reuseList,
+                    ),
+                  },
                 ),
               ),
-              const SizedBox(width: 8),
-            ],
-          ),
-          bottomNavigationBar:
-              store.isLoading
-                  ? null
-                  : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_tab == 0)
-                        CartStatusBar(store: store, includeSafeArea: false),
-                      NavigationBar(
-                        selectedIndex: _tab,
-                        onDestinationSelected: _selectTab,
-                        destinations: const [
-                          NavigationDestination(
-                            key: Key('nav-home'),
-                            icon: Icon(Icons.home_outlined),
-                            selectedIcon: Icon(Icons.home_rounded),
-                            label: 'Home',
-                          ),
-                          NavigationDestination(
-                            key: Key('nav-lists'),
-                            icon: Icon(Icons.shopping_bag_outlined),
-                            selectedIcon: Icon(Icons.shopping_bag_rounded),
-                            label: 'Lists',
-                          ),
-                          NavigationDestination(
-                            key: Key('nav-tips'),
-                            icon: Icon(Icons.lightbulb_outline_rounded),
-                            selectedIcon: Icon(Icons.lightbulb_rounded),
-                            label: 'Tips',
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-          body:
-              store.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SafeArea(
-                    bottom: false,
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 760),
-                        child: switch (_tab) {
-                          1 => SavedListsView(
-                            store: store,
-                            onUseList: _reuseList,
-                            onCreateList:
-                                () => showSaveList(
-                                  context: context,
-                                  store: store,
-                                ),
-                            onDeleteList:
-                                (list) => confirmDeleteList(
-                                  context: context,
-                                  store: store,
-                                  list: list,
-                                ),
-                          ),
-                          2 => _TipsPage(store: store),
-                          _ => _Dashboard(
-                            store: store,
-                            onOpenCart: _openCart,
-                            onOpenLists: () => _selectTab(1),
-                            onOpenTips: () => _selectTab(2),
-                            onReuseList: _reuseList,
-                          ),
-                        },
-                      ),
-                    ),
-                  ),
-        ),
+            ),
+    ),
   );
 }
 
@@ -243,9 +235,8 @@ class _Dashboard extends StatelessWidget {
           child: CartItemTile(
             key: ValueKey(item.id),
             item: item,
-            onEdit:
-                () =>
-                    showItemEditor(context: context, store: store, item: item),
+            onEdit: () =>
+                showItemEditor(context: context, store: store, item: item),
             onDelete: () => store.removeItem(item.id),
             onIncrement: () => store.incrementQuantity(item.id),
             onDecrement: () => store.decrementQuantity(item.id),
@@ -264,8 +255,8 @@ class _Dashboard extends StatelessWidget {
             ),
             TextButton.icon(
               key: const Key('clear-cart'),
-              onPressed:
-                  () => confirmAndClearCart(context: context, store: store),
+              onPressed: () =>
+                  confirmAndClearCart(context: context, store: store),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.textSecondary,
               ),
@@ -312,12 +303,8 @@ class _Dashboard extends StatelessWidget {
             list: list,
             compact: true,
             onUse: () => onReuseList(list),
-            onDelete:
-                () => confirmDeleteList(
-                  context: context,
-                  store: store,
-                  list: list,
-                ),
+            onDelete: () =>
+                confirmDeleteList(context: context, store: store, list: list),
           ),
         ),
     ],

@@ -77,10 +77,11 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
       _saveError = null;
     });
     final name = _name.text.trim();
-    final product = (_matchedProduct ??
-            widget.store.findByBarcode(widget.barcode)?.product ??
-            ProductDetails(barcode: widget.barcode, name: name))
-        .copyWith(name: name);
+    final product =
+        (_matchedProduct ??
+                widget.store.findByBarcode(widget.barcode)?.product ??
+                ProductDetails(barcode: widget.barcode, name: name))
+            .copyWith(name: name);
     try {
       await widget.store.addScannedItem(
         product: product,
@@ -163,11 +164,10 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
                         prefixText: '£ ',
                         hintText: '0.00',
                       ),
-                      validator:
-                          (value) =>
-                              Money.tryParsePence(value ?? '') == null
-                                  ? 'Enter a price greater than £0 with up to 2 decimals'
-                                  : null,
+                      validator: (value) =>
+                          Money.tryParsePence(value ?? '') == null
+                          ? 'Enter a price greater than £0 with up to 2 decimals'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -245,30 +245,28 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
 
   Widget _matchCard(ProductDetails? product) {
     final status = _result?.status;
-    final title =
-        _loading
-            ? 'Looking up your product…'
-            : _result?.fromCache == true
-            ? 'Saved product details'
-            : product != null
-            ? status == ProductLookupStatus.found
-                ? 'Check your product'
-                : 'Using saved product details'
-            : status == ProductLookupStatus.notFound
-            ? 'No product match yet'
-            : status == ProductLookupStatus.rateLimited
-            ? 'Lookup is busy'
-            : 'Product lookup unavailable';
-    final description =
-        product != null
-            ? [product.brand, product.packSize].whereType<String>().join(' · ')
-            : _loading
-            ? 'You can enter the details below while we look.'
-            : status == ProductLookupStatus.notFound
-            ? 'This catalog mainly covers food. Enter the details below to keep shopping.'
-            : status == ProductLookupStatus.rateLimited
-            ? 'Wait a moment before trying again, or enter the details below.'
-            : 'Check your connection, or enter the details below. Your basket works offline.';
+    final title = _loading
+        ? 'Looking up your product…'
+        : _result?.fromCache == true
+        ? 'Saved product details'
+        : product != null
+        ? status == ProductLookupStatus.found
+              ? 'Check your product'
+              : 'Using saved product details'
+        : status == ProductLookupStatus.notFound
+        ? 'No product match yet'
+        : status == ProductLookupStatus.rateLimited
+        ? 'Lookup is busy'
+        : 'Product lookup unavailable';
+    final description = product != null
+        ? [product.brand, product.packSize].whereType<String>().join(' · ')
+        : _loading
+        ? 'You can enter the details below while we look.'
+        : status == ProductLookupStatus.notFound
+        ? 'This catalog mainly covers food. Enter the details below to keep shopping.'
+        : status == ProductLookupStatus.rateLimited
+        ? 'Wait a moment before trying again, or enter the details below.'
+        : 'Check your connection, or enter the details below. Your basket works offline.';
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -285,9 +283,8 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.primaryDark,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(color: AppColors.primaryDark),
                 ),
               ),
               if (_loading)

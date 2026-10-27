@@ -100,12 +100,11 @@ void main() {
   });
 
   test('handles a missing product and server rate limiting', () async {
-    for (final entry
-        in {
-          404: ProductLookupStatus.notFound,
-          429: ProductLookupStatus.rateLimited,
-          503: ProductLookupStatus.unavailable,
-        }.entries) {
+    for (final entry in {
+      404: ProductLookupStatus.notFound,
+      429: ProductLookupStatus.rateLimited,
+      503: ProductLookupStatus.unavailable,
+    }.entries) {
       final repository = _repository(
         (_) async => http.Response('{}', entry.key),
       );

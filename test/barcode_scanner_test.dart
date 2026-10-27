@@ -19,32 +19,29 @@ class _ScannerHarness {
         theme: AppTheme.lightTheme,
         navigatorKey: navigator,
         home: Builder(
-          builder:
-              (context) => Scaffold(
-                body: TextButton(
-                  onPressed: () async {
-                    final barcode = await Navigator.of(context).push<String>(
-                      MaterialPageRoute(
-                        builder:
-                            (_) => BarcodeScannerScreen(
-                              cameraBuilder:
-                                  realCamera
-                                      ? null
-                                      : (context, onBarcode) {
-                                        detect = onBarcode;
-                                        return const ColoredBox(
-                                          key: ValueKey('fake-camera'),
-                                          color: Colors.black,
-                                        );
-                                      },
-                            ),
-                      ),
-                    );
-                    result.complete(barcode);
-                  },
-                  child: const Text('Open scanner'),
-                ),
-              ),
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async {
+                final barcode = await Navigator.of(context).push<String>(
+                  MaterialPageRoute(
+                    builder: (_) => BarcodeScannerScreen(
+                      cameraBuilder: realCamera
+                          ? null
+                          : (context, onBarcode) {
+                              detect = onBarcode;
+                              return const ColoredBox(
+                                key: ValueKey('fake-camera'),
+                                color: Colors.black,
+                              );
+                            },
+                    ),
+                  ),
+                );
+                result.complete(barcode);
+              },
+              child: const Text('Open scanner'),
+            ),
+          ),
         ),
       ),
     );

@@ -24,24 +24,21 @@ class ShoppingTips extends StatelessWidget {
     final alert = store.isOverBudget || ratio >= 0.8;
     final tips = <_Tip>[
       _Tip(
-        title:
-            budget == null
-                ? 'Every good shop starts with a plan'
-                : store.isOverBudget
-                ? 'Time for a quick budget check'
-                : alert
-                ? 'You’re getting close to your budget'
-                : 'You’re on track',
-        body:
-            budget == null
-                ? 'Set a budget, then add shelf prices as you shop. Your running total will do the rest.'
-                : store.isOverBudget
-                ? 'Your basket is ${Money.format(remaining!.abs())} over budget. Review your quantities before checkout.'
-                : 'You’ve used ${(ratio * 100).round()}% of your budget, with ${Money.format(remaining!)} left to spend.',
-        icon:
-            alert
-                ? Icons.notifications_active_outlined
-                : Icons.lightbulb_outline_rounded,
+        title: budget == null
+            ? 'Every good shop starts with a plan'
+            : store.isOverBudget
+            ? 'Time for a quick budget check'
+            : alert
+            ? 'You’re getting close to your budget'
+            : 'You’re on track',
+        body: budget == null
+            ? 'Set a budget, then add shelf prices as you shop. Your running total will do the rest.'
+            : store.isOverBudget
+            ? 'Your basket is ${Money.format(remaining!.abs())} over budget. Review your quantities before checkout.'
+            : 'You’ve used ${(ratio * 100).round()}% of your budget, with ${Money.format(remaining!)} left to spend.',
+        icon: alert
+            ? Icons.notifications_active_outlined
+            : Icons.lightbulb_outline_rounded,
         color: alert ? AppColors.warning : AppColors.primaryColor,
         background: alert ? AppColors.warningLight : AppColors.mint,
       ),
@@ -56,26 +53,23 @@ class ShoppingTips extends StatelessWidget {
         ),
       const _Tip(
         title: 'Compare the price, not just the pack',
-        body:
-            'Check the shelf price per kg, litre or item. A bigger pack is not always better value.',
+        body: 'Check the shelf price per kg, litre or item. A bigger pack is not always better value.',
         icon: Icons.sell_outlined,
         color: Color(0xFF245D8A),
         background: Color(0xFFECF4FC),
       ),
       _Tip(
         title: 'Make the next shop easier',
-        body:
-            store.savedLists.isEmpty
-                ? 'Save your basket as a shopping list. Next time, keep your usual quantities or start fresh with the same products.'
-                : 'Your saved lists keep the original products and quantities. Reuse one to plan your next shop without rebuilding it.',
+        body: store.savedLists.isEmpty
+            ? 'Save your basket as a shopping list. Next time, keep your usual quantities or start fresh with the same products.'
+            : 'Your saved lists keep the original products and quantities. Reuse one to plan your next shop without rebuilding it.',
         icon: Icons.bookmarks_outlined,
         color: const Color(0xFF7155A5),
         background: const Color(0xFFF1EDFA),
       ),
       const _Tip(
         title: 'Give saved prices a fresh look',
-        body:
-            'Saved lists use your last entered prices. Check the shelf labels and edit any changes so your budget stays accurate.',
+        body: 'Saved lists use your last entered prices. Check the shelf labels and edit any changes so your budget stays accurate.',
         icon: Icons.price_change_outlined,
         color: AppColors.primaryColor,
         background: AppColors.mint,
@@ -152,17 +146,14 @@ class _TipCard extends StatelessWidget {
                   ],
                   Text(
                     tip.title,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleSmall?.copyWith(color: tip.color),
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.copyWith(color: tip.color),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     tip.body,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      height: 1.5,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: AppColors.textPrimary, height: 1.5),
                   ),
                 ],
               ),

@@ -28,9 +28,8 @@ class StorageNotice extends StatelessWidget {
                 ),
                 if (store.needsStorageReset)
                   TextButton(
-                    onPressed:
-                        () =>
-                            confirmStorageReset(context: context, store: store),
+                    onPressed: () =>
+                        confirmStorageReset(context: context, store: store),
                     child: const Text('Reset saved data'),
                   ),
               ],

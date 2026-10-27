@@ -27,10 +27,9 @@ class _CartItemEditorState extends State<CartItemEditor> {
   final _formKey = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.item?.name ?? '');
   late final _price = TextEditingController(
-    text:
-        widget.item == null
-            ? ''
-            : Money.format(widget.item!.unitPricePence).replaceAll('£', ''),
+    text: widget.item == null
+        ? ''
+        : Money.format(widget.item!.unitPricePence).replaceAll('£', ''),
   );
   late final _quantity = TextEditingController(
     text: (widget.item?.quantity ?? 1).toString(),

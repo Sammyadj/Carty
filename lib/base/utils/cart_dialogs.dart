@@ -52,24 +52,23 @@ Future<void> confirmAndClearCart({
 }) async {
   final clear = await showDialog<bool>(
     context: context,
-    builder:
-        (dialogContext) => AlertDialog(
-          title: const Text('Clear cart?'),
-          content: const Text(
-            'Remove all products from this basket? Your budget and saved shopping lists will stay.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              key: const Key('clear-confirm'),
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Clear cart'),
-            ),
-          ],
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Clear cart?'),
+      content: const Text(
+        'Remove all products from this basket? Your budget and saved shopping lists will stay.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
         ),
+        FilledButton(
+          key: const Key('clear-confirm'),
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Clear cart'),
+        ),
+      ],
+    ),
   );
   if (clear != true || !context.mounted) return;
   await store.clearCart();
@@ -108,23 +107,20 @@ Future<void> confirmDeleteList({
 }) async {
   final remove = await showDialog<bool>(
     context: context,
-    builder:
-        (dialogContext) => AlertDialog(
-          title: const Text('Delete saved list?'),
-          content: Text(
-            'Delete “${list.name}”? Your current basket will stay.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Delete list'),
-            ),
-          ],
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete saved list?'),
+      content: Text('Delete “${list.name}”? Your current basket will stay.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
         ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Delete list'),
+        ),
+      ],
+    ),
   );
   if (remove != true || !context.mounted) return;
   await store.removeSavedList(list.id);
@@ -136,23 +132,22 @@ Future<void> confirmStorageReset({
 }) async {
   final reset = await showDialog<bool>(
     context: context,
-    builder:
-        (dialogContext) => AlertDialog(
-          title: const Text('Replace unreadable saved data?'),
-          content: const Text(
-            'Carty could not read the saved basket. This replaces the unreadable local data with the basket and lists currently shown in Carty. The old saved data cannot be recovered after replacement.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Reset local data'),
-            ),
-          ],
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Replace unreadable saved data?'),
+      content: const Text(
+        'Carty could not read the saved basket. This replaces the unreadable local data with the basket and lists currently shown in Carty. The old saved data cannot be recovered after replacement.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
         ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Reset local data'),
+        ),
+      ],
+    ),
   );
   if (reset != true || !context.mounted) return;
   await store.resetUnreadableStorage();
@@ -174,10 +169,9 @@ class _BudgetDialog extends StatefulWidget {
 class _BudgetDialogState extends State<_BudgetDialog> {
   final _form = GlobalKey<FormState>();
   late final _amount = TextEditingController(
-    text:
-        widget.budgetPence == null
-            ? ''
-            : Money.format(widget.budgetPence!).replaceAll('£', ''),
+    text: widget.budgetPence == null
+        ? ''
+        : Money.format(widget.budgetPence!).replaceAll('£', ''),
   );
 
   @override

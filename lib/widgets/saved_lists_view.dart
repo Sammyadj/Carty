@@ -76,10 +76,9 @@ class SavedListsView extends StatelessWidget {
                       vertical: 15,
                     ),
                     side: BorderSide(
-                      color:
-                          store.items.isEmpty
-                              ? AppColors.borderColor
-                              : AppColors.primaryColor,
+                      color: store.items.isEmpty
+                          ? AppColors.borderColor
+                          : AppColors.primaryColor,
                     ),
                   ),
                   icon: const Icon(Icons.add_rounded),

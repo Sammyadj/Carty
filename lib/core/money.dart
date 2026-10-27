@@ -11,9 +11,8 @@ class Money {
     var value = input.trim();
     if (value.startsWith('£')) value = value.substring(1).trim();
     if (value.length > 24) return null;
-    final match = RegExp(
-      r'^(?:(\d+)(?:[.,](\d{1,2}))?|[.,](\d{1,2}))$',
-    ).firstMatch(value);
+    final match = RegExp(r'^(?:(\d+)(?:[.,](\d{1,2}))?|[.,](\d{1,2}))$')
+        .firstMatch(value);
     if (match == null) return null;
 
     final pounds = int.tryParse(match.group(1) ?? '0');

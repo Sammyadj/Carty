@@ -22,12 +22,11 @@ class SummaryCard extends StatelessWidget {
     final over = remaining != null && remaining < 0;
     final ratio = budgetPence == null ? 0.0 : totalPence / budgetPence!;
     final near = !over && ratio >= 0.8;
-    final statusColor =
-        over
-            ? AppColors.error
-            : near
-            ? AppColors.warning
-            : AppColors.primaryColor;
+    final statusColor = over
+        ? AppColors.error
+        : near
+        ? AppColors.warning
+        : AppColors.primaryColor;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -97,7 +96,6 @@ class SummaryCard extends StatelessWidget {
                 color: statusColor,
                 backgroundColor: AppColors.borderColor,
                 semanticsLabel: 'Budget used',
-                semanticsValue: '${(ratio * 100).round()} percent',
               ),
             ),
             const SizedBox(height: 16),
@@ -127,12 +125,11 @@ class SummaryCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color:
-                    over
-                        ? const Color(0xFFFBECEC)
-                        : near
-                        ? AppColors.warningLight
-                        : AppColors.mint,
+                color: over
+                    ? const Color(0xFFFBECEC)
+                    : near
+                    ? AppColors.warningLight
+                    : AppColors.mint,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -189,8 +186,9 @@ class _BudgetMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment:
-        alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+    crossAxisAlignment: alignEnd
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.start,
     children: [
       Text(
         label,

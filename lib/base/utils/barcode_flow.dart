@@ -13,20 +13,19 @@ Future<void> scanAndAddProduct({
   final barcode = await Navigator.push<String>(
     context,
     MaterialPageRoute<String>(
-      builder:
-          (_) => BarcodeScannerScreen(cameraBuilder: catalog.cameraBuilder),
+      builder: (_) =>
+          BarcodeScannerScreen(cameraBuilder: catalog.cameraBuilder),
     ),
   );
   if (barcode == null || !context.mounted) return;
   final added = await Navigator.push<bool>(
     context,
     MaterialPageRoute<bool>(
-      builder:
-          (_) => ScannedProductScreen(
-            barcode: barcode,
-            store: store,
-            repository: catalog.repository,
-          ),
+      builder: (_) => ScannedProductScreen(
+        barcode: barcode,
+        store: store,
+        repository: catalog.repository,
+      ),
     ),
   );
   if (added != true || !context.mounted) return;

@@ -33,16 +33,16 @@ class _CartFullScreenState extends State<CartFullScreen> {
     animation: store,
     builder: (context, _) {
       final query = _search.text.trim().toLowerCase();
-      final items =
-          store.items
-              .where(
-                (item) =>
-                    item.name.toLowerCase().contains(query) &&
-                    (!_pendingOnly || item.quantity == 0),
-              )
-              .toList();
-      final pendingCount =
-          store.items.where((item) => item.quantity == 0).length;
+      final items = store.items
+          .where(
+            (item) =>
+                item.name.toLowerCase().contains(query) &&
+                (!_pendingOnly || item.quantity == 0),
+          )
+          .toList();
+      final pendingCount = store.items
+          .where((item) => item.quantity == 0)
+          .length;
       return Scaffold(
         appBar: AppBar(title: const Text('Your basket')),
         bottomNavigationBar: CartStatusBar(store: store),
@@ -63,11 +63,10 @@ class _CartFullScreenState extends State<CartFullScreen> {
                           SummaryCard(
                             totalPence: store.totalPence,
                             budgetPence: store.budgetPence,
-                            onEditBudget:
-                                () => showBudgetEditor(
-                                  context: context,
-                                  store: store,
-                                ),
+                            onEditBudget: () => showBudgetEditor(
+                              context: context,
+                              store: store,
+                            ),
                           ),
                           const SizedBox(height: 24),
                           Text(
@@ -89,17 +88,16 @@ class _CartFullScreenState extends State<CartFullScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Search your basket',
                                 prefixIcon: const Icon(Icons.search_rounded),
-                                suffixIcon:
-                                    query.isEmpty
-                                        ? null
-                                        : IconButton(
-                                          tooltip: 'Clear search',
-                                          onPressed: () {
-                                            _search.clear();
-                                            setState(() {});
-                                          },
-                                          icon: const Icon(Icons.close_rounded),
-                                        ),
+                                suffixIcon: query.isEmpty
+                                    ? null
+                                    : IconButton(
+                                        tooltip: 'Clear search',
+                                        onPressed: () {
+                                          _search.clear();
+                                          setState(() {});
+                                        },
+                                        icon: const Icon(Icons.close_rounded),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -110,18 +108,16 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 ChoiceChip(
                                   label: Text('All (${store.items.length})'),
                                   selected: !_pendingOnly,
-                                  onSelected:
-                                      (_) =>
-                                          setState(() => _pendingOnly = false),
+                                  onSelected: (_) =>
+                                      setState(() => _pendingOnly = false),
                                   showCheckmark: false,
                                 ),
                                 ChoiceChip(
                                   key: const Key('cart-filter-pending'),
                                   label: Text('To pick ($pendingCount)'),
                                   selected: _pendingOnly,
-                                  onSelected:
-                                      (_) =>
-                                          setState(() => _pendingOnly = true),
+                                  onSelected: (_) =>
+                                      setState(() => _pendingOnly = true),
                                   showCheckmark: false,
                                 ),
                               ],
@@ -169,12 +165,11 @@ class _CartFullScreenState extends State<CartFullScreen> {
                           child: CartItemTile(
                             key: ValueKey(item.id),
                             item: item,
-                            onEdit:
-                                () => showItemEditor(
-                                  context: context,
-                                  store: store,
-                                  item: item,
-                                ),
+                            onEdit: () => showItemEditor(
+                              context: context,
+                              store: store,
+                              item: item,
+                            ),
                             onDelete: () => store.removeItem(item.id),
                             onIncrement: () => store.incrementQuantity(item.id),
                             onDecrement: () => store.decrementQuantity(item.id),
@@ -192,11 +187,8 @@ class _CartFullScreenState extends State<CartFullScreen> {
                         children: [
                           if (store.items.isNotEmpty) ...[
                             OutlinedButton.icon(
-                              onPressed:
-                                  () => showSaveList(
-                                    context: context,
-                                    store: store,
-                                  ),
+                              onPressed: () =>
+                                  showSaveList(context: context, store: store),
                               icon: const Icon(
                                 Icons.bookmark_add_outlined,
                                 size: 18,
@@ -205,11 +197,10 @@ class _CartFullScreenState extends State<CartFullScreen> {
                             ),
                             TextButton.icon(
                               key: const Key('clear-cart'),
-                              onPressed:
-                                  () => confirmAndClearCart(
-                                    context: context,
-                                    store: store,
-                                  ),
+                              onPressed: () => confirmAndClearCart(
+                                context: context,
+                                store: store,
+                              ),
                               style: TextButton.styleFrom(
                                 foregroundColor: AppColors.textSecondary,
                               ),

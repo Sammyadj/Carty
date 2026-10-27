@@ -312,20 +312,19 @@ void main() {
         'unitPricePence': 250,
         'quantity': 2,
       };
-      final storage =
-          InMemoryCartStorage()
-            ..value = jsonEncode({
-              'version': 1,
+      final storage = InMemoryCartStorage()
+        ..value = jsonEncode({
+          'version': 1,
+          'items': [oldItem],
+          'savedLists': [
+            {
+              'id': 'old-list',
+              'name': 'Weekly',
               'items': [oldItem],
-              'savedLists': [
-                {
-                  'id': 'old-list',
-                  'name': 'Weekly',
-                  'items': [oldItem],
-                  'savedAt': '2026-01-01T00:00:00.000Z',
-                },
-              ],
-            });
+              'savedAt': '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        });
       final store = CartStore(storage: storage);
       addTearDown(store.dispose);
 

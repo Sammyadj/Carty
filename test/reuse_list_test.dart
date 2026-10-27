@@ -53,11 +53,10 @@ Future<void> _openReuse(
               onPressed: () async {
                 final result = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
-                    builder:
-                        (_) => ReuseListScreen(
-                          store: store,
-                          list: store.savedLists.single,
-                        ),
+                    builder: (_) => ReuseListScreen(
+                      store: store,
+                      list: store.savedLists.single,
+                    ),
                   ),
                 );
                 onResult?.call(result);
@@ -83,7 +82,10 @@ void main() {
       find.byKey(const ValueKey('reuse-duplicate')),
     );
     expect(duplicate.value, isFalse);
-    expect(duplicate.groupValue, isFalse);
+    expect(
+      tester.widget<RadioGroup<bool>>(find.byType(RadioGroup<bool>)).groupValue,
+      isFalse,
+    );
     expect(find.byKey(const ValueKey('reuse-apply')), findsNothing);
 
     await _tap(tester, 'reuse-continue');
@@ -113,7 +115,13 @@ void main() {
       final fresh = tester.widget<RadioListTile<bool>>(
         find.byKey(const ValueKey('reuse-fresh')),
       );
-      expect(fresh.groupValue, isTrue);
+      expect(fresh.value, isTrue);
+      expect(
+        tester
+            .widget<RadioGroup<bool>>(find.byType(RadioGroup<bool>))
+            .groupValue,
+        isTrue,
+      );
 
       await _tap(tester, 'reuse-cancel');
       expect(result, isFalse);

@@ -47,20 +47,17 @@ class CartStatusBar extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _StatusMetric(
-                          label:
-                              remaining == null
-                                  ? 'BUDGET'
-                                  : remaining < 0
-                                  ? 'OVER BUDGET'
-                                  : 'LEFT TO SPEND',
-                          value:
-                              remaining == null
-                                  ? 'Not set'
-                                  : Money.format(remaining.abs()),
-                          color:
-                              store.isOverBudget
-                                  ? AppColors.error
-                                  : AppColors.primaryColor,
+                          label: remaining == null
+                              ? 'BUDGET'
+                              : remaining < 0
+                              ? 'OVER BUDGET'
+                              : 'LEFT TO SPEND',
+                          value: remaining == null
+                              ? 'Not set'
+                              : Money.format(remaining.abs()),
+                          color: store.isOverBudget
+                              ? AppColors.error
+                              : AppColors.primaryColor,
                         ),
                       ),
                     ],
@@ -71,11 +68,8 @@ class CartStatusBar extends StatelessWidget {
                       Expanded(
                         child: FilledButton.icon(
                           key: const Key('scan-product'),
-                          onPressed:
-                              () => scanAndAddProduct(
-                                context: context,
-                                store: store,
-                              ),
+                          onPressed: () =>
+                              scanAndAddProduct(context: context, store: store),
                           icon: const Icon(Icons.barcode_reader, size: 22),
                           label: Text(
                             MediaQuery.sizeOf(context).width < 390 ||
@@ -92,11 +86,8 @@ class CartStatusBar extends StatelessWidget {
                         Expanded(
                           child: OutlinedButton.icon(
                             key: const Key('add-item'),
-                            onPressed:
-                                () => showItemEditor(
-                                  context: context,
-                                  store: store,
-                                ),
+                            onPressed: () =>
+                                showItemEditor(context: context, store: store),
                             icon: const Icon(Icons.add_rounded, size: 20),
                             label: const Text('Add item'),
                           ),
@@ -105,11 +96,8 @@ class CartStatusBar extends StatelessWidget {
                         IconButton.outlined(
                           key: const Key('add-item'),
                           tooltip: 'Add item',
-                          onPressed:
-                              () => showItemEditor(
-                                context: context,
-                                store: store,
-                              ),
+                          onPressed: () =>
+                              showItemEditor(context: context, store: store),
                           style: IconButton.styleFrom(
                             minimumSize: const Size(48, 48),
                             shape: RoundedRectangleBorder(

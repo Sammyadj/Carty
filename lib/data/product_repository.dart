@@ -60,11 +60,10 @@ class OpenFoodFactsProductRepository implements ProductRepository {
   OpenFoodFactsProductRepository({
     http.Client? client,
     CartStorage? cacheStorage,
-    Duration timeout = const Duration(seconds: 8),
+    this._timeout = const Duration(seconds: 8),
     DateTime Function()? now,
   }) : _client = client ?? http.Client(),
        _cacheStorage = cacheStorage ?? SharedPreferencesProductCacheStorage(),
-       _timeout = timeout,
        _now = now ?? DateTime.now;
 
   @override

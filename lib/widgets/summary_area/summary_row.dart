@@ -19,7 +19,9 @@ class SummaryRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(label, style: TextStyle(color: color))),
+          Expanded(
+            child: Text(label, style: TextStyle(color: color)),
+          ),
           const SizedBox(width: 12),
           Flexible(
             child: Text(

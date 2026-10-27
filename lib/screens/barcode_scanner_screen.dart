@@ -7,8 +7,10 @@ import '../base/res/styles/app_styles.dart';
 import '../core/retail_barcode.dart';
 
 /// Supplies a camera preview without requiring a camera in widget tests.
-typedef BarcodeCameraBuilder =
-    Widget Function(BuildContext context, ValueChanged<String> onBarcode);
+typedef BarcodeCameraBuilder = Widget Function(
+  BuildContext context,
+  ValueChanged<String> onBarcode,
+);
 
 /// Returns one validated retail barcode, or null when the shopper goes back.
 class BarcodeScannerScreen extends StatefulWidget {
@@ -223,9 +225,8 @@ class _ManualBarcodeDialogState extends State<_ManualBarcodeDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.of(
-      context,
-    ).pop<String>(RetailBarcode.normalize(_controller.text));
+    Navigator.of(context)
+        .pop<String>(RetailBarcode.normalize(_controller.text));
   }
 
   @override
@@ -249,12 +250,10 @@ class _ManualBarcodeDialogState extends State<_ManualBarcodeDialog> {
             helperMaxLines: 3,
             errorMaxLines: 3,
           ),
-          validator:
-              (value) =>
-                  RetailBarcode.normalize(value ?? '') == null
-                      ? 'Enter a valid product barcode with 8, 12, 13 or '
-                          '14 digits.'
-                      : null,
+          validator: (value) => RetailBarcode.normalize(value ?? '') == null
+              ? 'Enter a valid product barcode with 8, 12, 13 or '
+                    '14 digits.'
+              : null,
           onFieldSubmitted: (_) => _submit(),
         ),
       ),
@@ -406,22 +405,21 @@ class _BarcodeCameraState extends State<_BarcodeCamera>
           controller: _controller,
           useAppLifecycleState: false,
           onDetect: _onDetect,
-          errorBuilder:
-              (context, error) => _CameraMessage(
-                message: switch (error.errorCode) {
-                  MobileScannerErrorCode.permissionDenied =>
-                    'Camera access is off. Allow it in your device settings, '
-                        'or enter the barcode below.',
-                  MobileScannerErrorCode.unsupported =>
-                    'Camera scanning isn’t available on this device. '
-                        'Enter the barcode below.',
-                  _ =>
-                    'The camera couldn’t start. Enter the barcode below '
-                        'to keep going.',
-                },
-              ),
-          placeholderBuilder:
-              (_) => const ColoredBox(color: AppColors.primaryDark),
+          errorBuilder: (context, error) => _CameraMessage(
+            message: switch (error.errorCode) {
+              MobileScannerErrorCode.permissionDenied =>
+                'Camera access is off. Allow it in your device settings, '
+                    'or enter the barcode below.',
+              MobileScannerErrorCode.unsupported =>
+                'Camera scanning isn’t available on this device. '
+                    'Enter the barcode below.',
+              _ =>
+                'The camera couldn’t start. Enter the barcode below '
+                    'to keep going.',
+            },
+          ),
+          placeholderBuilder: (_) =>
+              const ColoredBox(color: AppColors.primaryDark),
         ),
         if (_operationError case final message?)
           _CameraMessage(message: message),
@@ -493,12 +491,11 @@ class _ScanFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final frame = Rect.fromLTWH(18, 18, size.width - 36, size.height - 36);
-    final paint =
-        Paint()
-          ..color = AppColors.mint
-          ..strokeWidth = 4
-          ..strokeCap = StrokeCap.round
-          ..style = PaintingStyle.stroke;
+    final paint = Paint()
+      ..color = AppColors.mint
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
     const length = 24.0;
     for (final corner in [
       frame.topLeft,

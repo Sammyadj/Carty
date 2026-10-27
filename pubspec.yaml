@@ -4,14 +4,14 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.7.0
-  flutter: '>=3.29.0'
+  sdk: ^3.13.0
+  flutter: '>=3.47.8'
 
 dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.5.3
-  # Keep Android dependencies aligned with the Flutter 3.29 toolchain.
+  # Retain the tested scanner version during SDK migration.
   mobile_scanner: 7.0.0
   http: ^1.4.0
 

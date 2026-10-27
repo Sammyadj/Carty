@@ -138,10 +138,9 @@ class CartItemTile extends StatelessWidget {
                         IconButton(
                           key: Key('item-increment-${item.id}'),
                           tooltip: 'Increase quantity of ${item.name}',
-                          onPressed:
-                              item.quantity < CartItem.maxQuantity
-                                  ? onIncrement
-                                  : null,
+                          onPressed: item.quantity < CartItem.maxQuantity
+                              ? onIncrement
+                              : null,
                           constraints: const BoxConstraints(
                             minWidth: 44,
                             minHeight: 44,
