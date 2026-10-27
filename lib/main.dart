@@ -13,6 +13,7 @@ import 'widgets/product_catalog_scope.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  registerDesignFontLicenses();
   runApp(const MyApp());
 }
 

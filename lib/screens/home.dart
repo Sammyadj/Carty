@@ -4,6 +4,7 @@ import '../design/carty_design.dart';
 
 import '../base/utils/cart_dialogs.dart';
 import '../design/design_picker.dart';
+import '../design/shopping_header.dart';
 import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
@@ -228,23 +229,14 @@ class _Dashboard extends StatelessWidget {
     key: const PageStorageKey('home-dashboard'),
     padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
     children: [
-      Text(
-        'Your smart shopping companion',
-        style: TextStyle(
-          color: CartyDesign.of(context).textSecondary,
-          fontSize: 14,
-        ),
-      ),
-      const SizedBox(height: 24),
+      const ShoppingHeader(),
       StorageNotice(store: store),
       SummaryCard(
         totalPence: store.totalPence,
         budgetPence: store.budgetPence,
         onEditBudget: () => showBudgetEditor(context: context, store: store),
       ),
-      const SizedBox(height: 18),
-      ShoppingTips(store: store, onViewAll: onOpenTips),
-      const SizedBox(height: 28),
+      const SizedBox(height: 20),
       SectionHeading(
         title: 'Your shopping list',
         actionKey: const Key('cart-open'),
@@ -306,6 +298,8 @@ class _Dashboard extends StatelessWidget {
             ),
           ],
         ),
+      const SizedBox(height: 20),
+      ShoppingTips(store: store, onViewAll: onOpenTips),
       const SizedBox(height: 28),
       SectionHeading(
         title: 'Your saved lists',

@@ -25,12 +25,15 @@ class CartItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final design = CartyDesign.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       color: Colors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(
+          design.variant == DesignVariant.city ? 10 : design.radius,
+        ),
         side: BorderSide(color: CartyDesign.of(context).borderColor),
       ),
       child: Padding(
@@ -41,7 +44,7 @@ class CartItemTile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ProductAvatar(name: item.name, size: 44),
+                ProductAvatar(name: item.name, size: 52),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -104,8 +107,10 @@ class CartItemTile extends StatelessWidget {
                 children: [
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: CartyDesign.of(context).backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
+                      color: design.mint,
+                      borderRadius: BorderRadius.circular(
+                        design.variant == DesignVariant.city ? 10 : 28,
+                      ),
                       border: Border.all(
                         color: CartyDesign.of(context).borderColor,
                       ),
@@ -149,6 +154,11 @@ class CartItemTile extends StatelessWidget {
                             minHeight: 44,
                           ),
                           color: CartyDesign.of(context).primaryColor,
+                          style: IconButton.styleFrom(
+                            backgroundColor: design.primaryColor,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: design.borderColor,
+                          ),
                           icon: const Icon(Icons.add, size: 18),
                         ),
                       ],

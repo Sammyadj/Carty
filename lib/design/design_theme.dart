@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import 'carty_design.dart';
 
@@ -8,6 +10,10 @@ ThemeData buildDesignTheme(CartyDesign design) {
     onPrimary: Colors.white,
     primaryContainer: design.mint,
     onPrimaryContainer: design.primaryDark,
+    secondary: design.primaryColor,
+    onSecondary: Colors.white,
+    secondaryContainer: design.mint,
+    onSecondaryContainer: design.primaryDark,
     surface: Colors.white,
     onSurface: design.textPrimary,
     onSurfaceVariant: design.textSecondary,
@@ -156,4 +162,14 @@ ThemeData buildDesignTheme(CartyDesign design) {
       space: 1,
     ),
   );
+}
+
+void registerDesignFontLicenses() {
+  LicenseRegistry.addLicense(() async* {
+    for (final family in ['Manrope', 'DMSans', 'NunitoSans']) {
+      yield LicenseEntryWithLineBreaks([
+        family,
+      ], await rootBundle.loadString('assets/fonts/$family-OFL.txt'));
+    }
+  });
 }

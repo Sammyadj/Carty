@@ -22,6 +22,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/Manrope-OFL.txt
+    - assets/fonts/DMSans-OFL.txt
+    - assets/fonts/NunitoSans-OFL.txt
   fonts:
     - family: Manrope
       fonts:
