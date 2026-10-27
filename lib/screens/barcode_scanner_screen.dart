@@ -104,8 +104,8 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Barcodes are sent to Open Food Facts for product '
-                      'details. Camera images stay on your device. '
+                      'Barcodes are sent to Open Food Facts, then UPCitemdb '
+                      'if needed, for product details. Camera images stay on your device. '
                       'You confirm the shelf price.',
                       style: TextStyle(
                         color: AppColors.textSecondary,

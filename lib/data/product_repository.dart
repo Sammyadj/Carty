@@ -75,6 +75,7 @@ class OpenFoodFactsProductRepository
   DateTime? _lastRetailRequestAt;
   DateTime? _retailBlockedUntil;
   bool _retailBusy = false;
+  int _confirmedRevision = 0;
 
   OpenFoodFactsProductRepository({
     http.Client? client,
@@ -131,11 +132,12 @@ class OpenFoodFactsProductRepository
   );
 
   Future<ProductLookupResult> _fetch(String barcode) async {
-    final food = await _fetchFood(barcode);
+    final revision = _confirmedRevision;
+    final food = await _fetchFood(barcode, revision);
     if (!_enableRetailFallback || _disposed || food.product != null) {
       return food;
     }
-    final retail = await _fetchRetail(barcode);
+    final retail = await _fetchRetail(barcode, revision);
     if (retail.product != null) return retail;
     if (retail.status == ProductLookupStatus.notFound &&
         food.status != ProductLookupStatus.notFound) {
@@ -144,7 +146,7 @@ class OpenFoodFactsProductRepository
     return retail;
   }
 
-  Future<ProductLookupResult> _fetchRetail(String barcode) async {
+  Future<ProductLookupResult> _fetchRetail(String barcode, int revision) async {
     final now = _now();
     if (_retailBusy ||
         (_lastRetailRequestAt != null &&
@@ -208,7 +210,7 @@ class OpenFoodFactsProductRepository
           brand: _boundedText(item['brand']),
           source: ProductSource.upcitemdb,
         );
-        await remember(product);
+        if (revision == _confirmedRevision) await _cacheProduct(product);
         return ProductLookupResult(
           status: ProductLookupStatus.found,
           product: product,
@@ -222,7 +224,7 @@ class OpenFoodFactsProductRepository
     }
   }
 
-  Future<ProductLookupResult> _fetchFood(String barcode) async {
+  Future<ProductLookupResult> _fetchFood(String barcode, int revision) async {
     try {
       final uri = Uri.https(
         'world.openfoodfacts.org',
@@ -281,7 +283,7 @@ class OpenFoodFactsProductRepository
         packSize: _boundedText(rawProduct['quantity']),
         fromOpenFoodFacts: true,
       );
-      await remember(product);
+      if (revision == _confirmedRevision) await _cacheProduct(product);
       return ProductLookupResult(
         product: product,
         status: ProductLookupStatus.found,
@@ -301,6 +303,11 @@ class OpenFoodFactsProductRepository
 
   @override
   Future<void> remember(ProductDetails product) async {
+    _confirmedRevision++;
+    await _cacheProduct(product);
+  }
+
+  Future<void> _cacheProduct(ProductDetails product) async {
     final validated = ProductDetails.fromJson(product.toJson());
     if (_disposed || validated == null) return;
     await (_loadFuture ??= _loadCache());

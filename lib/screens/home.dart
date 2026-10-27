@@ -114,7 +114,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Barcode product data: Open Food Facts (openfoodfacts.org), under the Open Database License (opendatacommons.org/licenses/odbl/1-0/). Camera images stay on your device. Prices are entered by you.',
+                  'Barcode lookups use Open Food Facts (openfoodfacts.org), then UPCitemdb (upcitemdb.com) if needed. Open Food Facts data is under the Open Database License (opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data has its own terms. Camera images stay on your device. Prices are entered by you. Confirmed product details are remembered locally.',
                 ),
               ],
             ),

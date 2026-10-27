@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:carty_app/data/cart_storage.dart';
 import 'package:carty_app/data/product_repository.dart';
@@ -28,6 +29,33 @@ http.Response retail({String code = barcode}) => http.Response(
 );
 
 void main() {
+  test(
+    'late lookup cannot overwrite a name confirmed while it was pending',
+    () async {
+      final pending = Completer<http.Response>();
+      final reachedRetail = Completer<void>();
+      final repo = RetailProductRepository(
+        cacheStorage: InMemoryCartStorage(),
+        client: MockClient((request) async {
+          if (request.url.host == 'world.openfoodfacts.org') {
+            return http.Response('', 404);
+          }
+          reachedRetail.complete();
+          return pending.future;
+        }),
+      );
+      addTearDown(repo.dispose);
+      final lookup = repo.lookup(barcode);
+      await reachedRetail.future;
+      await repo.remember(
+        const ProductDetails(barcode: barcode, name: 'My confirmed pen'),
+      );
+      pending.complete(retail());
+      await lookup;
+      expect((await repo.lookup(barcode)).product?.name, 'My confirmed pen');
+    },
+  );
+
   test('food match avoids retail service', () async {
     final requests = <String>[];
     final repo = RetailProductRepository(

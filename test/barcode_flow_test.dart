@@ -16,11 +16,16 @@ const _product = ProductDetails(
   fromOpenFoodFacts: true,
 );
 
-class _Repository implements ProductRepository {
+class _Repository implements ProductRepository, ProductMemory {
   _Repository(this.result);
   ProductLookupResult result;
   final requests = <String>[];
   bool throwOnLookup = false;
+  final remembered = <ProductDetails>[];
+
+  @override
+  Future<void> remember(ProductDetails product) async =>
+      remembered.add(product);
 
   @override
   Future<ProductLookupResult> lookup(
@@ -99,6 +104,32 @@ Future<CartStore> _open(
 }
 
 void main() {
+  testWidgets('retail source is shown and retained after price confirmation', (
+    tester,
+  ) async {
+    final repository = _Repository(
+      const ProductLookupResult(
+        status: ProductLookupStatus.found,
+        product: ProductDetails(
+          barcode: _barcode,
+          name: 'Household product',
+          source: ProductSource.upcitemdb,
+        ),
+      ),
+    );
+    final store = await _open(tester, repository);
+    expect(find.text('Product data: UPCitemdb'), findsOneWidget);
+    final price = tester.widget<TextFormField>(
+      find.byKey(const Key('scan-product-price')),
+    );
+    expect(price.controller!.text, isEmpty);
+    await _enter(tester, 'scan-product-price', '2.00');
+    await _tap(tester, 'scan-product-add');
+    expect(store.items.single.product!.source, ProductSource.upcitemdb);
+    expect(repository.remembered.single.source, ProductSource.upcitemdb);
+    expect(store.totalPence, 200);
+  });
+
   testWidgets('failed refresh preserves matched metadata and entered details', (
     tester,
   ) async {
@@ -220,9 +251,10 @@ void main() {
     testWidgets('$status allows manual details and retains the barcode', (
       tester,
     ) async {
+      final repository = _Repository(ProductLookupResult(status: status));
       final store = await _open(
         tester,
-        _Repository(ProductLookupResult(status: status)),
+        repository,
         fullCart: status == ProductLookupStatus.notFound,
       );
       await _enter(tester, 'scan-product-name', 'Store brand oats');
@@ -230,11 +262,14 @@ void main() {
       await _enter(tester, 'scan-product-quantity', '0');
       await _tap(tester, 'scan-product-add');
       expect(store.items, isEmpty);
+      expect(repository.remembered, isEmpty);
       await _enter(tester, 'scan-product-quantity', '1');
       await _tap(tester, 'scan-product-add');
       expect(store.items.single.product!.barcode, _barcode);
       expect(store.items.single.product!.fromOpenFoodFacts, isFalse);
       expect(store.totalPence, 110);
+      expect(repository.remembered.single.name, 'Store brand oats');
+      expect(repository.remembered.single.source, ProductSource.manual);
       expect(tester.takeException(), isNull);
     });
   }

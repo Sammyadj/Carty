@@ -89,6 +89,14 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
         unitPricePence: Money.tryParsePence(_price.text)!,
         quantity: int.parse(_quantity.text),
       );
+      final repository = widget.repository;
+      if (repository is ProductMemory) {
+        try {
+          await (repository as ProductMemory).remember(product);
+        } catch (_) {
+          // Remembering a product must not undo an already confirmed cart edit.
+        }
+      }
       if (mounted) Navigator.pop(context, true);
     } on ArgumentError {
       if (!mounted) return;
@@ -263,7 +271,7 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
         : _loading
         ? 'You can enter the details below while we look.'
         : status == ProductLookupStatus.notFound
-        ? 'This catalog mainly covers food. Enter the details below to keep shopping.'
+        ? 'No matching product was found in the available catalogs. Enter its name below; Carty will remember it on this device when you add it.'
         : status == ProductLookupStatus.rateLimited
         ? 'Wait a moment before trying again, or enter the details below.'
         : 'Check your connection, or enter the details below. Your basket works offline.';
@@ -327,6 +335,20 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
             const SizedBox(height: 6),
             const Text(
               'Product data: Open Food Facts · ODbL',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+          ],
+          if (product?.source == ProductSource.upcitemdb) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'Product data: UPCitemdb',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+          ],
+          if (product?.source == ProductSource.manual) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'Product details you entered on this device',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],

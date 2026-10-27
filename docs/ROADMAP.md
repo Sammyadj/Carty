@@ -32,7 +32,7 @@ Track planned and actual prices explicitly before introducing price history or s
 
 ## Stage 3: product capture and useful comparisons
 
-The first product-capture milestone is implemented: camera or manual barcode entry, checksum validation, Open Food Facts lookup, editable name review, manual shelf-price confirmation, and duplicate-product merging. Product identifiers, brand, and display pack size persist in baskets and saved lists. A bounded local cache supports previously matched products offline; unknown or unavailable matches allow manual details. The review attributes the catalog and explains that prices come from the shopper. Physical-device scanner checks and native iOS verification remain release work.
+Product capture includes camera or manual barcode entry, checksum validation, Open Food Facts lookup with UPCitemdb general-retail fallback, editable name review, manual shelf-price confirmation, and duplicate-product merging. Product identifiers, sources, brand, and display pack size persist in baskets and saved lists. A bounded local cache supports matched products and manually confirmed names offline; unknown or unavailable matches allow manual details. The review attributes each source and explains that prices come from the shopper. UPCitemdb's free-tier quota limits evaluation capacity; assess real-shop coverage before selecting a production plan. Physical-device scanner checks remain release work.
 
 Catalog search, normalized pack sizes/units, categories, and licensed product images remain future work. Product icon avatars do not supply these. A barcode does not provide a universal current price: automated price lookup needs a reliable retailer or product-price source, and users must be able to enter or correct a price manually.
 

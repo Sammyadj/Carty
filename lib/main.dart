@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
   late final CartStore _store =
       widget.store ?? CartStore(storage: SharedPreferencesCartStorage());
   late final ProductRepository _products =
-      widget.productRepository ?? OpenFoodFactsProductRepository();
+      widget.productRepository ?? RetailProductRepository();
 
   @override
   void initState() {
