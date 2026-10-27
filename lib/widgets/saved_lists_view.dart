@@ -13,11 +13,13 @@ class SavedListsView extends StatelessWidget {
     required this.onUseList,
     required this.onCreateList,
     required this.onDeleteList,
+    required this.onNewList,
   });
 
   final CartStore store;
   final ValueChanged<SavedShoppingList> onUseList;
   final VoidCallback onCreateList;
+  final VoidCallback onNewList;
   final ValueChanged<SavedShoppingList> onDeleteList;
 
   @override
@@ -47,6 +49,13 @@ class SavedListsView extends StatelessWidget {
                   style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 24),
+                FilledButton.icon(
+                  key: const Key('new-list-from-library'),
+                  onPressed: onNewList,
+                  icon: const Icon(Icons.playlist_add_rounded),
+                  label: const Text('Create new list'),
+                ),
+                const SizedBox(height: 20),
                 if (store.savedLists.isEmpty)
                   const _EmptySavedLists()
                 else ...[

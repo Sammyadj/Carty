@@ -235,6 +235,7 @@ void main() {
           theme: AppTheme.lightTheme,
           home: Scaffold(
             body: SavedListsView(
+              onNewList: () {},
               store: store,
               onUseList: (_) {},
               onCreateList: () => created++,
@@ -288,6 +289,7 @@ void main() {
         theme: AppTheme.lightTheme,
         home: Scaffold(
           body: SavedListsView(
+            onNewList: () {},
             store: store,
             onUseList: (SavedShoppingList _) {},
             onCreateList: () {},

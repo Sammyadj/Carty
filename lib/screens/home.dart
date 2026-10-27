@@ -84,6 +84,20 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
+            key: const Key('new-list'),
+            tooltip: 'New list',
+            onPressed: store.isLoading
+                ? null
+                : () async {
+                    final started = await showNewList(
+                      context: context,
+                      store: store,
+                    );
+                    if (mounted && started) _selectTab(0);
+                  },
+            icon: const Icon(Icons.playlist_add_rounded),
+          ),
+          IconButton(
             tooltip: 'About Carty',
             onPressed: () => showAboutDialog(
               context: context,
@@ -155,6 +169,13 @@ class _HomePageState extends State<HomePage> {
                   child: switch (_tab) {
                     1 => SavedListsView(
                       store: store,
+                      onNewList: () async {
+                        final started = await showNewList(
+                          context: context,
+                          store: store,
+                        );
+                        if (mounted && started) _selectTab(0);
+                      },
                       onUseList: _reuseList,
                       onCreateList: () =>
                           showSaveList(context: context, store: store),
@@ -242,6 +263,15 @@ class _Dashboard extends StatelessWidget {
             onDecrement: () => store.decrementQuantity(item.id),
           ),
         ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          key: const Key('new-list-from-home'),
+          onPressed: () => showNewList(context: context, store: store),
+          icon: const Icon(Icons.playlist_add_rounded, size: 18),
+          label: const Text('Create new list'),
+        ),
+      ),
       if (store.items.isNotEmpty)
         Wrap(
           spacing: 8,

@@ -19,6 +19,8 @@ Cart changes flow through one `CartStore`, so the home and full-cart screens dis
 
 ## Using Carty
 
+Choose **Create new list** on Home or Lists, or use the **New list** toolbar action, to begin a different shop with an empty basket and no budget. If the current products or budget differ from every named saved list, Carty offers **Save and start new**, **Start without saving**, or **Cancel**. Cancelling the name form or a failed save keeps the current basket. Existing saved lists stay available. A budget-only basket can be cancelled or discarded; add products before saving it as a named list.
+
 - **Home** shows the budget summary, a shopping tip, the first three basket products, and saved-list shortcuts. Use **View all** beside the shopping list to open the full basket, where **Search your basket** matches product names and **To pick** shows only products with quantity zero. Search covers the active basket only.
 - **Lists** shows saved shopping lists. Save the current basket from this tab or with **Save as list** on either shopping screen; reuse a saved list or delete it after confirmation.
 - **Tips** expands the local shopping guidance, including budget progress, products waiting to be picked, and reminders to check saved prices.

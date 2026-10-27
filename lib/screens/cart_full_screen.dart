@@ -44,7 +44,30 @@ class _CartFullScreenState extends State<CartFullScreen> {
           .where((item) => item.quantity == 0)
           .length;
       return Scaffold(
-        appBar: AppBar(title: const Text('Your basket')),
+        appBar: AppBar(
+          title: const Text('Your basket'),
+          actions: [
+            IconButton(
+              key: const Key('new-list'),
+              tooltip: 'New list',
+              onPressed: store.isLoading
+                  ? null
+                  : () async {
+                      final started = await showNewList(
+                        context: context,
+                        store: store,
+                      );
+                      if (started && mounted) {
+                        setState(() {
+                          _search.clear();
+                          _pendingOnly = false;
+                        });
+                      }
+                    },
+              icon: const Icon(Icons.playlist_add_rounded),
+            ),
+          ],
+        ),
         bottomNavigationBar: CartStatusBar(store: store),
         body: SafeArea(
           bottom: false,

@@ -74,7 +74,7 @@ Future<void> confirmAndClearCart({
   await store.clearCart();
 }
 
-Future<void> showSaveList({
+Future<bool> showSaveList({
   required BuildContext context,
   required CartStore store,
 }) async {
@@ -82,8 +82,58 @@ Future<void> showSaveList({
     context: context,
     builder: (_) => const _ListNameDialog(),
   );
-  if (name == null || !context.mounted) return;
+  if (name == null || !context.mounted) return false;
   await store.saveList(name);
+  return store.storageError == null && !store.needsStorageReset;
+}
+
+enum _NewListChoice { save, discard }
+
+Future<bool> showNewList({
+  required BuildContext context,
+  required CartStore store,
+}) async {
+  if (store.isLoading) return false;
+  if (store.hasUnsavedList) {
+    final choice = await showDialog<_NewListChoice>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Save before starting a new list?'),
+        content: Text(
+          store.items.isEmpty
+              ? 'Your current budget has not been saved as a list. Starting a new list resets it. Add products first if you want to save this shop.'
+              : 'Your current products or budget are not saved as a matching shopping list. Save them for later, or start a new list without saving.',
+        ),
+        actions: [
+          TextButton(
+            key: const Key('new-list-cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            key: const Key('new-list-discard'),
+            onPressed: () =>
+                Navigator.pop(dialogContext, _NewListChoice.discard),
+            child: const Text('Start without saving'),
+          ),
+          if (store.items.isNotEmpty)
+            FilledButton(
+              key: const Key('new-list-save'),
+              onPressed: () =>
+                  Navigator.pop(dialogContext, _NewListChoice.save),
+              child: const Text('Save and start new'),
+            ),
+        ],
+      ),
+    );
+    if (choice == null || !context.mounted) return false;
+    if (choice == _NewListChoice.save) {
+      final saved = await showSaveList(context: context, store: store);
+      if (!saved || !context.mounted) return false;
+    }
+  }
+  await store.startNewList();
+  return true;
 }
 
 Future<bool> showReuseList({

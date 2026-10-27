@@ -42,6 +42,7 @@ class CartStore extends ChangeNotifier {
   /// Ignore item IDs so a reused list still counts as saved until it is edited.
   bool get hasUnsavedList {
     if (_items.isEmpty) return _budgetPence != null;
+    if (_storageError != null) return true;
     String contents(List<CartItem> items) => jsonEncode([
       for (final item in items) {...item.toJson()}..remove('id'),
     ]);
