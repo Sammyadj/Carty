@@ -25,6 +25,7 @@ Future<void> scanAndAddProduct({
         barcode: barcode,
         store: store,
         repository: catalog.repository,
+        cameraBuilder: catalog.cameraBuilder,
       ),
     ),
   );
