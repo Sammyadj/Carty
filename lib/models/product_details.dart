@@ -1,5 +1,7 @@
 import '../core/retail_barcode.dart';
 
+enum ProductSource { manual, openFoodFacts, upcitemdb }
+
 /// Product identity and optional packaging information, without a shelf price.
 class ProductDetails {
   static const maxFieldLength = 120;
@@ -8,22 +10,28 @@ class ProductDetails {
   final String name;
   final String? brand;
   final String? packSize;
-  final bool fromOpenFoodFacts;
+  final ProductSource source;
+  bool get fromOpenFoodFacts => source == ProductSource.openFoodFacts;
 
   const ProductDetails({
     required this.barcode,
     required this.name,
     this.brand,
     this.packSize,
-    this.fromOpenFoodFacts = false,
-  });
+    bool fromOpenFoodFacts = false,
+    ProductSource? source,
+  }) : source =
+           source ??
+           (fromOpenFoodFacts
+               ? ProductSource.openFoodFacts
+               : ProductSource.manual);
 
   ProductDetails copyWith({String? name}) => ProductDetails(
     barcode: barcode,
     name: name ?? this.name,
     brand: brand,
     packSize: packSize,
-    fromOpenFoodFacts: fromOpenFoodFacts,
+    source: source,
   );
 
   Map<String, Object?> toJson() => {
@@ -32,6 +40,7 @@ class ProductDetails {
     'brand': brand,
     'packSize': packSize,
     'fromOpenFoodFacts': fromOpenFoodFacts,
+    'source': source.name,
   };
 
   static ProductDetails? fromJson(Map<String, dynamic> json) {
@@ -40,6 +49,11 @@ class ProductDetails {
     final rawBrand = json['brand'];
     final rawPackSize = json['packSize'];
     final source = json['fromOpenFoodFacts'];
+    final sourceName = json['source'];
+    if (sourceName != null &&
+        !ProductSource.values.any((value) => value.name == sourceName)) {
+      return null;
+    }
     if (rawBarcode is! String || rawName is! String) return null;
 
     final barcode = RetailBarcode.normalize(rawBarcode);
@@ -65,6 +79,9 @@ class ProductDetails {
       brand: brand == '' ? null : brand,
       packSize: packSize == '' ? null : packSize,
       fromOpenFoodFacts: source as bool? ?? false,
+      source: sourceName == null
+          ? null
+          : ProductSource.values.byName(sourceName as String),
     );
   }
 }
