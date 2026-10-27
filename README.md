@@ -9,13 +9,16 @@ Carty is a Flutter shopping companion for keeping track of the cost of a basket 
 - Add products with a name, unit price, and quantity; edit or remove them later.
 - Scan retail barcodes, look up products through Open Food Facts with a UPCitemdb general-retail fallback, then confirm the shelf price and quantity. Manual barcode entry and remembered product details cover missing matches.
 - See a live basket total, remaining budget, and progress. Near-budget feedback starts at 80% of the budget; spending above the budget has an explicit over-budget status.
-- Use a green Carty dashboard with product icon avatars and Home, Lists, and Tips navigation.
+- Use the City design with product icon avatars and Home, Lists, Tips, and History navigation.
 - Keep the total, budget status, Scan barcode, and Add item controls visible in a bottom bar on Home and the full basket screen.
 - Set or remove a budget. Money is represented as integer pence, with GBP formatting.
 - Search products in the active basket and filter to products still to pick.
 - Save a named shopping list and continue editing it with automatic updates; duplicate it or start fresh for a separate shop.
 - Read simple tips based on the basket and budget. These are local rules, not AI recommendations or live store offers.
-- Restore the current basket, budget, saved lists, and the named list being edited after restarting the app.
+- Restore the current basket, budget, saved lists, history, and the named list being edited after restarting the app.
+- Optionally sign in through an email link, set a display name, and sync a private shopping workspace through Supabase.
+- Keep shopping offline, review conflicting cloud changes, and explicitly copy guest lists into an account when wanted.
+- Finish a shop to retain its picked products and entered prices in History, independently of reusable lists.
 
 Cart changes flow through one `CartStore`, so the home and full-cart screens display the same state. Forms and layouts are designed for phone screens, keyboard input, and larger text.
 
@@ -26,6 +29,7 @@ Choose **Create new list** on Home or Lists, or use the **New list** toolbar act
 - **Home** shows the budget summary, a shopping tip, the first three basket products, and saved-list shortcuts. Use **View all** beside the shopping list to open the full basket, where **Search your basket** matches product names and **To pick** shows only products with quantity zero. Search covers the active basket only.
 - **Lists** shows saved shopping lists. Save the current basket from this tab or with **Save as list** on either shopping screen. Continue editing a saved list, reuse its products in a separate basket, or delete it after confirmation. The list receiving your current edits is marked **Currently editing**.
 - **Tips** expands the local shopping guidance, including budget progress, products waiting to be picked, and reminders to check saved prices.
+- **History** contains completed shops. Choose **Finish shopping** on Home or the full basket, name the trip, and confirm. Only picked products (quantity above zero) enter the record; the active basket and budget are cleared, while named saved lists remain reusable. A recorded total uses your entered prices and is not a receipt or payment confirmation. Open a trip to review or delete its record.
 
 Set a product's quantity to zero to keep it on the list without adding to the total. Increase its quantity as you pick it up. Deleting a product removes it from the basket entirely.
 
@@ -47,7 +51,19 @@ Scanning a product already in the basket combines its quantity with the existing
 
 The last 100 catalog matches and confirmed products share a private on-device cache for offline reuse. This includes manually identified products, even after they are removed from a basket. Old entries may be evicted as the cache fills. **Look up again** requests fresh product details, without changing your price. Lookups are spaced at least five seconds apart; UPCitemdb requests are spaced at least ten seconds apart and only one retail request runs at a time. Its key-free trial allows 100 requests daily and may enforce shared-network limits. Rate-limit cooldowns are respected across app restarts; busy or failed lookups allow manual entry. Cached details can become outdated, so review the packaging and shelf label.
 
-The camera is opened only from the scanner screen. Camera images are processed on the device; Carty sends the barcode to [Open Food Facts](https://world.openfoodfacts.org/) and, if needed, [UPCitemdb](https://www.upcitemdb.com/api/), along with ordinary network request information. Basket contents, quantities, budgets, saved lists, and manually entered names are not uploaded. Sources are labelled in the review: Open Food Facts data is under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data is subject to [its own terms](https://www.upcitemdb.com/terms). User-entered details are labelled separately. Product photographs and provider prices are not used. No paid API key or subscription is configured; evaluate real-shop coverage and service terms before scaling a public release.
+The camera is opened only from the scanner screen. Camera images are processed on the device; Carty sends the barcode to [Open Food Facts](https://world.openfoodfacts.org/) and, if needed, [UPCitemdb](https://www.upcitemdb.com/api/), along with ordinary network request information. Product providers do not receive your basket, quantities, budget, saved lists, or manually entered names. When you sign in, your private shopping workspace is uploaded to Supabase as described below. Sources are labelled in the review: Open Food Facts data is under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data is subject to [its own terms](https://www.upcitemdb.com/terms). User-entered details are labelled separately. Product photographs and provider prices are not used. No paid product API key or subscription is configured; evaluate real-shop coverage and service terms before scaling a public release.
+
+## Accounts and private cloud saving
+
+Open the account icon on Home, enter your email, and request a sign-in link. Open the email on the **same device** to return to Carty. The SDK retains the session for later launches. For now, Supabase's built-in mail service is for testing: it only sends to organisation team members and currently allows two emails per hour. Public email sign-ups require custom SMTP. See [cloud setup and verification](docs/CLOUD_SETUP.md).
+
+Guest shopping remains available without an account. Signing in opens a separate account workspace; it does not silently upload existing guest data. **Copy guest lists** explicitly copies guest lists, any separate guest basket, and history into the account, retaining the guest originals. Signing out returns to guest data. Each account has its own on-device cache, so sign-out is not a device-data wipe; use device access controls on shared phones.
+
+Signed-in changes save on the device first, then sync the basket, budget, named lists, active editing link, and history to your private Supabase workspace. Your email and optional display name are stored for the account. The bounded product-lookup cache stays local. The sync notice distinguishes pending, failed, current, and conflicting copies. Reopen the app or use **Sync now** to retry after reconnecting.
+
+When another device and this device both changed the workspace, Carty asks whether to use the cloud or device version. It never silently merges product quantities or overwrites a competing revision. The replaced version is kept as one recovery copy on this device, available through **Restore previous version**. Review the cloud copy before switching between devices, and avoid simultaneous edits until the conflict is resolved.
+
+**Delete account** permanently deletes that account's profile and cloud shopping workspace and removes its cache on this device. It leaves guest data and other accounts alone. Other offline devices cannot be remotely wiped; their retained copies stop syncing once the deleted account's session is rejected. Sharing and checkout are deferred. The app still uses GBP and manually entered shelf prices.
 
 ## Run locally
 
@@ -101,12 +117,15 @@ Flutter now links the scanner and preferences plugins through its generated Swif
 
 ```text
 lib/
+  auth/       Account session, guest/account separation, and profile actions
+  cloud/      Supabase adapter, revision checks, offline queue, and recovery
+  config/     Client-public Supabase configuration and exact auth callback
   core/       Money parsing and retail barcode validation
-  models/     Immutable cart items, product details, and saved shopping lists
+  models/     Immutable cart items, product details, saved lists, and completed trips
   state/      CartStore: basket actions, derived totals, and persistence coordination
   data/       Local cart storage and cached product lookup
-  screens/    Home, basket, list reuse, barcode capture, and product review
-  widgets/    Forms, cart tiles, budget summary, lists, and tips
+  screens/    Home, account, basket, list reuse, barcode capture, and product review
+  widgets/    Forms, cart tiles, budget summary, lists, tips, history, and sync status
   base/res/   Shared theme and styles
 ```
 
@@ -116,16 +135,16 @@ Prices are stored as pence rather than floating-point pounds. Totals and remaini
 
 ## Local data and limitations
 
-This MVP saves the basket, budget, and saved lists in a versioned JSON snapshot on the device using `shared_preferences`. It is convenient storage for a small personal basket and saved lists, not a durable financial record or backup service. Device removal, app-data clearing, or uninstalling the app can lose data.
+This version retains a local JSON snapshot using `shared_preferences`, including for signed-in accounts so shopping works offline. Cloud saving adds recovery across installations after successful sync; it does not eliminate local storage or protect unsynced edits from uninstalling, clearing app data, or device loss. It is not a financial ledger.
 
-Saved lists live in the app's private preferences, not as files in your Documents folder. The product cache uses a separate preferences key and can be discarded without altering the basket or saved lists. Version-2 snapshots also retain which named list is being edited. Existing version-1 baskets and saved lists, including ones without barcode metadata, remain readable and migrate on the next save. Old saved lists become linked for ongoing updates when you explicitly choose **Continue editing**.
+Saved lists live in the app's private preferences, not as files in your Documents folder. The product cache uses a separate preferences key and can be discarded without altering shopping data. Version-3 snapshots retain history and the named list being edited. Existing version-1 and version-2 data remains readable and migrates on the next save without inventing past trips. Old saved lists become linked for ongoing updates when you explicitly choose **Continue editing**.
 
 Save failures show a **Retry** action; keep the app open while resolving them. If saved data cannot be read, Carty preserves it and blocks replacement writes. **Retry** can try loading it again before local edits are made. A confirmed **Reset saved data** allows the current basket and lists to replace the unreadable snapshot.
 
-There are no accounts, cloud sync, live retailer prices, AI calls, or shopping-history records in this stage. Prices are entered by the user, and a basket total is an estimate of the checkout amount. The app currently supports GBP only.
+Phase one uses one private, revisioned workspace per account, capped at 2 MiB in the database. It is intended for personal lists and modest history, not unlimited records or collaborative editing. Split data into individual list/trip records and add pagination before implementing sharing or large histories. [The cloud roadmap](docs/CLOUD_ROADMAP.md) records the deferred decisions.
 
 ## Product direction and release preparation
 
-See [the mockup gap analysis](docs/MOCKUP_GAP_ANALYSIS.md) for what matches the three reference images and what remains, and [the roadmap](docs/ROADMAP.md) for the next stages and the choices behind them. The green brand, Home/Lists/Tips navigation, and barcode-to-review flow adapt the references to the current app. Product avatars are icon hints rather than catalog photos; live price refresh and the mockups' advanced recommendations still need their supporting data and integrations.
+See [the mockup gap analysis](docs/MOCKUP_GAP_ANALYSIS.md) for what matches the reference images and what remains, and [the roadmap](docs/ROADMAP.md) for the next stages. City is the selected interface. Product avatars are icon hints rather than catalog photos; live price refresh and advanced recommendations still need their supporting data and integrations.
 
-Before a store release, configure production Android signing, confirm app identifiers and iOS signing, finish the app icons and store metadata, and test on physical Android and iOS devices. The existing Android release configuration uses a debug key and must be replaced for publishing. Review platform minimum versions and privacy disclosures when adding new plugins. A Flutter SDK upgrade is a separate, tested migration; it is not required to understand or continue this MVP.
+Before a store release, configure production Android signing, confirm app identifiers and iOS signing, finish store metadata, configure production email delivery, review cloud privacy disclosures, and test real email sign-in and two-device sync on physical Android and iOS devices. The Android release configuration still uses a debug key and must be replaced for publishing. Passing automated checks does not make this a production-ready release.

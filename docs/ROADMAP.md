@@ -2,7 +2,7 @@
 
 Carty's aim is to make a shopping trip easier to plan and keep within budget. It should remain quick to use in a shop and clear enough that the user understands every change to their basket.
 
-The three root-level mockups are the visual direction, not a list of completed integrations. See the [mockup gap analysis](MOCKUP_GAP_ANALYSIS.md) for the feature-by-feature comparison and what remains.
+City is the selected interface. The root-level mockups remain product references, not a list of completed integrations. See the [mockup gap analysis](MOCKUP_GAP_ANALYSIS.md) and the newer [cloud phases and open decisions](CLOUD_ROADMAP.md).
 
 ## Stage 1: dependable shopping and reusable lists
 
@@ -23,11 +23,11 @@ The current implementation establishes:
 
 The separate Tips view uses only information already entered in Carty. Its local rules describe the situation and offer a useful next step, without claiming to know store prices or taking actions on the user's behalf. This stage does not calculate cheaper alternatives, health recommendations, or spending forecasts.
 
-The mockups use different navigation sets. Home, Lists, and Tips are the current choice because those destinations work with existing data. Search, Products, History, Settings, and Profile should be added with complete flows. Saved lists record when they were saved; last-used tracking is not implemented. Reusing a list creates the next active basket, not a retained historical shopping session.
+Navigation now includes Home, Lists, Tips, and History; the Home account action opens sign-in, profile, and sync controls. Catalog Search/Products and a general Settings destination remain future work. Saved lists record their save date; last-used tracking is not implemented. Reusing a list creates an active basket; Finish shopping explicitly records a completed trip.
 
 ## Stage 2: planning and shopping history
 
-Named editable shopping lists are available now. Add favourites, saved-list search, and a clear action to finish a trip. Keep completed trips separate from ongoing lists and reusable templates, and allow a previous trip to become a new basket without changing the historical record.
+Named editable lists and Finish shopping are available. History keeps completed picked products separate from reusable lists. Favourites, saved-list search, and reusing a previous trip as a new basket remain future work.
 
 Track planned and actual prices explicitly before introducing price history or spending summaries. Add export and restore, and move shopping records to a database with migrations and appropriate recovery behavior as the data grows. The current preferences snapshot is a small-MVP storage choice.
 
@@ -45,7 +45,7 @@ AI can suggest substitutions, remind someone about products they often buy, or e
 
 The mockup's cheaper-alternative, healthy-choice, and spending-forecast cards need separate foundations: comparable product/price data, suitable nutrition data and a defined scope, and enough completed-trip history to validate predictions. Do not fill these cards with invented savings or forecasts.
 
-Household sharing and cloud backup need explicit account and backend decisions, offline synchronization, conflict handling, and deletion/export controls. Build them after the local shopping flow has proved useful.
+Private accounts and Supabase cloud saving now include guest separation, offline synchronization, revision conflict handling, profile editing, and account deletion. See [setup](CLOUD_SETUP.md). Household sharing, export, and larger-scale record storage remain separate work; [the cloud roadmap](CLOUD_ROADMAP.md) retains the unanswered sharing and currency decisions.
 
 ## Release work
 
