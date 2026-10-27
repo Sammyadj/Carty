@@ -9,7 +9,7 @@ import '../models/cart_item.dart';
 import '../models/product_details.dart';
 import '../models/saved_shopping_list.dart';
 
-/// One source of truth for the active basket and reusable list snapshots.
+/// One source of truth for the active basket and named shopping lists.
 ///
 /// Writes are queued in edit order so an earlier slow save cannot overwrite
 /// a more recent basket when someone taps quickly.
@@ -20,6 +20,7 @@ class CartStore extends ChangeNotifier {
   List<CartItem> _items = const [];
   List<SavedShoppingList> _savedLists = const [];
   int? _budgetPence;
+  String? _activeListId;
   bool _isLoading = true;
   bool _disposed = false;
   bool _needsStorageReset = false;
@@ -34,15 +35,17 @@ class CartStore extends ChangeNotifier {
   int? get budgetPence => _budgetPence;
   bool get isLoading => _isLoading;
   String? get storageError => _storageError;
+  SavedShoppingList? get activeList => _savedListForId(_activeListId);
 
   /// A damaged or newer snapshot is kept until the user explicitly resets it.
   bool get needsStorageReset => _needsStorageReset;
 
-  /// Named list snapshots are distinct from automatic on-device basket storage.
+  /// Linked lists save automatically; separate baskets can be saved by name.
   /// Ignore item IDs so a reused list still counts as saved until it is edited.
   bool get hasUnsavedList {
-    if (_items.isEmpty) return _budgetPence != null;
     if (_storageError != null) return true;
+    if (activeList != null) return false;
+    if (_items.isEmpty) return _budgetPence != null;
     String contents(List<CartItem> items) => jsonEncode([
       for (final item in items) {...item.toJson()}..remove('id'),
     ]);
@@ -57,6 +60,7 @@ class CartStore extends ChangeNotifier {
   Future<void> startNewList() async {
     await load();
     if (_disposed) return;
+    _activeListId = null;
     _items = const [];
     _budgetPence = null;
     await _commit();
@@ -89,7 +93,8 @@ class CartStore extends ChangeNotifier {
 
   void _restore(String value) {
     final decoded = jsonDecode(value);
-    if (decoded is! Map<String, dynamic> || decoded['version'] != 1) {
+    if (decoded is! Map<String, dynamic> ||
+        (decoded['version'] != 1 && decoded['version'] != 2)) {
       throw const FormatException('Unsupported cart snapshot');
     }
     final budget = decoded['budgetPence'];
@@ -122,10 +127,23 @@ class CartStore extends ChangeNotifier {
       }
       savedLists.add(list);
     }
+    final activeId = decoded['version'] == 2 ? decoded['activeListId'] : null;
+    if (activeId != null) {
+      if (activeId is! String || !listIds.contains(activeId)) {
+        throw const FormatException('Invalid active shopping list');
+      }
+      final active = savedLists.firstWhere((list) => list.id == activeId);
+      if (active.budgetPence != budget || !_sameItems(active.items, items)) {
+        throw const FormatException(
+          'Active shopping list does not match basket',
+        );
+      }
+    }
     // Publish only after the whole snapshot has passed validation.
     _items = List.unmodifiable(items);
     _savedLists = List.unmodifiable(savedLists);
     _budgetPence = budget as int?;
+    _activeListId = activeId as String?;
   }
 
   Future<void> setBudget(int? budgetPence) async {
@@ -286,6 +304,8 @@ class CartStore extends ChangeNotifier {
   Future<void> clearCart() async {
     await load();
     if (_disposed || _items.isEmpty) return;
+    // Clear is an explicit way to leave a shop, preserving its named list.
+    _activeListId = null;
     _items = const [];
     await _commit();
   }
@@ -299,27 +319,37 @@ class CartStore extends ChangeNotifier {
     await load();
     if (_disposed) return;
     if (_items.isEmpty) throw StateError('Add products before saving a list.');
-    _savedLists = List.unmodifiable([
-      SavedShoppingList(
-        id: _newId(),
-        name: trimmedName,
-        items: _items,
-        budgetPence: _budgetPence,
-        savedAt: DateTime.now(),
-      ),
-      ..._savedLists,
-    ]);
+    final saved = SavedShoppingList(
+      id: _newId(),
+      name: trimmedName,
+      items: _items,
+      budgetPence: _budgetPence,
+      savedAt: DateTime.now(),
+    );
+    _savedLists = List.unmodifiable([saved, ..._savedLists]);
+    _activeListId = saved.id;
     await _commit();
   }
 
-  Future<void> startFromList(String id, {required bool startFresh}) async {
+  /// Continue the same named shop, retaining its product IDs and progress.
+  Future<bool> resumeList(String id) async {
     await load();
-    if (_disposed) return;
-    SavedShoppingList? savedList;
-    for (final list in _savedLists) {
-      if (list.id == id) savedList = list;
-    }
-    if (savedList == null) return;
+    if (_disposed) return false;
+    final saved = _savedListForId(id);
+    if (saved == null) return false;
+    _items = saved.items;
+    _budgetPence = saved.budgetPence;
+    _activeListId = saved.id;
+    await _commit();
+    return true;
+  }
+
+  Future<bool> startFromList(String id, {required bool startFresh}) async {
+    await load();
+    if (_disposed) return false;
+    final savedList = _savedListForId(id);
+    if (savedList == null) return false;
+    _activeListId = null;
     _items = List.unmodifiable(
       savedList.items.map(
         (item) => CartItem(
@@ -333,6 +363,7 @@ class CartStore extends ChangeNotifier {
     );
     _budgetPence = startFresh ? null : savedList.budgetPence;
     await _commit();
+    return true;
   }
 
   Future<void> removeSavedList(String id) async {
@@ -341,6 +372,7 @@ class CartStore extends ChangeNotifier {
     final updated = _savedLists.where((list) => list.id != id).toList();
     if (updated.length == _savedLists.length) return;
     _savedLists = List.unmodifiable(updated);
+    if (_activeListId == id) _activeListId = null;
     await _commit();
   }
 
@@ -377,6 +409,33 @@ class CartStore extends ChangeNotifier {
     return null;
   }
 
+  SavedShoppingList? _savedListForId(String? id) {
+    for (final list in _savedLists) {
+      if (list.id == id) return list;
+    }
+    return null;
+  }
+
+  static bool _sameItems(List<CartItem> first, List<CartItem> second) =>
+      jsonEncode(first.map((item) => item.toJson()).toList()) ==
+      jsonEncode(second.map((item) => item.toJson()).toList());
+
+  void _updateActiveList() {
+    final active = activeList;
+    if (active == null ||
+        (active.budgetPence == _budgetPence &&
+            _sameItems(active.items, _items))) {
+      return;
+    }
+    _savedLists = List.unmodifiable(
+      _savedLists.map(
+        (list) => list.id == active.id
+            ? list.updated(items: _items, budgetPence: _budgetPence)
+            : list,
+      ),
+    );
+  }
+
   String _newId() => '${DateTime.now().microsecondsSinceEpoch}-${_nextId++}';
 
   void _validateItem(String name, int price, int quantity) {
@@ -392,11 +451,13 @@ class CartStore extends ChangeNotifier {
   }
 
   Future<void> _commit() {
+    _updateActiveList();
     _hasLocalEdits = true;
     _notify();
     if (_needsStorageReset) return Future.value();
     final snapshot = jsonEncode({
-      'version': 1,
+      'version': 2,
+      'activeListId': _activeListId,
       'budgetPence': _budgetPence,
       'items': _items.map((item) => item.toJson()).toList(),
       'savedLists': _savedLists.map((list) => list.toJson()).toList(),

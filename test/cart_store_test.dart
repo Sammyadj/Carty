@@ -128,6 +128,7 @@ void main() {
       await store.addItem(name: 'Milk', unitPricePence: 120, quantity: 3);
       await store.saveList('Weekly groceries');
       final saved = store.savedLists.single;
+      await store.startFromList(saved.id, startFresh: false);
       await store.updateItem(
         store.items.single.copyWith(name: 'Eggs', quantity: 1),
       );
@@ -243,7 +244,7 @@ void main() {
     () async {
       for (final value in [
         '{broken',
-        jsonEncode({'version': 2, 'items': []}),
+        jsonEncode({'version': 3, 'items': []}),
         jsonEncode({
           'version': 1,
           'items': [

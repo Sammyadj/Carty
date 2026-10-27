@@ -1,7 +1,7 @@
 import '../core/money.dart';
 import 'cart_item.dart';
 
-/// A snapshot. Starting a basket from it never changes the saved products.
+/// An immutable named list, replaced when its active shop is edited.
 class SavedShoppingList {
   static const maxNameLength = 60;
 
@@ -18,6 +18,17 @@ class SavedShoppingList {
   final List<CartItem> items;
   final int? budgetPence;
   final DateTime savedAt;
+
+  SavedShoppingList updated({
+    required List<CartItem> items,
+    required int? budgetPence,
+  }) => SavedShoppingList(
+    id: id,
+    name: name,
+    items: items,
+    budgetPence: budgetPence,
+    savedAt: DateTime.now(),
+  );
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -39,7 +50,6 @@ class SavedShoppingList {
         name.trim().isEmpty ||
         name.trim().length > maxNameLength ||
         rawItems is! List ||
-        rawItems.isEmpty ||
         rawDate is! String) {
       return null;
     }
