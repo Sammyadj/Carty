@@ -32,9 +32,9 @@ Track planned and actual prices explicitly before introducing price history or s
 
 ## Stage 3: product capture and useful comparisons
 
-Choose a product catalog and extend the item model with identifiers, pack sizes/units, categories, and licensed product images. Product icon avatars in the current UI do not supply this data. Catalog search and editable match review should use that foundation.
+The first product-capture milestone is implemented: camera or manual barcode entry, checksum validation, Open Food Facts lookup, editable name review, manual shelf-price confirmation, and duplicate-product merging. Product identifiers, brand, and display pack size persist in baskets and saved lists. A bounded local cache supports previously matched products offline; unknown or unavailable matches allow manual details. The review attributes the catalog and explains that prices come from the shopper. Physical-device scanner checks and native iOS verification remain release work.
 
-Barcode scanning can reduce typing by identifying a product. A barcode does not provide a universal current price: price lookup needs a reliable retailer or product-price source, and users must be able to enter or correct a price manually. Plan camera permission, product lookup, no-match, offline, and incorrect-result flows before integrating a scanner.
+Catalog search, normalized pack sizes/units, categories, and licensed product images remain future work. Product icon avatars do not supply these. A barcode does not provide a universal current price: automated price lookup needs a reliable retailer or product-price source, and users must be able to enter or correct a price manually.
 
 Introduce normalized pack sizes and units before unit-price comparisons such as pounds per kilogram or litre. Price refresh on list reuse and “was/current” highlights require store-specific source and timestamp data; until then reuse retains last-entered prices. Receipt capture can later help record actual purchases, with a review step for uncertain text and amounts. Any price comparison should show its source, store, and freshness rather than implying a live offer.
 

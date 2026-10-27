@@ -5,9 +5,10 @@ Carty is a Flutter shopping companion for keeping track of the cost of a basket 
 ## Current MVP
 
 - Add products with a name, unit price, and quantity; edit or remove them later.
+- Scan retail barcodes, review food product details from Open Food Facts, then confirm the shelf price and quantity. Manual barcode entry and manual product details cover camera or lookup failures.
 - See a live basket total, remaining budget, and progress. Near-budget feedback starts at 80% of the budget; spending above the budget has an explicit over-budget status.
 - Use a green Carty dashboard with product icon avatars and Home, Lists, and Tips navigation.
-- Keep the total, budget status, and Add item control visible in a bottom bar on Home and the full basket screen.
+- Keep the total, budget status, Scan barcode, and Add item controls visible in a bottom bar on Home and the full basket screen.
 - Set or remove a budget. Money is represented as integer pence, with GBP formatting.
 - Search products in the active basket and filter to products still to pick.
 - Save the current basket as a reusable shopping list, then choose and review how to reuse it.
@@ -25,6 +26,18 @@ Cart changes flow through one `CartStore`, so the home and full-cart screens dis
 Set a product's quantity to zero to keep it on the list without adding to the total. Increase its quantity as you pick it up. Deleting a product removes it from the basket entirely.
 
 To reuse a saved list, choose **Duplicate list** to copy its products, prices, quantities, and budget, or **Start fresh** to keep its products and prices while resetting every quantity to zero and clearing the budget. Continue to **Review list**, check the products, starting total, and budget, then select **Use this list**. Only that final action replaces the active basket and budget; backing out before applying leaves them unchanged. The saved original stays unchanged when you edit the new basket. Saved prices are the last prices entered when the list was saved, so check them against shelf labels as you shop.
+
+## Barcode scanning
+
+Select **Scan barcode** on Home or in the full basket. Allow camera access, hold a retail barcode inside the frame, and review the matched name, brand, and pack size. Correct the name if needed, enter the shop's **Shelf price per item**, choose the quantity to add, and confirm **Add to basket**. A scan alone never adds an item. Prices are always entered by you; the catalog supplies product identity, not a live retailer price.
+
+**Enter barcode manually** accepts the printed digits when camera access is denied or unavailable. EAN-8, UPC-A, EAN-13, and GTIN-14 barcodes are checksum validated; QR codes and UPC-E are outside this first version. Open Food Facts mainly covers food, so an unknown barcode, a failed connection, or a busy lookup still lets you enter the product name and price manually.
+
+Scanning a product already in the basket combines its quantity with the existing line. The review explains that the newly confirmed unit price applies to the entire combined line. Barcode metadata survives restarts and saved-list reuse; ordinary manual products are not merged just because their names match.
+
+The last 100 successful catalog matches are cached privately on this device for reuse offline. **Look up again** requests fresh product details, without changing your price. Requests are spaced at least five seconds apart; busy or failed lookups allow manual entry. Cached details can become outdated, so review the packaging and shelf label.
+
+The camera is opened only from the scanner screen. Camera images are processed on the device; Carty sends the barcode to [Open Food Facts](https://world.openfoodfacts.org/) for product lookup, along with ordinary network request information. Basket contents, quantities, budgets, and saved lists are not uploaded. Product data is attributed in the review and provided under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/). Product photographs are not used in this version.
 
 ## Run locally
 
@@ -48,6 +61,8 @@ flutter test
 
 GitHub Actions checks formatting, analysis, and tests on pushes and pull requests. Tests should protect user-visible behavior: accurate totals, valid edits, state shared across screens, saved-list reuse, and storage failure handling.
 
+Scanner tests use a fake camera and HTTP client to cover duplicate detections, permission failures, lifecycle changes, product lookup, offline cache, manual fallback, and confirmed cart changes. Camera focus, flashlight behavior, permission settings, and detection speed still need checks on physical Android and iOS devices. Rebuild the app after adding the camera plugin; hot reload alone cannot install native plugins or permission descriptions. `mobile_scanner` is pinned to 7.0.0 to retain compatibility with the current Flutter and Android toolchain.
+
 ## Development workflow
 
 Follow [AGENTS.md](AGENTS.md): build small, working milestones and commit each with its relevant regression tests. Format, analyze, and run appropriate tests before committing; check documentation-only diffs. Use concise commit messages, preserve unrelated work, and push only when publishing has been authorized.
@@ -66,11 +81,11 @@ Passing Dart analysis and Flutter tests does not by itself confirm that native A
 
 ```text
 lib/
-  core/       Money parsing and formatting
-  models/     Immutable cart items and saved shopping lists
+  core/       Money parsing and retail barcode validation
+  models/     Immutable cart items, product details, and saved shopping lists
   state/      CartStore: basket actions, derived totals, and persistence coordination
-  data/       CartStorage interface and local storage implementation
-  screens/    Home navigation, full basket, and saved-list choice/review flow
+  data/       Local cart storage and cached product lookup
+  screens/    Home, basket, list reuse, barcode capture, and product review
   widgets/    Forms, cart tiles, budget summary, lists, and tips
   base/res/   Shared theme and styles
 ```
@@ -83,12 +98,14 @@ Prices are stored as pence rather than floating-point pounds. Totals and remaini
 
 This MVP saves the basket, budget, and saved lists in a versioned JSON snapshot on the device using `shared_preferences`. It is convenient storage for a small personal basket and saved lists, not a durable financial record or backup service. Device removal, app-data clearing, or uninstalling the app can lose data.
 
+Saved lists live in the app's private preferences, not as files in your Documents folder. The product cache uses a separate preferences key and can be discarded without altering the basket or saved lists. Existing version-1 baskets without barcode metadata remain readable.
+
 Save failures show a **Retry** action; keep the app open while resolving them. If saved data cannot be read, Carty preserves it and blocks replacement writes. **Retry** can try loading it again before local edits are made. A confirmed **Reset saved data** allows the current basket and lists to replace the unreadable snapshot.
 
-There are no accounts, cloud sync, live retailer prices, barcode scanning, AI calls, or shopping-history records in this stage. Prices are entered by the user, and a basket total is an estimate of the checkout amount. The app currently supports GBP only.
+There are no accounts, cloud sync, live retailer prices, AI calls, or shopping-history records in this stage. Prices are entered by the user, and a basket total is an estimate of the checkout amount. The app currently supports GBP only.
 
 ## Product direction and release preparation
 
-See [the mockup gap analysis](docs/MOCKUP_GAP_ANALYSIS.md) for what matches the three reference images and what remains, and [the roadmap](docs/ROADMAP.md) for the next stages and the choices behind them. The green brand and functional Home, Lists, and Tips navigation adapt the references to the current local MVP. Product avatars are icon hints rather than catalog photos; scanning, price refresh, and the mockups' advanced recommendations still need their supporting data and integrations.
+See [the mockup gap analysis](docs/MOCKUP_GAP_ANALYSIS.md) for what matches the three reference images and what remains, and [the roadmap](docs/ROADMAP.md) for the next stages and the choices behind them. The green brand, Home/Lists/Tips navigation, and barcode-to-review flow adapt the references to the current app. Product avatars are icon hints rather than catalog photos; live price refresh and the mockups' advanced recommendations still need their supporting data and integrations.
 
 Before a store release, configure production Android signing, confirm app identifiers and iOS signing, finish the app icons and store metadata, and test on physical Android and iOS devices. The existing Android release configuration uses a debug key and must be replaced for publishing. Review platform minimum versions and privacy disclosures when adding new plugins. A Flutter SDK upgrade is a separate, tested migration; it is not required to understand or continue this MVP.
