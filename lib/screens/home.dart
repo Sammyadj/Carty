@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../design/carty_design.dart';
+
 import '../base/utils/cart_dialogs.dart';
+import '../design/design_picker.dart';
 import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
@@ -49,15 +51,15 @@ class _HomePageState extends State<HomePage> {
     animation: store,
     builder: (context, _) => Scaffold(
       appBar: AppBar(
-        toolbarHeight: 76,
+        toolbarHeight: 68,
         titleSpacing: 20,
         title: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: AppColors.primaryColor,
+                color: CartyDesign.of(context).primaryColor,
                 borderRadius: BorderRadius.circular(13),
               ),
               child: const Icon(
@@ -66,23 +68,29 @@ class _HomePageState extends State<HomePage> {
                 size: 23,
               ),
             ),
-            const SizedBox(width: 12),
-            const Flexible(
+            const SizedBox(width: 9),
+            Flexible(
               child: Text(
                 'Carty',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 30,
+                  fontSize: 25,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -1.1,
-                  color: AppColors.primaryDark,
+                  color: CartyDesign.of(context).primaryDark,
                 ),
               ),
             ),
           ],
         ),
         actions: [
+          IconButton(
+            key: const Key('design-picker'),
+            tooltip: 'Explore designs',
+            onPressed: () => showDesignPicker(context),
+            icon: const Icon(Icons.tune_rounded),
+          ),
           IconButton(
             key: const Key('new-list'),
             tooltip: 'New list',
@@ -103,9 +111,9 @@ class _HomePageState extends State<HomePage> {
               context: context,
               applicationName: 'Carty',
               applicationVersion: '1.0.0',
-              applicationIcon: const Icon(
+              applicationIcon: Icon(
                 Icons.shopping_cart_rounded,
-                color: AppColors.primaryColor,
+                color: CartyDesign.of(context).primaryColor,
                 size: 36,
               ),
               children: [
@@ -118,9 +126,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            icon: const Icon(
+            icon: Icon(
               Icons.info_outline_rounded,
-              color: AppColors.textSecondary,
+              color: CartyDesign.of(context).textSecondary,
             ),
           ),
           const SizedBox(width: 8),
@@ -220,9 +228,12 @@ class _Dashboard extends StatelessWidget {
     key: const PageStorageKey('home-dashboard'),
     padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
     children: [
-      const Text(
+      Text(
         'Your smart shopping companion',
-        style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        style: TextStyle(
+          color: CartyDesign.of(context).textSecondary,
+          fontSize: 14,
+        ),
       ),
       const SizedBox(height: 24),
       StorageNotice(store: store),
@@ -288,7 +299,7 @@ class _Dashboard extends StatelessWidget {
               onPressed: () =>
                   confirmAndClearCart(context: context, store: store),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
+                foregroundColor: CartyDesign.of(context).textSecondary,
               ),
               icon: const Icon(Icons.delete_sweep_outlined, size: 18),
               label: const Text('Clear cart'),
@@ -305,21 +316,24 @@ class _Dashboard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.mint,
+            color: CartyDesign.of(context).mint,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: const Row(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.bookmarks_outlined, color: AppColors.primaryColor),
-              SizedBox(width: 12),
+              Icon(
+                Icons.bookmarks_outlined,
+                color: CartyDesign.of(context).primaryColor,
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Your regular shop, ready to go. Save a basket as a list and reuse it next time.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.5,
-                    color: AppColors.primaryDark,
+                    color: CartyDesign.of(context).primaryDark,
                   ),
                 ),
               ),
@@ -355,9 +369,12 @@ class _TipsPage extends StatelessWidget {
         style: Theme.of(context).textTheme.headlineMedium,
       ),
       const SizedBox(height: 10),
-      const Text(
+      Text(
         'A few useful pointers, based on your basket and budget.',
-        style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+        style: TextStyle(
+          color: CartyDesign.of(context).textSecondary,
+          height: 1.5,
+        ),
       ),
       const SizedBox(height: 24),
       ShoppingTips(store: store, expanded: true),

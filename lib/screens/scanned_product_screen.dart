@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../design/carty_design.dart';
+
 import 'package:flutter/services.dart';
 
-import '../base/res/styles/app_styles.dart';
 import '../core/money.dart';
 import '../data/product_repository.dart';
 import '../models/cart_item.dart';
@@ -132,10 +134,10 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'The barcode identifies the product. Enter the unit price shown in this shop before adding it.',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: CartyDesign.of(context).textSecondary,
                         height: 1.5,
                       ),
                     ),
@@ -203,15 +205,15 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.warningLight,
+                          color: CartyDesign.of(context).warningLight,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Text(
                           '${existing.quantity} already in your basket at ${Money.format(existing.unitPricePence)} each. '
                           'Adding will combine the quantities and use the price you enter for every item in this line.',
                           key: const Key('scan-merge-notice'),
-                          style: const TextStyle(
-                            color: AppColors.warning,
+                          style: TextStyle(
+                            color: CartyDesign.of(context).warning,
                             height: 1.5,
                           ),
                         ),
@@ -222,7 +224,9 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
                         padding: const EdgeInsets.only(top: 12),
                         child: Text(
                           _saveError!,
-                          style: const TextStyle(color: AppColors.error),
+                          style: TextStyle(
+                            color: CartyDesign.of(context).error,
+                          ),
                         ),
                       ),
                     const SizedBox(height: 20),
@@ -233,12 +237,12 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
                       label: Text(_saving ? 'Adding…' : 'Add to basket'),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
+                    Text(
                       'Only add it once you have checked the product and price.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: CartyDesign.of(context).textSecondary,
                       ),
                     ),
                   ],
@@ -278,7 +282,7 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.mint,
+        color: CartyDesign.of(context).mint,
         borderRadius: BorderRadius.circular(22),
       ),
       child: Column(
@@ -292,7 +296,7 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(color: AppColors.primaryDark),
+                      ?.copyWith(color: CartyDesign.of(context).primaryDark),
                 ),
               ),
               if (_loading)
@@ -311,45 +315,60 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
             const SizedBox(height: 8),
             Text(
               description,
-              style: const TextStyle(color: AppColors.primaryDark, height: 1.5),
+              style: TextStyle(
+                color: CartyDesign.of(context).primaryDark,
+                height: 1.5,
+              ),
             ),
           ],
           if (!_loading &&
               product != null &&
               status != ProductLookupStatus.found) ...[
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Lookup unavailable. Check these saved details against the packaging.',
-              style: TextStyle(color: AppColors.warning, height: 1.5),
+              style: TextStyle(
+                color: CartyDesign.of(context).warning,
+                height: 1.5,
+              ),
             ),
           ],
           const SizedBox(height: 12),
           Text(
             'Barcode ${widget.barcode}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: CartyDesign.of(context).textSecondary,
             ),
           ),
           if (product?.fromOpenFoodFacts == true) ...[
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Product data: Open Food Facts · ODbL',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: CartyDesign.of(context).textSecondary,
+              ),
             ),
           ],
           if (product?.source == ProductSource.upcitemdb) ...[
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Product data: UPCitemdb',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: CartyDesign.of(context).textSecondary,
+              ),
             ),
           ],
           if (product?.source == ProductSource.manual) ...[
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Product details you entered on this device',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: CartyDesign.of(context).textSecondary,
+              ),
             ),
           ],
           if (!_loading)

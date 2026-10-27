@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../design/carty_design.dart';
+
 import '../base/utils/cart_dialogs.dart';
 import '../state/cart_store.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
@@ -156,22 +157,24 @@ class _CartFullScreenState extends State<CartFullScreen> {
                       sliver: SliverToBoxAdapter(child: EmptyCartMessage()),
                     ),
                   if (store.items.isNotEmpty && items.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
                             Icon(
                               Icons.search_off_rounded,
-                              color: AppColors.textSecondary,
+                              color: CartyDesign.of(context).textSecondary,
                               size: 36,
                             ),
-                            SizedBox(height: 12),
-                            Text('No products match this view.'),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 12),
+                            const Text('No products match this view.'),
+                            const SizedBox(height: 4),
                             Text(
                               'Try a different search or choose All.',
-                              style: TextStyle(color: AppColors.textSecondary),
+                              style: TextStyle(
+                                color: CartyDesign.of(context).textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -225,7 +228,8 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 store: store,
                               ),
                               style: TextButton.styleFrom(
-                                foregroundColor: AppColors.textSecondary,
+                                foregroundColor: CartyDesign.of(context)
+                                    .textSecondary,
                               ),
                               icon: const Icon(
                                 Icons.delete_sweep_outlined,

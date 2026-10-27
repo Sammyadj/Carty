@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../design/carty_design.dart';
+
 import 'package:flutter/services.dart';
 
-import '../../base/res/styles/app_styles.dart';
 import '../../core/money.dart';
 import '../../models/cart_item.dart';
 
@@ -73,14 +75,14 @@ class _CartItemEditorState extends State<CartItemEditor> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.mint,
+              color: CartyDesign.of(context).mint,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               widget.item == null
                   ? Icons.add_shopping_cart_outlined
                   : Icons.edit_outlined,
-              color: AppColors.primaryColor,
+              color: CartyDesign.of(context).primaryColor,
               size: 22,
             ),
           ),
@@ -88,7 +90,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
           Text(
             widget.item == null ? 'Add an item' : 'Edit item',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: AppColors.textPrimary,
+              color: CartyDesign.of(context).textPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -98,7 +100,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
                 ? 'Keep track of your shop as you go.'
                 : 'Update the details in your basket.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: CartyDesign.of(context).textSecondary,
               height: 1.5,
             ),
           ),
@@ -178,18 +180,18 @@ class _CartItemEditorState extends State<CartItemEditor> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.mint,
+                    color: CartyDesign.of(context).mint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
                         child: Icon(
                           Icons.info_outline,
                           size: 17,
-                          color: AppColors.primaryColor,
+                          color: CartyDesign.of(context).primaryColor,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -197,7 +199,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
                         child: Text(
                           'Use 0 to keep an item on your list until you pick it up.',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.primaryDark,
+                            color: CartyDesign.of(context).primaryDark,
                             height: 1.5,
                           ),
                         ),
@@ -213,14 +215,16 @@ class _CartItemEditorState extends State<CartItemEditor> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+          style: TextButton.styleFrom(
+            foregroundColor: CartyDesign.of(context).textSecondary,
+          ),
           child: const Text('Cancel'),
         ),
         FilledButton(
           key: const Key('item-save'),
           onPressed: _save,
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primaryColor,
+            backgroundColor: CartyDesign.of(context).primaryColor,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             shape: RoundedRectangleBorder(
@@ -243,15 +247,15 @@ class _CartItemEditorState extends State<CartItemEditor> {
     prefixText: prefixText,
     counterText: '',
     filled: true,
-    fillColor: AppColors.backgroundColor,
+    fillColor: CartyDesign.of(context).backgroundColor,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderColor),
+      borderSide: BorderSide(color: CartyDesign.of(context).borderColor),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderColor),
+      borderSide: BorderSide(color: CartyDesign.of(context).borderColor),
     ),
     errorMaxLines: 3,
   );

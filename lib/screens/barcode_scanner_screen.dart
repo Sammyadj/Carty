@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../design/carty_design.dart';
+
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../base/res/styles/app_styles.dart';
@@ -69,10 +72,10 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.backgroundColor,
+        backgroundColor: CartyDesign.of(context).backgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.backgroundColor,
-          foregroundColor: AppColors.textPrimary,
+          backgroundColor: CartyDesign.of(context).backgroundColor,
+          foregroundColor: CartyDesign.of(context).textPrimary,
           title: const Text(
             'Scan a barcode',
             maxLines: 1,
@@ -88,13 +91,13 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    Text(
                       'A little scan.\nA smarter shop.',
                       style: TextStyle(
                         fontSize: 28,
                         height: 1.15,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primaryDark,
+                        color: CartyDesign.of(context).primaryDark,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -103,12 +106,12 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                       style: AppTextStyles.body,
                     ),
                     const SizedBox(height: 10),
-                    const Text(
+                    Text(
                       'Barcodes are sent to Open Food Facts, then UPCitemdb '
                       'if needed, for product details. Camera images stay on your device. '
                       'You confirm the shelf price.',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: CartyDesign.of(context).textSecondary,
                         fontSize: 12,
                         height: 1.5,
                       ),
@@ -126,8 +129,12 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                                   active: !_manualOpen && !_completed,
                                   onBarcode: _onBarcode,
                                 ),
-                            const IgnorePointer(
-                              child: CustomPaint(painter: _ScanFramePainter()),
+                            IgnorePointer(
+                              child: CustomPaint(
+                                painter: _ScanFramePainter(
+                                  CartyDesign.of(context).mint,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -137,15 +144,15 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.mint,
+                        color: CartyDesign.of(context).mint,
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.center_focus_strong_rounded,
-                            color: AppColors.primaryColor,
+                            color: CartyDesign.of(context).primaryColor,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -153,8 +160,8 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                               _scanMessage ??
                                   'Keep the bars inside the frame and hold '
                                       'steady. We’ll read the number for you.',
-                              style: const TextStyle(
-                                color: AppColors.primaryDark,
+                              style: TextStyle(
+                                color: CartyDesign.of(context).primaryDark,
                                 height: 1.45,
                               ),
                             ),
@@ -167,8 +174,10 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                       key: const ValueKey('barcode-manual'),
                       onPressed: _completed ? null : _enterManually,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryColor,
-                        side: const BorderSide(color: AppColors.borderColor),
+                        foregroundColor: CartyDesign.of(context).primaryColor,
+                        side: BorderSide(
+                          color: CartyDesign.of(context).borderColor,
+                        ),
                         backgroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -185,12 +194,12 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Works with retail product barcodes. QR codes aren’t '
                       'supported.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: CartyDesign.of(context).textSecondary,
                         fontSize: 12,
                         height: 1.5,
                       ),
@@ -419,7 +428,7 @@ class _BarcodeCameraState extends State<_BarcodeCamera>
             },
           ),
           placeholderBuilder: (_) =>
-              const ColoredBox(color: AppColors.primaryDark),
+              ColoredBox(color: CartyDesign.of(context).primaryDark),
         ),
         if (_operationError case final message?)
           _CameraMessage(message: message),
@@ -459,7 +468,7 @@ class _CameraMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppColors.primaryDark,
+      color: CartyDesign.of(context).primaryDark,
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
@@ -486,13 +495,14 @@ class _CameraMessage extends StatelessWidget {
 }
 
 class _ScanFramePainter extends CustomPainter {
-  const _ScanFramePainter();
+  const _ScanFramePainter(this.color);
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
     final frame = Rect.fromLTWH(18, 18, size.width - 36, size.height - 36);
     final paint = Paint()
-      ..color = AppColors.mint
+      ..color = color
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -516,5 +526,6 @@ class _ScanFramePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ScanFramePainter oldDelegate) => false;
+  bool shouldRepaint(_ScanFramePainter oldDelegate) =>
+      color != oldDelegate.color;
 }

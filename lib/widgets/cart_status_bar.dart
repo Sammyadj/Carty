@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../design/carty_design.dart';
+
 import '../base/utils/cart_dialogs.dart';
 import '../base/utils/barcode_flow.dart';
 import '../core/money.dart';
@@ -19,9 +20,11 @@ class CartStatusBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final remaining = store.remainingPence;
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.borderColor)),
+        border: Border(
+          top: BorderSide(color: CartyDesign.of(context).borderColor),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -41,7 +44,7 @@ class CartStatusBar extends StatelessWidget {
                         child: _StatusMetric(
                           label: 'BASKET TOTAL',
                           value: Money.format(store.totalPence),
-                          color: AppColors.textPrimary,
+                          color: CartyDesign.of(context).textPrimary,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -56,8 +59,8 @@ class CartStatusBar extends StatelessWidget {
                               ? 'Not set'
                               : Money.format(remaining.abs()),
                           color: store.isOverBudget
-                              ? AppColors.error
-                              : AppColors.primaryColor,
+                              ? CartyDesign.of(context).error
+                              : CartyDesign.of(context).primaryColor,
                         ),
                       ),
                     ],
@@ -135,10 +138,10 @@ class _StatusMetric extends StatelessWidget {
     children: [
       Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,
-          color: AppColors.textSecondary,
+          color: CartyDesign.of(context).textSecondary,
           letterSpacing: 0.7,
         ),
       ),

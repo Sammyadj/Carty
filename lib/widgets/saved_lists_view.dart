@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../design/carty_design.dart';
+
 import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
 import 'saved_list_card.dart';
@@ -34,19 +35,22 @@ class SavedListsView extends StatelessWidget {
               key: const PageStorageKey('saved-lists-scroll'),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
-                const Text(
+                Text(
                   'Your saved lists',
                   style: TextStyle(
                     fontSize: 26,
                     height: 1.2,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: CartyDesign.of(context).textPrimary,
                   ),
                 ),
                 const SizedBox(height: 9),
-                const Text(
+                Text(
                   'Keep the essentials close. Reuse a list whenever you shop.',
-                  style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                  style: TextStyle(
+                    color: CartyDesign.of(context).textSecondary,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
@@ -61,8 +65,8 @@ class SavedListsView extends StatelessWidget {
                 else ...[
                   Text(
                     '${store.savedLists.length} ${store.savedLists.length == 1 ? 'saved list' : 'saved lists'}',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: CartyDesign.of(context).textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -86,8 +90,8 @@ class SavedListsView extends StatelessWidget {
                     ),
                     side: BorderSide(
                       color: store.items.isEmpty
-                          ? AppColors.borderColor
-                          : AppColors.primaryColor,
+                          ? CartyDesign.of(context).borderColor
+                          : CartyDesign.of(context).primaryColor,
                     ),
                   ),
                   icon: const Icon(Icons.add_rounded),
@@ -102,8 +106,8 @@ class SavedListsView extends StatelessWidget {
                       ? 'Add products to your basket, then save them here for next time.'
                       : 'Save your products, quantities and budget for another shop.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: CartyDesign.of(context).textSecondary,
                     fontSize: 12,
                     height: 1.5,
                   ),
@@ -126,39 +130,42 @@ class _EmptySavedLists extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: CartyDesign.of(context).borderColor),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.mint,
+              color: CartyDesign.of(context).mint,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.bookmark_border_rounded,
               size: 36,
-              color: AppColors.primaryColor,
+              color: CartyDesign.of(context).primaryColor,
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Make your next shop easier',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 19,
               height: 1.3,
-              color: AppColors.textPrimary,
+              color: CartyDesign.of(context).textPrimary,
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Your regular groceries deserve a place of their own. Save a basket to create your first list.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+            style: TextStyle(
+              color: CartyDesign.of(context).textSecondary,
+              height: 1.5,
+            ),
           ),
         ],
       ),

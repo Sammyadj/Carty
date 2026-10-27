@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../base/res/styles/app_styles.dart';
+import '../../design/carty_design.dart';
+
 import '../../core/money.dart';
 import '../../models/cart_item.dart';
 import '../product_avatar.dart';
@@ -30,7 +31,7 @@ class CartItemTile extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.borderColor),
+        side: BorderSide(color: CartyDesign.of(context).borderColor),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 14, 10, 8),
@@ -51,7 +52,7 @@ class CartItemTile extends StatelessWidget {
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: CartyDesign.of(context).textPrimary,
                           height: 1.3,
                         ),
                       ),
@@ -64,14 +65,14 @@ class CartItemTile extends StatelessWidget {
                           Text(
                             '${Money.format(item.unitPricePence)} each',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: CartyDesign.of(context).textSecondary,
                             ),
                           ),
                           Text(
                             Money.format(item.totalPence),
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: AppColors.primaryDark,
+                              color: CartyDesign.of(context).primaryDark,
                             ),
                           ),
                         ],
@@ -82,7 +83,7 @@ class CartItemTile extends StatelessWidget {
                           child: Text(
                             'Not picked yet',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.warning,
+                              color: CartyDesign.of(context).warning,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -103,9 +104,11 @@ class CartItemTile extends StatelessWidget {
                 children: [
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundColor,
+                      color: CartyDesign.of(context).backgroundColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.borderColor),
+                      border: Border.all(
+                        color: CartyDesign.of(context).borderColor,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -118,7 +121,7 @@ class CartItemTile extends StatelessWidget {
                             minWidth: 44,
                             minHeight: 44,
                           ),
-                          color: AppColors.primaryColor,
+                          color: CartyDesign.of(context).primaryColor,
                           icon: const Icon(Icons.remove, size: 18),
                         ),
                         ConstrainedBox(
@@ -129,7 +132,7 @@ class CartItemTile extends StatelessWidget {
                               '${item.quantity}',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.labelLarge?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: CartyDesign.of(context).textPrimary,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -145,7 +148,7 @@ class CartItemTile extends StatelessWidget {
                             minWidth: 44,
                             minHeight: 44,
                           ),
-                          color: AppColors.primaryColor,
+                          color: CartyDesign.of(context).primaryColor,
                           icon: const Icon(Icons.add, size: 18),
                         ),
                       ],
@@ -162,7 +165,7 @@ class CartItemTile extends StatelessWidget {
                           minWidth: 44,
                           minHeight: 44,
                         ),
-                        color: AppColors.textSecondary,
+                        color: CartyDesign.of(context).textSecondary,
                         icon: const Icon(Icons.edit_outlined, size: 19),
                       ),
                       IconButton(
@@ -173,7 +176,7 @@ class CartItemTile extends StatelessWidget {
                           minWidth: 44,
                           minHeight: 44,
                         ),
-                        color: AppColors.textSecondary,
+                        color: CartyDesign.of(context).textSecondary,
                         icon: const Icon(Icons.delete_outline, size: 20),
                       ),
                     ],

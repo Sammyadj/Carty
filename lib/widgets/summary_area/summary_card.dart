@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../base/res/styles/app_styles.dart';
+import '../../design/carty_design.dart';
+
 import '../../core/money.dart';
 
 class SummaryCard extends StatelessWidget {
@@ -23,10 +24,10 @@ class SummaryCard extends StatelessWidget {
     final ratio = budgetPence == null ? 0.0 : totalPence / budgetPence!;
     final near = !over && ratio >= 0.8;
     final statusColor = over
-        ? AppColors.error
+        ? CartyDesign.of(context).error
         : near
-        ? AppColors.warning
-        : AppColors.primaryColor;
+        ? CartyDesign.of(context).warning
+        : CartyDesign.of(context).primaryColor;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -35,10 +36,10 @@ class SummaryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: CartyDesign.of(context).borderColor),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryDark.withValues(alpha: 0.04),
+            color: CartyDesign.of(context).primaryDark.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -65,8 +66,8 @@ class SummaryCard extends StatelessWidget {
                   key: const Key('budget-edit'),
                   onPressed: onEditBudget,
                   style: TextButton.styleFrom(
-                    backgroundColor: AppColors.mint,
-                    foregroundColor: AppColors.primaryDark,
+                    backgroundColor: CartyDesign.of(context).mint,
+                    foregroundColor: CartyDesign.of(context).primaryDark,
                     minimumSize: const Size(48, 44),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
@@ -83,7 +84,7 @@ class SummaryCard extends StatelessWidget {
             Money.format(budgetPence ?? totalPence),
             style: theme.textTheme.headlineLarge?.copyWith(
               fontSize: 38,
-              color: AppColors.primaryDark,
+              color: CartyDesign.of(context).primaryDark,
             ),
           ),
           const SizedBox(height: 20),
@@ -94,7 +95,7 @@ class SummaryCard extends StatelessWidget {
                 value: ratio.clamp(0.0, 1.0),
                 minHeight: 10,
                 color: statusColor,
-                backgroundColor: AppColors.borderColor,
+                backgroundColor: CartyDesign.of(context).borderColor,
                 semanticsLabel: 'Budget used',
               ),
             ),
@@ -106,7 +107,7 @@ class SummaryCard extends StatelessWidget {
                   child: _BudgetMetric(
                     label: 'Spent',
                     value: Money.format(totalPence),
-                    color: AppColors.textPrimary,
+                    color: CartyDesign.of(context).textPrimary,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -128,8 +129,8 @@ class SummaryCard extends StatelessWidget {
                 color: over
                     ? const Color(0xFFFBECEC)
                     : near
-                    ? AppColors.warningLight
-                    : AppColors.mint,
+                    ? CartyDesign.of(context).warningLight
+                    : CartyDesign.of(context).mint,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -162,9 +163,12 @@ class SummaryCard extends StatelessWidget {
               ),
             ),
           ] else
-            const Text(
+            Text(
               'Give this shop a budget to keep your spending on track.',
-              style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+              style: TextStyle(
+                color: CartyDesign.of(context).textSecondary,
+                height: 1.5,
+              ),
             ),
         ],
       ),
