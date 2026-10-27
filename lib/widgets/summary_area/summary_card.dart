@@ -24,26 +24,10 @@ class SummaryCard extends StatelessWidget {
     final over = remaining != null && remaining < 0;
     final ratio = budgetPence == null ? 0.0 : totalPence / budgetPence!;
     final near = !over && ratio >= 0.8;
-    if (design.variant != DesignVariant.city) {
-      return _AlternativeBudget(
-        design: design,
-        totalPence: totalPence,
-        budgetPence: budgetPence,
-        remaining: remaining,
-        ratio: ratio,
-        over: over,
-        near: near,
-        onEditBudget: onEditBudget,
-      );
-    }
     final statusColor = over
-        ? (design.variant == DesignVariant.pantry
-              ? design.error
-              : const Color(0xFFFFBAB6))
+        ? const Color(0xFFFFBAB6)
         : near
-        ? (design.variant == DesignVariant.pantry
-              ? design.warning
-              : const Color(0xFFFFD891))
+        ? const Color(0xFFFFD891)
         : design.heroAccent;
     return Container(
       decoration: BoxDecoration(
@@ -109,7 +93,7 @@ class SummaryCard extends StatelessWidget {
               ),
               if (MediaQuery.sizeOf(context).width >= 360 &&
                   MediaQuery.textScalerOf(context).scale(1) < 1.3)
-                _BudgetMark(design: design, ratio: ratio.clamp(0.0, 1.0)),
+                _BudgetMark(design: design),
             ],
           ),
           const SizedBox(height: 12),
@@ -237,288 +221,22 @@ class _BudgetMetric extends StatelessWidget {
 }
 
 class _BudgetMark extends StatelessWidget {
-  const _BudgetMark({required this.design, required this.ratio});
+  const _BudgetMark({required this.design});
   final CartyDesign design;
-  final double ratio;
+
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
-    child: switch (design.variant) {
-      DesignVariant.city => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: design.heroAccent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          Icons.account_balance_wallet_outlined,
-          color: design.heroColor,
-          size: 28,
-        ),
-      ),
-      DesignVariant.fresh => SizedBox(
-        width: 52,
-        height: 52,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox.expand(
-              child: CircularProgressIndicator(
-                value: ratio,
-                color: design.heroAccent,
-                backgroundColor: Colors.white24,
-                strokeWidth: 5,
-              ),
-            ),
-            Icon(Icons.shopping_bag_outlined, color: design.heroInk, size: 24),
-          ],
-        ),
-      ),
-      DesignVariant.pantry => Transform.rotate(
-        angle: -.13,
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: design.heroInk,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Icon(
-            Icons.shopping_basket_rounded,
-            color: design.heroColor,
-            size: 32,
-          ),
-        ),
-      ),
-    },
-  );
-}
-
-class _AlternativeBudget extends StatelessWidget {
-  const _AlternativeBudget({
-    required this.design,
-    required this.totalPence,
-    required this.budgetPence,
-    required this.remaining,
-    required this.ratio,
-    required this.over,
-    required this.near,
-    required this.onEditBudget,
-  });
-  final CartyDesign design;
-  final int totalPence;
-  final int? budgetPence;
-  final int? remaining;
-  final double ratio;
-  final bool over;
-  final bool near;
-  final VoidCallback onEditBudget;
-
-  @override
-  Widget build(BuildContext context) {
-    final fresh = design.variant == DesignVariant.fresh;
-    final warning = over
-        ? design.error
-        : near
-        ? design.warning
-        : design.primaryColor;
-    final status = over
-        ? 'Your basket is over budget.'
-        : near
-        ? 'You’re close to your budget.'
-        : 'Looking good. You’re within budget.';
-    final heading = Row(
-      children: [
-        Icon(
-          fresh
-              ? Icons.account_balance_wallet_outlined
-              : Icons.receipt_long_rounded,
-          color: design.primaryColor,
-          size: 20,
-        ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Text(
-            budgetPence == null ? 'Your basket so far' : 'Your shopping budget',
-            style: Theme.of(context).textTheme.titleSmall
-                ?.copyWith(fontSize: 12),
-          ),
-        ),
-        Flexible(
-          child: TextButton(
-            key: const Key('budget-edit'),
-            onPressed: onEditBudget,
-            child: Text(
-              budgetPence == null ? 'Set budget' : 'Edit',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ],
-    );
-    final amount = Column(
-      crossAxisAlignment: fresh
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.center,
-      children: [
-        Text(
-          fresh
-              ? (remaining == null
-                    ? 'Basket total'
-                    : over
-                    ? 'Over budget'
-                    : 'Left to spend')
-              : 'Basket total',
-          style: TextStyle(fontSize: 12, color: design.textSecondary),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          Money.format(
-            fresh && remaining != null ? remaining!.abs() : totalPence,
-          ),
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            fontSize: 44,
-            color: over ? design.error : design.primaryDark,
-            letterSpacing: -2,
-          ),
-        ),
-      ],
-    );
-    final details = Row(
-      children: [
-        Expanded(
-          child: _BudgetMetric(
-            label: 'Budget',
-            value: budgetPence == null ? 'Not set' : Money.format(budgetPence!),
-            color: design.primaryDark,
-            labelColor: design.textSecondary,
-          ),
-        ),
-        Expanded(
-          child: _BudgetMetric(
-            label: fresh
-                ? 'Spent'
-                : over
-                ? 'Over budget'
-                : 'Remaining',
-            value: fresh
-                ? Money.format(totalPence)
-                : remaining == null
-                ? 'Not set'
-                : Money.format(remaining!.abs()),
-            color: warning,
-            labelColor: design.textSecondary,
-            alignEnd: true,
-          ),
-        ),
-      ],
-    );
-    return Container(
-      padding: const EdgeInsets.all(18),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: fresh ? Colors.white : design.heroColor,
-        borderRadius: BorderRadius.circular(design.radius),
-        border: Border.all(color: design.borderColor),
+        color: design.heroAccent,
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          heading,
-          const SizedBox(height: 10),
-          if (fresh)
-            Row(
-              children: [
-                Expanded(child: amount),
-                if (MediaQuery.sizeOf(context).width >= 360 &&
-                    MediaQuery.textScalerOf(context).scale(1) < 1.3)
-                  ExcludeSemantics(
-                    child: SizedBox(
-                      width: 76,
-                      height: 76,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox.expand(
-                            child: CircularProgressIndicator(
-                              value: ratio.clamp(0.0, 1.0),
-                              strokeWidth: 8,
-                              color: design.primaryColor,
-                              backgroundColor: design.mint,
-                            ),
-                          ),
-                          Icon(
-                            Icons.shopping_bag_outlined,
-                            color: design.primaryColor,
-                            size: 27,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            )
-          else ...[
-            amount,
-            const SizedBox(height: 16),
-            Row(
-              children: List.generate(
-                24,
-                (_) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: Container(
-                      height: 1,
-                      color: design.heroInk.withValues(alpha: .2),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Container(
-            padding: fresh ? const EdgeInsets.all(14) : EdgeInsets.zero,
-            decoration: fresh
-                ? BoxDecoration(
-                    color: design.backgroundColor,
-                    borderRadius: BorderRadius.circular(16),
-                  )
-                : null,
-            child: details,
-          ),
-          if (budgetPence != null) ...[
-            const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  over || near
-                      ? Icons.info_outline_rounded
-                      : Icons.check_circle_outline_rounded,
-                  size: 16,
-                  color: warning,
-                ),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: warning,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            const SizedBox(height: 14),
-            Text(
-              'Give this shop a budget to keep your spending on track.',
-              style: TextStyle(color: design.textSecondary, fontSize: 12),
-            ),
-          ],
-        ],
+      child: Icon(
+        Icons.account_balance_wallet_outlined,
+        color: design.heroColor,
+        size: 28,
       ),
-    );
-  }
+    ),
+  );
 }

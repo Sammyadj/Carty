@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:carty_app/data/cart_storage.dart';
 import 'package:carty_app/data/product_repository.dart';
-import 'package:carty_app/design/carty_design.dart';
 import 'package:carty_app/main.dart';
 import 'package:carty_app/models/product_details.dart';
 import 'package:carty_app/screens/barcode_scanner_screen.dart';
@@ -93,7 +92,6 @@ Future<CartStore> _open(
   CartStore? cart,
   bool fullCart = false,
   String Function()? barcodeToCapture,
-  DesignVariant design = DesignVariant.city,
 }) async {
   final store = cart ?? CartStore(storage: InMemoryCartStorage());
   await store.load();
@@ -101,7 +99,6 @@ Future<CartStore> _open(
   final app = MyApp(
     store: store,
     productRepository: repository,
-    initialDesign: design,
     cameraBuilder: (_, onBarcode) => Center(
       child: FilledButton(
         key: const Key('test-camera-capture'),
@@ -616,41 +613,38 @@ void main() {
     },
   );
 
-  for (final design in DesignVariant.values) {
-    testWidgets(
-      '${design.name} barcode correction fits narrow phones and larger text',
-      (tester) async {
-        tester.view.physicalSize = const Size(320, 800);
-        tester.view.devicePixelRatio = 1;
-        tester.platformDispatcher.textScaleFactorTestValue = 1.6;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-        final repository = _Repository(
-          const ProductLookupResult(
-            product: _product,
-            status: ProductLookupStatus.found,
-          ),
-        );
-        final store = await _open(tester, repository, design: design);
-        await _tap(tester, 'scan-product-edit-barcode');
-        expect(await _value(tester, 'barcode-input'), _barcode);
-        repository.result = const ProductLookupResult(
-          product: _replacementProduct,
-          status: ProductLookupStatus.found,
-        );
-        await _enter(tester, 'barcode-input', _replacementBarcode);
-        await _tap(tester, 'barcode-submit');
-        expect(tester.takeException(), isNull);
-        await _tap(tester, 'scan-product-rescan');
-        await tester.pageBack();
-        await tester.pumpAndSettle();
-        await _enter(tester, 'scan-product-price', '1.50');
-        await _tap(tester, 'scan-product-add');
-        expect(store.totalPence, 150);
-        expect(store.items.single.product!.barcode, _replacementBarcode);
-        expect(tester.takeException(), isNull);
-      },
+  testWidgets('City barcode correction fits narrow phones and larger text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final repository = _Repository(
+      const ProductLookupResult(
+        product: _product,
+        status: ProductLookupStatus.found,
+      ),
     );
-  }
+    final store = await _open(tester, repository);
+    await _tap(tester, 'scan-product-edit-barcode');
+    expect(await _value(tester, 'barcode-input'), _barcode);
+    repository.result = const ProductLookupResult(
+      product: _replacementProduct,
+      status: ProductLookupStatus.found,
+    );
+    await _enter(tester, 'barcode-input', _replacementBarcode);
+    await _tap(tester, 'barcode-submit');
+    expect(tester.takeException(), isNull);
+    await _tap(tester, 'scan-product-rescan');
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await _enter(tester, 'scan-product-price', '1.50');
+    await _tap(tester, 'scan-product-add');
+    expect(store.totalPence, 150);
+    expect(store.items.single.product!.barcode, _replacementBarcode);
+    expect(tester.takeException(), isNull);
+  });
 }

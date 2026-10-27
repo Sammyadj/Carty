@@ -31,9 +31,7 @@ class CartItemTile extends StatelessWidget {
       color: Colors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          design.variant == DesignVariant.city ? 10 : design.radius,
-        ),
+        borderRadius: BorderRadius.circular(10),
         side: BorderSide(color: CartyDesign.of(context).borderColor),
       ),
       child: Padding(
@@ -108,9 +106,7 @@ class CartItemTile extends StatelessWidget {
                   DecoratedBox(
                     decoration: BoxDecoration(
                       color: design.mint,
-                      borderRadius: BorderRadius.circular(
-                        design.variant == DesignVariant.city ? 10 : 28,
-                      ),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: CartyDesign.of(context).borderColor,
                       ),

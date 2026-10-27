@@ -51,11 +51,7 @@ class ShoppingHeader extends StatelessWidget {
                     Text(
                       design.headline,
                       style: Theme.of(context).textTheme.headlineLarge
-                          ?.copyWith(
-                            fontSize: design.variant == DesignVariant.pantry
-                                ? 30
-                                : 32,
-                          ),
+                          ?.copyWith(fontSize: 32),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -102,7 +98,7 @@ class _GroceryDrawing extends CustomPainter {
     );
     canvas.save();
     canvas.translate(53, 70);
-    canvas.rotate(design.variant == DesignVariant.city ? -.12 : .12);
+    canvas.rotate(-.12);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         const Rect.fromLTWH(-31, -18, 62, 69),

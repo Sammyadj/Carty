@@ -23,20 +23,17 @@ class MyApp extends StatefulWidget {
     this.store,
     this.productRepository,
     this.cameraBuilder,
-    this.initialDesign = DesignVariant.city,
   });
 
   final CartStore? store;
   final ProductRepository? productRepository;
   final BarcodeCameraBuilder? cameraBuilder;
-  final DesignVariant initialDesign;
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  late DesignVariant _design = widget.initialDesign;
   late final CartStore _store =
       widget.store ?? CartStore(storage: SharedPreferencesCartStorage());
   late final ProductRepository _products =
@@ -60,15 +57,11 @@ class _MyAppState extends State<MyApp> {
     return ProductCatalogScope(
       repository: _products,
       cameraBuilder: widget.cameraBuilder,
-      child: DesignPreviewScope(
-        variant: _design,
-        onChanged: (value) => setState(() => _design = value),
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Carty',
-          theme: buildDesignTheme(CartyDesign.forVariant(_design)),
-          home: HomePage(store: _store),
-        ),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Carty',
+        theme: buildDesignTheme(CartyDesign.city),
+        home: HomePage(store: _store),
       ),
     );
   }

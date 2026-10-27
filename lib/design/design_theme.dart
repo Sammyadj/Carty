@@ -166,7 +166,7 @@ ThemeData buildDesignTheme(CartyDesign design) {
 
 void registerDesignFontLicenses() {
   LicenseRegistry.addLicense(() async* {
-    for (final family in ['Manrope', 'DMSans', 'NunitoSans']) {
+    for (final family in ['Manrope']) {
       yield LicenseEntryWithLineBreaks([
         family,
       ], await rootBundle.loadString('assets/fonts/$family-OFL.txt'));

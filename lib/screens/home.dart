@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../design/carty_design.dart';
 
 import '../base/utils/cart_dialogs.dart';
-import '../design/design_picker.dart';
 import '../design/shopping_header.dart';
 import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
@@ -87,12 +86,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
-          IconButton(
-            key: const Key('design-picker'),
-            tooltip: 'Explore designs',
-            onPressed: () => showDesignPicker(context),
-            icon: const Icon(Icons.tune_rounded),
-          ),
           IconButton(
             key: const Key('new-list'),
             tooltip: 'New list',

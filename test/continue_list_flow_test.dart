@@ -1,5 +1,4 @@
 import 'package:carty_app/data/cart_storage.dart';
-import 'package:carty_app/design/carty_design.dart';
 import 'package:carty_app/main.dart';
 import 'package:carty_app/screens/cart_full_screen.dart';
 import 'package:carty_app/screens/reuse_list_screen.dart';
@@ -59,12 +58,8 @@ Future<void> _enter(WidgetTester tester, String key, String value) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _open(
-  WidgetTester tester,
-  CartStore store, {
-  DesignVariant design = DesignVariant.fresh,
-}) async {
-  await tester.pumpWidget(MyApp(store: store, initialDesign: design));
+Future<void> _open(WidgetTester tester, CartStore store) async {
+  await tester.pumpWidget(MyApp(store: store));
   await tester.pumpAndSettle();
 }
 
@@ -236,26 +231,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  for (final design in DesignVariant.values) {
-    testWidgets(
-      '${design.name} continue editing fits narrow screens with large text',
-      (tester) async {
-        tester.view.physicalSize = const Size(320, 780);
-        tester.view.devicePixelRatio = 1;
-        tester.platformDispatcher.textScaleFactorTestValue = 1.6;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-        final store = await _fixture();
-        final id = store.savedLists.single.id;
-        await _open(tester, store, design: design);
-        await _review(tester, id);
-        await _tap(tester, 'reuse-apply');
-        await _reveal(tester, 'active-list-banner');
-        expect(find.text('Editing Monthly shop'), findsOneWidget);
-        expect(store.activeList!.id, id);
-        expect(tester.takeException(), isNull);
-      },
-    );
-  }
+  testWidgets('City continue editing fits narrow screens with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 780);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final store = await _fixture();
+    final id = store.savedLists.single.id;
+    await _open(tester, store);
+    await _review(tester, id);
+    await _tap(tester, 'reuse-apply');
+    await _reveal(tester, 'active-list-banner');
+    expect(find.text('Editing Monthly shop'), findsOneWidget);
+    expect(store.activeList!.id, id);
+    expect(tester.takeException(), isNull);
+  });
 }

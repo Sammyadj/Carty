@@ -14,6 +14,7 @@ dependencies:
   # Retain the tested scanner version during SDK migration.
   mobile_scanner: 7.0.0
   http: ^1.4.0
+  supabase_flutter: ^2.18.3
 
 dev_dependencies:
   flutter_test:
@@ -24,15 +25,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/fonts/Manrope-OFL.txt
-    - assets/fonts/DMSans-OFL.txt
-    - assets/fonts/NunitoSans-OFL.txt
   fonts:
     - family: Manrope
       fonts:
         - asset: assets/fonts/Manrope.ttf
-    - family: DMSans
-      fonts:
-        - asset: assets/fonts/DMSans.ttf
-    - family: NunitoSans
-      fonts:
-        - asset: assets/fonts/NunitoSans.ttf

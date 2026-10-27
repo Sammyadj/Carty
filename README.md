@@ -1,6 +1,6 @@
 # Carty
 
-This is the **UI exploration branch**. Use the Home toolbar's sliders icon (**Explore designs**) to compare City, Fresh, and Pantry while keeping the same shopping data. See [the visual comparison](docs/UI_EXPERIMENT.md) for rendered home/basket screens and the design references.
+**City** is Carty’s selected design: bold typography, a focused budget card, and lime accents. The earlier three-design experiment remains available on the [`codex/ui-exploration` branch](https://github.com/Sammyadj/Carty/tree/codex/ui-exploration).
 
 Carty is a Flutter shopping companion for keeping track of the cost of a basket and staying within a budget. It is being developed in small, understandable stages: a dependable manual shopping flow first, then useful automation.
 
