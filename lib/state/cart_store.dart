@@ -38,6 +38,29 @@ class CartStore extends ChangeNotifier {
   /// A damaged or newer snapshot is kept until the user explicitly resets it.
   bool get needsStorageReset => _needsStorageReset;
 
+  /// Named list snapshots are distinct from automatic on-device basket storage.
+  /// Ignore item IDs so a reused list still counts as saved until it is edited.
+  bool get hasUnsavedList {
+    if (_items.isEmpty) return _budgetPence != null;
+    String contents(List<CartItem> items) => jsonEncode([
+      for (final item in items) {...item.toJson()}..remove('id'),
+    ]);
+    final current = contents(_items);
+    return !_savedLists.any(
+      (list) =>
+          list.budgetPence == _budgetPence && contents(list.items) == current,
+    );
+  }
+
+  /// Begin a different shop without changing any named saved lists.
+  Future<void> startNewList() async {
+    await load();
+    if (_disposed) return;
+    _items = const [];
+    _budgetPence = null;
+    await _commit();
+  }
+
   int get totalPence => _items.fold(0, (sum, item) => sum + item.totalPence);
   int? get remainingPence =>
       _budgetPence == null ? null : _budgetPence! - totalPence;
