@@ -13,9 +13,9 @@ Carty is a Flutter shopping companion for keeping track of the cost of a basket 
 - Keep the total, budget status, Scan barcode, and Add item controls visible in a bottom bar on Home and the full basket screen.
 - Set or remove a budget. Money is represented as integer pence, with GBP formatting.
 - Search products in the active basket and filter to products still to pick.
-- Save the current basket as a reusable shopping list, then choose and review how to reuse it.
+- Save a named shopping list and continue editing it with automatic updates; duplicate it or start fresh for a separate shop.
 - Read simple tips based on the basket and budget. These are local rules, not AI recommendations or live store offers.
-- Restore the current basket, budget, and saved lists after restarting the app.
+- Restore the current basket, budget, saved lists, and the named list being edited after restarting the app.
 
 Cart changes flow through one `CartStore`, so the home and full-cart screens display the same state. Forms and layouts are designed for phone screens, keyboard input, and larger text.
 
@@ -24,12 +24,16 @@ Cart changes flow through one `CartStore`, so the home and full-cart screens dis
 Choose **Create new list** on Home or Lists, or use the **New list** toolbar action, to begin a different shop with an empty basket and no budget. If the current products or budget differ from every named saved list, Carty offers **Save and start new**, **Start without saving**, or **Cancel**. Cancelling the name form or a failed save keeps the current basket. Existing saved lists stay available. A budget-only basket can be cancelled or discarded; add products before saving it as a named list.
 
 - **Home** shows the budget summary, a shopping tip, the first three basket products, and saved-list shortcuts. Use **View all** beside the shopping list to open the full basket, where **Search your basket** matches product names and **To pick** shows only products with quantity zero. Search covers the active basket only.
-- **Lists** shows saved shopping lists. Save the current basket from this tab or with **Save as list** on either shopping screen; reuse a saved list or delete it after confirmation.
+- **Lists** shows saved shopping lists. Save the current basket from this tab or with **Save as list** on either shopping screen. Continue editing a saved list, reuse its products in a separate basket, or delete it after confirmation. The list receiving your current edits is marked **Currently editing**.
 - **Tips** expands the local shopping guidance, including budget progress, products waiting to be picked, and reminders to check saved prices.
 
 Set a product's quantity to zero to keep it on the list without adding to the total. Increase its quantity as you pick it up. Deleting a product removes it from the basket entirely.
 
-To reuse a saved list, choose **Duplicate list** to copy its products, prices, quantities, and budget, or **Start fresh** to keep its products and prices while resetting every quantity to zero and clearing the budget. Continue to **Review list**, check the products, starting total, and budget, then select **Use this list**. Only that final action replaces the active basket and budget; backing out before applying leaves them unchanged. The saved original stays unchanged when you edit the new basket. Saved prices are the last prices entered when the list was saved, so check them against shelf labels as you shop.
+To carry on an existing shop, open its saved list and choose **Continue editing** (the default). Continue to **Review list**, check the products and budget, then confirm **Continue editing**. Quantities, prices, pending products, and budget are retained. Edits and new scans update that same named list automatically. **Editing [list name]** identifies it on Home and the full basket screen. Closing and reopening Carty restores this editing state, so you can prepare a list at home and carry on in the shop without duplicating it. Saving a basket by name also starts this ongoing editing mode.
+
+Choose **Duplicate list** to copy products, prices, quantities, and budget into a separate basket, or **Start fresh** to copy the products and prices while resetting quantities to zero and clearing the budget. Review and confirm **Use this list**. These two modes keep the saved original unchanged. **Save a copy** creates another named version when you are already editing a saved list. Saved prices are your last entered prices; check them against shelf labels as you shop.
+
+Opening a different list prompts **Save and switch**, **Switch without saving**, or **Cancel** when the current basket has no matching named list. Cancelling the prompt or name form keeps the current shop. Pending writes settle before switching; if saving fails, switching is blocked until a successful retry. **Create new list** and **Clear cart** leave the named list intact and detach the new basket. Deleting a named list keeps the current basket but stops updates to the deleted list. Removing its last product keeps the named list available for editing.
 
 ## Barcode scanning
 
@@ -114,7 +118,7 @@ Prices are stored as pence rather than floating-point pounds. Totals and remaini
 
 This MVP saves the basket, budget, and saved lists in a versioned JSON snapshot on the device using `shared_preferences`. It is convenient storage for a small personal basket and saved lists, not a durable financial record or backup service. Device removal, app-data clearing, or uninstalling the app can lose data.
 
-Saved lists live in the app's private preferences, not as files in your Documents folder. The product cache uses a separate preferences key and can be discarded without altering the basket or saved lists. Existing version-1 baskets without barcode metadata remain readable.
+Saved lists live in the app's private preferences, not as files in your Documents folder. The product cache uses a separate preferences key and can be discarded without altering the basket or saved lists. Version-2 snapshots also retain which named list is being edited. Existing version-1 baskets and saved lists, including ones without barcode metadata, remain readable and migrate on the next save. Old saved lists become linked for ongoing updates when you explicitly choose **Continue editing**.
 
 Save failures show a **Retry** action; keep the app open while resolving them. If saved data cannot be read, Carty preserves it and blocks replacement writes. **Retry** can try loading it again before local edits are made. A confirmed **Reset saved data** allows the current basket and lists to replace the unreadable snapshot.
 

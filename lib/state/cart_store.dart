@@ -395,6 +395,13 @@ class CartStore extends ChangeNotifier {
     await _commit();
   }
 
+  /// Settle queued writes before a navigation action can replace this shop.
+  Future<bool> waitForPendingSave() async {
+    await load();
+    await _writeTail;
+    return !_needsStorageReset && _storageError == null;
+  }
+
   /// Call only after the user confirms discarding unreadable saved data.
   Future<void> resetUnreadableStorage() async {
     if (_disposed) return;

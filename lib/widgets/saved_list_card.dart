@@ -4,7 +4,7 @@ import '../design/carty_design.dart';
 
 import '../models/saved_shopping_list.dart';
 
-/// A saved snapshot with separate, accessible use and delete controls.
+/// A named list with separate, accessible open and delete controls.
 class SavedListCard extends StatelessWidget {
   const SavedListCard({
     super.key,
@@ -12,12 +12,14 @@ class SavedListCard extends StatelessWidget {
     required this.onUse,
     this.onDelete,
     this.compact = false,
+    this.isActive = false,
   });
 
   final SavedShoppingList list;
   final VoidCallback onUse;
   final VoidCallback? onDelete;
   final bool compact;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +79,17 @@ class SavedListCard extends StatelessWidget {
                                 height: 1.5,
                               ),
                             ),
+                            if (isActive) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Currently editing',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: CartyDesign.of(context).primaryColor,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

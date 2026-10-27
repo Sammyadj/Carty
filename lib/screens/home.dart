@@ -7,6 +7,7 @@ import '../design/design_picker.dart';
 import '../design/shopping_header.dart';
 import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
+import '../widgets/active_list_banner.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
@@ -231,6 +232,7 @@ class _Dashboard extends StatelessWidget {
     children: [
       const ShoppingHeader(),
       StorageNotice(store: store),
+      ActiveListBanner(store: store),
       SummaryCard(
         totalPence: store.totalPence,
         budgetPence: store.budgetPence,
@@ -284,7 +286,9 @@ class _Dashboard extends StatelessWidget {
               key: const Key('save-list'),
               onPressed: () => showSaveList(context: context, store: store),
               icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-              label: const Text('Save as list'),
+              label: Text(
+                store.activeList == null ? 'Save as list' : 'Save a copy',
+              ),
             ),
             TextButton.icon(
               key: const Key('clear-cart'),
@@ -340,6 +344,7 @@ class _Dashboard extends StatelessWidget {
           child: SavedListCard(
             list: list,
             compact: true,
+            isActive: store.activeList?.id == list.id,
             onUse: () => onReuseList(list),
             onDelete: () =>
                 confirmDeleteList(context: context, store: store, list: list),

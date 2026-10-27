@@ -46,7 +46,7 @@ class SavedListsView extends StatelessWidget {
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  'Keep the essentials close. Reuse a list whenever you shop.',
+                  'Continue a saved shop, or reuse its products in a new basket.',
                   style: TextStyle(
                     color: CartyDesign.of(context).textSecondary,
                     height: 1.5,
@@ -75,6 +75,7 @@ class SavedListsView extends StatelessWidget {
                   for (final list in store.savedLists)
                     SavedListCard(
                       list: list,
+                      isActive: store.activeList?.id == list.id,
                       onUse: () => onUseList(list),
                       onDelete: () => onDeleteList(list),
                     ),
@@ -95,8 +96,10 @@ class SavedListsView extends StatelessWidget {
                     ),
                   ),
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text(
-                    'Save current basket',
+                  label: Text(
+                    store.activeList == null
+                        ? 'Save current basket'
+                        : 'Save a copy',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -104,7 +107,9 @@ class SavedListsView extends StatelessWidget {
                 Text(
                   store.items.isEmpty
                       ? 'Add products to your basket, then save them here for next time.'
-                      : 'Save your products, quantities and budget for another shop.',
+                      : store.activeList == null
+                      ? 'Save your products, quantities and budget, then keep editing the same list.'
+                      : 'Your current list updates automatically. Save a copy to keep a separate version.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: CartyDesign.of(context).textSecondary,

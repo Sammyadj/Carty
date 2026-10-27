@@ -17,8 +17,9 @@ The current implementation establishes:
 - Basket icon avatars that make rows easier to recognize; these are visual hints, not catalog photos or product categories.
 - Local saving of the current basket, budget, and reusable lists.
 - A saved-list library and screen-based reuse flow: choose a mode, review the items and last-entered prices, then apply. The review explains that this replaces the active basket.
-- Reuse that either duplicates quantities and budget, or sets quantities to zero and removes the budget while retaining products and last-entered prices.
-- Preserved saved originals, plus tests and automated quality checks.
+- Continue editing a named list with automatic updates to products, quantities, prices, and budget, retaining the active list across app restarts.
+- Reuse that either duplicates quantities and budget, or sets quantities to zero and removes the budget while retaining products and last-entered prices. These modes preserve the saved original.
+- Save-before-switch protection, autosave recovery, tests, and automated quality checks.
 
 The separate Tips view uses only information already entered in Carty. Its local rules describe the situation and offer a useful next step, without claiming to know store prices or taking actions on the user's behalf. This stage does not calculate cheaper alternatives, health recommendations, or spending forecasts.
 
@@ -26,7 +27,7 @@ The mockups use different navigation sets. Home, Lists, and Tips are the current
 
 ## Stage 2: planning and shopping history
 
-Add multiple named shopping sessions, favourites, saved-list search, a dedicated template editor, and a clear action to finish a trip. Keep completed trips separate from reusable templates, and allow a previous trip to become a new basket without changing the historical record.
+Named editable shopping lists are available now. Add favourites, saved-list search, and a clear action to finish a trip. Keep completed trips separate from ongoing lists and reusable templates, and allow a previous trip to become a new basket without changing the historical record.
 
 Track planned and actual prices explicitly before introducing price history or spending summaries. Add export and restore, and move shopping records to a database with migrations and appropriate recovery behavior as the data grows. The current preferences snapshot is a small-MVP storage choice.
 

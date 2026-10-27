@@ -4,6 +4,7 @@ import '../design/carty_design.dart';
 
 import '../base/utils/cart_dialogs.dart';
 import '../state/cart_store.dart';
+import '../widgets/active_list_banner.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
@@ -84,6 +85,7 @@ class _CartFullScreenState extends State<CartFullScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           StorageNotice(store: store),
+                          ActiveListBanner(store: store),
                           SummaryCard(
                             totalPence: store.totalPence,
                             budgetPence: store.budgetPence,
@@ -219,7 +221,11 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 Icons.bookmark_add_outlined,
                                 size: 18,
                               ),
-                              label: const Text('Save as list'),
+                              label: Text(
+                                store.activeList == null
+                                    ? 'Save as list'
+                                    : 'Save a copy',
+                              ),
                             ),
                             TextButton.icon(
                               key: const Key('clear-cart'),

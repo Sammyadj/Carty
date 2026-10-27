@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../base/utils/list_dialogs.dart';
 import '../design/carty_design.dart';
 
 import '../core/money.dart';
@@ -8,7 +9,9 @@ import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
 import '../widgets/product_avatar.dart';
 
-/// Choose how to reuse a saved snapshot, then review before replacing a basket.
+enum SavedListMode { continueEditing, duplicate, startFresh }
+
+/// Choose whether to edit a named shop or use its products in another basket.
 class ReuseListScreen extends StatefulWidget {
   const ReuseListScreen({super.key, required this.store, required this.list});
 
@@ -20,7 +23,9 @@ class ReuseListScreen extends StatefulWidget {
 }
 
 class _ReuseListScreenState extends State<ReuseListScreen> {
-  bool _startFresh = false;
+  SavedListMode _mode = SavedListMode.continueEditing;
+  bool get _startFresh => _mode == SavedListMode.startFresh;
+  bool get _editing => _mode == SavedListMode.continueEditing;
   bool _review = false;
   bool _applying = false;
   final ScrollController _scrollController = ScrollController();
@@ -47,10 +52,33 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
   }
 
   Future<void> _apply() async {
+    if (_applying) return;
     setState(() => _applying = true);
-    await widget.store.startFromList(widget.list.id, startFresh: _startFresh);
+    final alreadyEditing =
+        _editing && widget.store.activeList?.id == widget.list.id;
+    if (!alreadyEditing &&
+        !await confirmLeaveList(context: context, store: widget.store)) {
+      if (mounted) setState(() => _applying = false);
+      return;
+    }
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    final applied = _editing
+        ? await widget.store.resumeList(widget.list.id)
+        : await widget.store.startFromList(
+            widget.list.id,
+            startFresh: _startFresh,
+          );
+    if (!mounted) return;
+    if (applied) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() => _applying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This saved list is no longer available.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -68,7 +96,7 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
             onPressed: _applying ? null : _goBack,
             icon: const Icon(Icons.arrow_back_rounded),
           ),
-          title: Text(_review ? 'Review list' : 'Reuse shopping list'),
+          title: Text(_review ? 'Review list' : 'Open shopping list'),
           titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: CartyDesign.of(context).textPrimary,
             fontSize: 18,
@@ -80,10 +108,10 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
-              child: RadioGroup<bool>(
-                groupValue: _startFresh,
+              child: RadioGroup<SavedListMode>(
+                groupValue: _mode,
                 onChanged: (value) {
-                  if (value != null) setState(() => _startFresh = value);
+                  if (value != null) setState(() => _mode = value);
                 },
                 child: ListView(
                   controller: _scrollController,
@@ -116,16 +144,14 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
                           vertical: 16,
                         ),
                       ),
-                      child: _applying
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              _review ? 'Use this list' : 'Continue',
-                              textAlign: TextAlign.center,
-                            ),
+                      child: Text(
+                        _applying
+                            ? 'Opening…'
+                            : _review
+                            ? (_editing ? 'Continue editing' : 'Use this list')
+                            : 'Continue',
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton(
@@ -164,25 +190,35 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
       ),
       const SizedBox(height: 14),
       _ReuseChoice(
+        controlKey: const ValueKey('reuse-edit'),
+        title: 'Continue editing',
+        description: 'Keep your products, quantities and budget. Changes update this saved list automatically.',
+        value: SavedListMode.continueEditing,
+        groupValue: _mode,
+      ),
+      const SizedBox(height: 12),
+      _ReuseChoice(
         controlKey: const ValueKey('reuse-duplicate'),
         title: 'Duplicate list',
         description:
-            'Keep the products, quantities and budget from your saved list.',
-        value: false,
-        groupValue: _startFresh,
+            'Copy your products, quantities and budget into a separate basket.',
+        value: SavedListMode.duplicate,
+        groupValue: _mode,
       ),
       const SizedBox(height: 12),
       _ReuseChoice(
         controlKey: const ValueKey('reuse-fresh'),
         title: 'Start fresh',
-        description: 'Keep the same products and stored prices. Reset quantities to zero and clear the budget for this shop.',
-        value: true,
-        groupValue: _startFresh,
+        description: 'Keep products and prices. Set quantities to zero and clear the budget.',
+        value: SavedListMode.startFresh,
+        groupValue: _mode,
       ),
       const SizedBox(height: 18),
-      const _Notice(
+      _Notice(
         icon: Icons.bookmark_border_rounded,
-        message: 'Your saved list stays unchanged. You can review everything before replacing your current basket.',
+        message: _editing
+            ? 'Continue this shop and keep updating the same saved list. Review everything before opening it.'
+            : 'Your saved list stays unchanged. You can review everything before replacing your current basket.',
       ),
     ];
   }
@@ -199,14 +235,20 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
         message: 'These are your last entered prices, not live quotes. Check prices as you shop.',
       ),
       const SizedBox(height: 12),
-      const _Notice(
+      _Notice(
         icon: Icons.swap_horiz_rounded,
-        message: 'Using this list replaces your current basket and its budget. Your saved list stays unchanged.',
+        message: _editing
+            ? 'Opening this list replaces your current basket and its budget. Changes will save to “${widget.list.name}” as you shop.'
+            : 'Using this list replaces your current basket and its budget. Your saved list stays unchanged.',
         warning: true,
       ),
       const SizedBox(height: 24),
       Text(
-        _startFresh ? 'Ready for a fresh shop' : 'Products to bring back',
+        _editing
+            ? 'Pick up where you left off'
+            : _startFresh
+            ? 'Ready for a fresh shop'
+            : 'Products to bring back',
         style: TextStyle(
           color: CartyDesign.of(context).textPrimary,
           fontWeight: FontWeight.w700,
@@ -216,7 +258,9 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
       ),
       const SizedBox(height: 6),
       Text(
-        _startFresh
+        _editing
+            ? 'Your quantities, prices and budget are kept. You can edit them after opening the list.'
+            : _startFresh
             ? 'All quantities start at zero. Add them as you shop.'
             : 'Your saved quantities and budget will be copied.',
         style: TextStyle(
@@ -345,8 +389,8 @@ class _ReuseChoice extends StatelessWidget {
   final Key controlKey;
   final String title;
   final String description;
-  final bool value;
-  final bool groupValue;
+  final SavedListMode value;
+  final SavedListMode groupValue;
 
   @override
   Widget build(BuildContext context) {
@@ -363,7 +407,7 @@ class _ReuseChoice extends StatelessWidget {
         ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: RadioListTile<bool>(
+      child: RadioListTile<SavedListMode>(
         key: controlKey,
         value: value,
         contentPadding: const EdgeInsets.symmetric(

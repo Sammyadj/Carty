@@ -293,8 +293,16 @@ void main() {
       final quantity = store.incrementQuantity(store.items.single.id);
       await storage.started.future;
       final budget = store.setBudget(4000);
+      var settled = false;
+      final pendingSave = store.waitForPendingSave().then((saved) {
+        settled = true;
+        return saved;
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(settled, isFalse);
       storage.release.complete();
       await Future.wait([quantity, budget]);
+      expect(await pendingSave, isTrue);
       final restored = CartStore(storage: storage);
       addTearDown(restored.dispose);
       await restored.load();
