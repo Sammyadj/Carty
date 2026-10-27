@@ -65,6 +65,8 @@ Scanner tests use a fake camera and HTTP client to cover duplicate detections, p
 
 ## Development workflow
 
+Launcher icons use Carty's green cart/checkmark artwork. Regenerate the iOS icon set, Android legacy and adaptive icons, and the 1024px preview with `python3 tool/generate_app_icons.py` (requires Pillow >= 10). Rebuild and install the app to update its home-screen icon; hot reload cannot update native launcher assets.
+
 Follow [AGENTS.md](AGENTS.md): build small, working milestones and commit each with its relevant regression tests. Format, analyze, and run appropriate tests before committing; check documentation-only diffs. Use concise commit messages, preserve unrelated work, and push only when publishing has been authorized.
 
 ## Local toolchain troubleshooting
