@@ -67,7 +67,7 @@ class ShoppingHeader extends StatelessWidget {
                   child: SizedBox(
                     width: 106,
                     height: 132,
-                    child: CustomPaint(painter: _GroceryDrawing(design)),
+                    child: const GroceryIllustration(),
                   ),
                 ),
               ],
@@ -79,10 +79,23 @@ class ShoppingHeader extends StatelessWidget {
   }
 }
 
+/// Shared vector artwork. A phase animates groceries while the app is loading;
+/// the dashboard keeps the original still illustration.
+class GroceryIllustration extends StatelessWidget {
+  const GroceryIllustration({super.key, this.phase});
+  final double? phase;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: _GroceryDrawing(CartyDesign.of(context), phase: phase),
+  );
+}
+
 /// Original vector artwork; no remote images or retailer product claims.
 class _GroceryDrawing extends CustomPainter {
-  const _GroceryDrawing(this.design);
+  const _GroceryDrawing(this.design, {this.phase});
   final CartyDesign design;
+  final double? phase;
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
@@ -96,9 +109,20 @@ class _GroceryDrawing extends CustomPainter {
       const Rect.fromLTWH(2, 10, 100, 114),
       fill..color = design.mint,
     );
+    final motion = phase;
+    if (motion != null) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: const Offset(53, 122),
+          width: 53 - math.sin(motion) * 4,
+          height: 7,
+        ),
+        fill..color = design.primaryColor.withValues(alpha: .08),
+      );
+    }
     canvas.save();
-    canvas.translate(53, 70);
-    canvas.rotate(-.12);
+    canvas.translate(53, 70 + (motion == null ? 0 : math.sin(motion) * 2));
+    canvas.rotate(-.12 + (motion == null ? 0 : math.sin(motion) * .035));
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         const Rect.fromLTWH(-31, -18, 62, 69),
@@ -113,6 +137,8 @@ class _GroceryDrawing extends CustomPainter {
       false,
       stroke..color = design.primaryDark,
     );
+    canvas.save();
+    if (motion != null) canvas.translate(0, math.sin(motion + .6) * 3);
     canvas.drawOval(
       const Rect.fromLTWH(-28, -43, 23, 34),
       fill..color = const Color(0xFF85AC5C),
@@ -121,6 +147,9 @@ class _GroceryDrawing extends CustomPainter {
       const Rect.fromLTWH(-15, -48, 20, 39),
       fill..color = const Color(0xFF477B4C),
     );
+    canvas.restore();
+    canvas.save();
+    if (motion != null) canvas.translate(0, math.sin(motion + 2) * 4);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         const Rect.fromLTWH(5, -40, 14, 40),
@@ -134,11 +163,15 @@ class _GroceryDrawing extends CustomPainter {
       stroke..color = const Color(0xFFB77D39),
     );
     canvas.drawLine(const Offset(9, -15), const Offset(17, -18), stroke);
+    canvas.restore();
+    canvas.save();
+    if (motion != null) canvas.translate(0, math.sin(motion + 4) * 2);
     canvas.drawCircle(
       const Offset(-15, -6),
       14,
       fill..color = const Color(0xFFEC876B),
     );
+    canvas.restore();
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         const Rect.fromLTWH(-31, 0, 62, 51),
@@ -170,5 +203,5 @@ class _GroceryDrawing extends CustomPainter {
 
   @override
   bool shouldRepaint(_GroceryDrawing oldDelegate) =>
-      oldDelegate.design != design;
+      oldDelegate.design != design || oldDelegate.phase != phase;
 }

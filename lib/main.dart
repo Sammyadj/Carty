@@ -10,6 +10,7 @@ import 'design/carty_design.dart';
 import 'design/design_theme.dart';
 import 'data/product_repository.dart';
 import 'screens/barcode_scanner_screen.dart';
+import 'screens/carty_loading_screen.dart';
 import 'screens/home.dart';
 import 'state/cart_store.dart';
 import 'widgets/product_catalog_scope.dart';
@@ -96,9 +97,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             title: 'Carty',
             theme: buildDesignTheme(CartyDesign.city),
             home: _session.isLoading
-                ? const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  )
+                ? const CartyLoadingScreen(message: 'Opening your lists…')
                 : HomePage(store: _session.store),
           ),
         ),
