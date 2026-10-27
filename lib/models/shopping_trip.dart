@@ -1,0 +1,67 @@
+import '../core/money.dart';
+import 'cart_item.dart';
+
+/// A completed basket record, independent of later edits to a reusable list.
+/// The total is shopper-entered; this is not a receipt or proof of payment.
+class ShoppingTrip {
+  ShoppingTrip({
+    required this.id,
+    required this.name,
+    required List<CartItem> items,
+    required this.budgetPence,
+    required this.completedAt,
+  }) : items = List.unmodifiable(items);
+
+  final String id;
+  final String name;
+  final List<CartItem> items;
+  final int? budgetPence;
+  final DateTime completedAt;
+  int get totalPence => items.fold(0, (sum, item) => sum + item.totalPence);
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'items': items.map((item) => item.toJson()).toList(),
+    'budgetPence': budgetPence,
+    'completedAt': completedAt.toUtc().toIso8601String(),
+    'currency': 'GBP',
+  };
+
+  static ShoppingTrip? fromJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    final name = json['name'];
+    final rawItems = json['items'];
+    final budget = json['budgetPence'];
+    final date = json['completedAt'];
+    if (id is! String ||
+        id.isEmpty ||
+        name is! String ||
+        name.trim().isEmpty ||
+        name.length > 60 ||
+        rawItems is! List ||
+        rawItems.isEmpty ||
+        date is! String ||
+        json['currency'] != 'GBP' ||
+        (budget != null &&
+            (budget is! int || budget <= 0 || budget > Money.maxPence))) {
+      return null;
+    }
+    final completed = DateTime.tryParse(date);
+    if (completed == null) return null;
+    final items = <CartItem>[];
+    final ids = <String>{};
+    for (final raw in rawItems) {
+      final item = raw is Map<String, dynamic> ? CartItem.fromJson(raw) : null;
+      if (item == null || item.quantity == 0 || !ids.add(item.id)) return null;
+      items.add(item);
+    }
+    return ShoppingTrip(
+      id: id,
+      name: name.trim(),
+      items: items,
+      budgetPence: budget as int?,
+      completedAt: completed,
+    );
+  }
+}

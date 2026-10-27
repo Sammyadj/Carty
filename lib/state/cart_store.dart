@@ -8,6 +8,7 @@ import '../data/cart_storage.dart';
 import '../models/cart_item.dart';
 import '../models/product_details.dart';
 import '../models/saved_shopping_list.dart';
+import '../models/shopping_trip.dart';
 
 /// One source of truth for the active basket and named shopping lists.
 ///
@@ -19,6 +20,7 @@ class CartStore extends ChangeNotifier {
   final CartStorage _storage;
   List<CartItem> _items = const [];
   List<SavedShoppingList> _savedLists = const [];
+  List<ShoppingTrip> _history = const [];
   int? _budgetPence;
   String? _activeListId;
   bool _isLoading = true;
@@ -32,6 +34,12 @@ class CartStore extends ChangeNotifier {
 
   List<CartItem> get items => _items;
   List<SavedShoppingList> get savedLists => _savedLists;
+  List<ShoppingTrip> get history => _history;
+  bool get hasData =>
+      _items.isNotEmpty ||
+      _savedLists.isNotEmpty ||
+      _history.isNotEmpty ||
+      _budgetPence != null;
   int? get budgetPence => _budgetPence;
   bool get isLoading => _isLoading;
   String? get storageError => _storageError;
@@ -94,7 +102,7 @@ class CartStore extends ChangeNotifier {
   void _restore(String value) {
     final decoded = jsonDecode(value);
     if (decoded is! Map<String, dynamic> ||
-        (decoded['version'] != 1 && decoded['version'] != 2)) {
+        !const [1, 2, 3].contains(decoded['version'])) {
       throw const FormatException('Unsupported cart snapshot');
     }
     final budget = decoded['budgetPence'];
@@ -127,7 +135,22 @@ class CartStore extends ChangeNotifier {
       }
       savedLists.add(list);
     }
-    final activeId = decoded['version'] == 2 ? decoded['activeListId'] : null;
+    final history = <ShoppingTrip>[];
+    final tripIds = <String>{};
+    final rawHistory = decoded['version'] == 3 ? decoded['history'] : const [];
+    if (rawHistory is! List) {
+      throw const FormatException('Invalid shopping history');
+    }
+    for (final raw in rawHistory) {
+      final trip = raw is Map<String, dynamic>
+          ? ShoppingTrip.fromJson(raw)
+          : null;
+      if (trip == null || !tripIds.add(trip.id)) {
+        throw const FormatException('Invalid shopping trip');
+      }
+      history.add(trip);
+    }
+    final activeId = decoded['version'] != 1 ? decoded['activeListId'] : null;
     if (activeId != null) {
       if (activeId is! String || !listIds.contains(activeId)) {
         throw const FormatException('Invalid active shopping list');
@@ -144,6 +167,117 @@ class CartStore extends ChangeNotifier {
     _savedLists = List.unmodifiable(savedLists);
     _budgetPence = budget as int?;
     _activeListId = activeId as String?;
+    _history = List.unmodifiable(history);
+  }
+
+  String exportSnapshot() => jsonEncode({
+    'version': 3,
+    'activeListId': _activeListId,
+    'budgetPence': _budgetPence,
+    'items': _items.map((item) => item.toJson()).toList(),
+    'savedLists': _savedLists.map((list) => list.toJson()).toList(),
+    'history': _history.map((trip) => trip.toJson()).toList(),
+  });
+
+  static bool isValidSnapshot(String snapshot) {
+    final probe = CartStore(storage: InMemoryCartStorage());
+    try {
+      probe._restore(snapshot);
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      probe.dispose();
+    }
+  }
+
+  /// Used only after the account's sync storage has validated and cached data.
+  void restoreFromCloud(String snapshot) {
+    if (_disposed || _needsStorageReset) return;
+    _restore(snapshot);
+    _notify();
+  }
+
+  Future<void> completeShopping(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || trimmed.length > 60) {
+      throw ArgumentError.value(name, 'name');
+    }
+    await load();
+    if (_disposed) return;
+    final picked = _items.where((item) => item.quantity > 0).toList();
+    if (picked.isEmpty) {
+      throw StateError('Pick at least one product before finishing this shop.');
+    }
+    final trip = ShoppingTrip(
+      id: _newId(),
+      name: trimmed,
+      items: picked,
+      budgetPence: _budgetPence,
+      completedAt: DateTime.now(),
+    );
+    _history = List.unmodifiable([trip, ..._history]);
+    _activeListId = null;
+    _items = const [];
+    _budgetPence = null;
+    await _commit();
+  }
+
+  Future<void> removeTrip(String id) async {
+    await load();
+    if (_disposed) return;
+    _history = List.unmodifiable(_history.where((trip) => trip.id != id));
+    await _commit();
+  }
+
+  /// Explicitly copy guest data; never silently upload an existing local shop.
+  Future<void> importGuestLists(CartStore guest) async {
+    await load();
+    await guest.load();
+    if (_disposed || identical(guest, this)) return;
+    List<CartItem> copyItems(List<CartItem> items) => items
+        .map(
+          (item) => CartItem(
+            id: _newId(),
+            name: item.name,
+            unitPricePence: item.unitPricePence,
+            quantity: item.quantity,
+            product: item.product,
+          ),
+        )
+        .toList();
+    final copies = <SavedShoppingList>[
+      for (final list in guest.savedLists)
+        SavedShoppingList(
+          id: _newId(),
+          name: list.name,
+          items: copyItems(list.items),
+          budgetPence: list.budgetPence,
+          savedAt: DateTime.now(),
+        ),
+      if (guest.activeList == null &&
+          (guest.items.isNotEmpty || guest.budgetPence != null))
+        SavedShoppingList(
+          id: _newId(),
+          name: 'Guest basket',
+          items: copyItems(guest.items),
+          budgetPence: guest.budgetPence,
+          savedAt: DateTime.now(),
+        ),
+    ];
+    _savedLists = List.unmodifiable([...copies, ..._savedLists]);
+    _history = List.unmodifiable([
+      for (final trip in guest.history)
+        ShoppingTrip(
+          id: _newId(),
+          name: trip.name,
+          items: copyItems(trip.items),
+          budgetPence: trip.budgetPence,
+          completedAt: trip.completedAt,
+        ),
+      ..._history,
+    ]);
+    await _commit();
   }
 
   Future<void> setBudget(int? budgetPence) async {
@@ -462,13 +596,7 @@ class CartStore extends ChangeNotifier {
     _hasLocalEdits = true;
     _notify();
     if (_needsStorageReset) return Future.value();
-    final snapshot = jsonEncode({
-      'version': 2,
-      'activeListId': _activeListId,
-      'budgetPence': _budgetPence,
-      'items': _items.map((item) => item.toJson()).toList(),
-      'savedLists': _savedLists.map((list) => list.toJson()).toList(),
-    });
+    final snapshot = exportSnapshot();
     _writeTail = _writeTail.then((_) async {
       try {
         await _storage.write(snapshot);

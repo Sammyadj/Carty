@@ -244,7 +244,7 @@ void main() {
     () async {
       for (final value in [
         '{broken',
-        jsonEncode({'version': 3, 'items': []}),
+        jsonEncode({'version': 4, 'items': []}),
         jsonEncode({
           'version': 1,
           'items': [

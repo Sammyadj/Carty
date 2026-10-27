@@ -224,7 +224,7 @@ void main() {
       expect(restored.activeList, isNull);
       final id = restored.savedLists.single.id;
       await restored.resumeList(id);
-      expect((jsonDecode(storage.value!) as Map)['version'], 2);
+      expect((jsonDecode(storage.value!) as Map)['version'], 3);
       expect((jsonDecode(storage.value!) as Map)['activeListId'], id);
       _expectLinkedContents(restored, id);
     },
