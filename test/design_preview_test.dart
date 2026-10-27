@@ -6,6 +6,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('Fresh fits an unset budget on narrow phones with larger text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final store = CartStore(storage: InMemoryCartStorage());
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      MyApp(store: store, initialDesign: DesignVariant.fresh),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('budget-edit')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final variant in DesignVariant.values) {
     testWidgets('${variant.name} supports narrow phones and large text', (
       tester,

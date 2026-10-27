@@ -343,10 +343,15 @@ class _AlternativeBudget extends StatelessWidget {
                 ?.copyWith(fontSize: 12),
           ),
         ),
-        TextButton(
-          key: const Key('budget-edit'),
-          onPressed: onEditBudget,
-          child: Text(budgetPence == null ? 'Set budget' : 'Edit'),
+        Flexible(
+          child: TextButton(
+            key: const Key('budget-edit'),
+            onPressed: onEditBudget,
+            child: Text(
+              budgetPence == null ? 'Set budget' : 'Edit',
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
       ],
     );
