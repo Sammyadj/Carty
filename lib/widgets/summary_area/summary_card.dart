@@ -61,16 +61,21 @@ class SummaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              TextButton(
-                key: const Key('budget-edit'),
-                onPressed: onEditBudget,
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.mint,
-                  foregroundColor: AppColors.primaryDark,
-                  minimumSize: const Size(48, 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+              Flexible(
+                child: TextButton(
+                  key: const Key('budget-edit'),
+                  onPressed: onEditBudget,
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.mint,
+                    foregroundColor: AppColors.primaryDark,
+                    minimumSize: const Size(48, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: Text(
+                    budgetPence == null ? 'Set budget' : 'Edit',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                child: Text(budgetPence == null ? 'Set budget' : 'Edit'),
               ),
             ],
           ),

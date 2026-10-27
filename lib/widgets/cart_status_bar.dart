@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../base/res/styles/app_styles.dart';
 import '../base/utils/cart_dialogs.dart';
+import '../base/utils/barcode_flow.dart';
 import '../core/money.dart';
 import '../state/cart_store.dart';
 
@@ -31,58 +32,94 @@ class CartStatusBar extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 760),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: _StatusMetric(
-                      label: 'BASKET TOTAL',
-                      value: Money.format(store.totalPence),
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatusMetric(
-                      label:
-                          remaining == null
-                              ? 'BUDGET'
-                              : remaining < 0
-                              ? 'OVER BUDGET'
-                              : 'LEFT TO SPEND',
-                      value:
-                          remaining == null
-                              ? 'Not set'
-                              : Money.format(remaining.abs()),
-                      color:
-                          store.isOverBudget
-                              ? AppColors.error
-                              : AppColors.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  if (MediaQuery.sizeOf(context).width >= 390 &&
-                      MediaQuery.textScalerOf(context).scale(1) <= 1.3)
-                    FilledButton.icon(
-                      key: const Key('add-item'),
-                      onPressed:
-                          () => showItemEditor(context: context, store: store),
-                      icon: const Icon(Icons.add_rounded, size: 20),
-                      label: const Text('Add item'),
-                    )
-                  else
-                    IconButton.filled(
-                      key: const Key('add-item'),
-                      tooltip: 'Add item',
-                      onPressed:
-                          () => showItemEditor(context: context, store: store),
-                      style: IconButton.styleFrom(
-                        minimumSize: const Size(48, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatusMetric(
+                          label: 'BASKET TOTAL',
+                          value: Money.format(store.totalPence),
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      icon: const Icon(Icons.add_rounded, size: 26),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _StatusMetric(
+                          label:
+                              remaining == null
+                                  ? 'BUDGET'
+                                  : remaining < 0
+                                  ? 'OVER BUDGET'
+                                  : 'LEFT TO SPEND',
+                          value:
+                              remaining == null
+                                  ? 'Not set'
+                                  : Money.format(remaining.abs()),
+                          color:
+                              store.isOverBudget
+                                  ? AppColors.error
+                                  : AppColors.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          key: const Key('scan-product'),
+                          onPressed:
+                              () => scanAndAddProduct(
+                                context: context,
+                                store: store,
+                              ),
+                          icon: const Icon(Icons.barcode_reader, size: 22),
+                          label: Text(
+                            MediaQuery.sizeOf(context).width < 390 ||
+                                    MediaQuery.textScalerOf(context).scale(1) >
+                                        1.3
+                                ? 'Scan'
+                                : 'Scan barcode',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      if (MediaQuery.sizeOf(context).width >= 390 &&
+                          MediaQuery.textScalerOf(context).scale(1) <= 1.3)
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            key: const Key('add-item'),
+                            onPressed:
+                                () => showItemEditor(
+                                  context: context,
+                                  store: store,
+                                ),
+                            icon: const Icon(Icons.add_rounded, size: 20),
+                            label: const Text('Add item'),
+                          ),
+                        )
+                      else
+                        IconButton.outlined(
+                          key: const Key('add-item'),
+                          tooltip: 'Add item',
+                          onPressed:
+                              () => showItemEditor(
+                                context: context,
+                                store: store,
+                              ),
+                          style: IconButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon: const Icon(Icons.add_rounded, size: 26),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),

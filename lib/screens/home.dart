@@ -100,6 +100,10 @@ class _HomePageState extends State<HomePage> {
                         const Text(
                           'Your smart shopping companion. Plan a basket, stay within budget and reuse your regular lists. Your shopping data is saved on this device.',
                         ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Barcode product data: Open Food Facts (openfoodfacts.org), under the Open Database License (opendatacommons.org/licenses/odbl/1-0/). Camera images stay on your device. Prices are entered by you.',
+                        ),
                       ],
                     ),
                 icon: const Icon(
