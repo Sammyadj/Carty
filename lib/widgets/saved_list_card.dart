@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../design/carty_design.dart';
+
 import '../models/saved_shopping_list.dart';
 
-/// A saved snapshot with separate, accessible use and delete controls.
+/// A named list with separate, accessible open and delete controls.
 class SavedListCard extends StatelessWidget {
   const SavedListCard({
     super.key,
@@ -11,12 +12,16 @@ class SavedListCard extends StatelessWidget {
     required this.onUse,
     this.onDelete,
     this.compact = false,
+    this.isActive = false,
+    this.actions,
   });
 
   final SavedShoppingList list;
   final VoidCallback onUse;
   final VoidCallback? onDelete;
   final bool compact;
+  final bool isActive;
+  final Widget? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +32,7 @@ class SavedListCard extends StatelessWidget {
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: radius,
-          side: const BorderSide(color: AppColors.borderColor),
+          side: BorderSide(color: CartyDesign.of(context).borderColor),
         ),
         clipBehavior: Clip.antiAlias,
         child: Row(
@@ -44,12 +49,12 @@ class SavedListCard extends StatelessWidget {
                         width: compact ? 44 : 50,
                         height: compact ? 44 : 50,
                         decoration: BoxDecoration(
-                          color: AppColors.mint,
+                          color: CartyDesign.of(context).mint,
                           borderRadius: BorderRadius.circular(13),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.shopping_basket_rounded,
-                          color: AppColors.primaryColor,
+                          color: CartyDesign.of(context).primaryColor,
                           size: 26,
                         ),
                       ),
@@ -58,31 +63,62 @@ class SavedListCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              list.name,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: compact ? 15 : 17,
-                                fontWeight: FontWeight.w700,
-                                height: 1.3,
-                              ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (list.favourite) ...[
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 2),
+                                    child: Icon(
+                                      Icons.star_rounded,
+                                      size: 18,
+                                      semanticLabel: 'Favourite list',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    list.name,
+                                    style: TextStyle(
+                                      color: CartyDesign.of(context)
+                                          .textPrimary,
+                                      fontSize: compact ? 15 : 17,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 5),
                             Text(
                               '${list.items.length} ${list.items.length == 1 ? 'product' : 'products'} · ${_savedDate(list.savedAt)}',
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                color: CartyDesign.of(context).textSecondary,
                                 fontSize: 12,
                                 height: 1.5,
                               ),
                             ),
+                            if (isActive) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Currently editing',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: CartyDesign.of(context).primaryColor,
+                                ),
+                              ),
+                            ],
+                            if (list.archived) const Text('Archived'),
                           ],
                         ),
                       ),
                       const SizedBox(width: 5),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
-                        color: AppColors.textSecondary,
+                        color: CartyDesign.of(context).textSecondary,
                         size: 21,
                       ),
                     ],
@@ -90,14 +126,16 @@ class SavedListCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (onDelete != null)
+            if (actions != null)
+              Padding(padding: const EdgeInsets.only(right: 4), child: actions!)
+            else if (onDelete != null)
               Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: IconButton(
                   key: ValueKey('saved-list-delete-${list.id}'),
                   onPressed: onDelete,
                   tooltip: 'Delete ${list.name}',
-                  color: AppColors.textSecondary,
+                  color: CartyDesign.of(context).textSecondary,
                   icon: const Icon(Icons.delete_outline_rounded, size: 21),
                 ),
               ),

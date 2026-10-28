@@ -8,6 +8,8 @@ import 'package:carty_app/widgets/saved_lists_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'list_content_expectations.dart';
+
 Future<CartStore> _savedListStore() async {
   final store = CartStore(storage: InMemoryCartStorage());
   await store.load();
@@ -22,7 +24,7 @@ Future<CartStore> _savedListStore() async {
   return store;
 }
 
-Future<void> _tap(WidgetTester tester, String key) async {
+Future<void> _reveal(WidgetTester tester, String key) async {
   final finder = find.byKey(ValueKey(key));
   if (finder.evaluate().isEmpty) {
     await tester.scrollUntilVisible(
@@ -33,7 +35,11 @@ Future<void> _tap(WidgetTester tester, String key) async {
   }
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
-  await tester.tap(finder);
+}
+
+Future<void> _tap(WidgetTester tester, String key) async {
+  await _reveal(tester, key);
+  await tester.tap(find.byKey(ValueKey(key)));
   await tester.pumpAndSettle();
 }
 
@@ -72,33 +78,45 @@ Future<void> _openReuse(
 }
 
 void main() {
-  testWidgets('duplicate is the default and review does not alter the basket', (
-    tester,
-  ) async {
-    final store = await _savedListStore();
-    await _openReuse(tester, store);
+  testWidgets(
+    'continue editing is the default and review does not alter the basket',
+    (tester) async {
+      final store = await _savedListStore();
+      await _openReuse(tester, store);
 
-    final duplicate = tester.widget<RadioListTile<bool>>(
-      find.byKey(const ValueKey('reuse-duplicate')),
-    );
-    expect(duplicate.value, isFalse);
-    expect(
-      tester.widget<RadioGroup<bool>>(find.byType(RadioGroup<bool>)).groupValue,
-      isFalse,
-    );
-    expect(find.byKey(const ValueKey('reuse-apply')), findsNothing);
+      final edit = tester.widget<RadioListTile<SavedListMode>>(
+        find.byKey(const ValueKey('reuse-edit')),
+      );
+      expect(edit.value, SavedListMode.continueEditing);
+      expect(
+        tester
+            .widget<RadioGroup<SavedListMode>>(
+              find.byType(RadioGroup<SavedListMode>),
+            )
+            .groupValue,
+        SavedListMode.continueEditing,
+      );
+      expect(find.byKey(const ValueKey('reuse-apply')), findsNothing);
 
-    await _tap(tester, 'reuse-continue');
+      await _tap(tester, 'reuse-continue');
 
-    expect(find.text('Review list'), findsOneWidget);
-    expect(find.textContaining('not live quotes'), findsOneWidget);
-    expect(find.textContaining('replaces your current basket'), findsOneWidget);
-    expect(find.text('Quantity: 2'), findsOneWidget);
-    expect(find.text('£1.20 each'), findsOneWidget);
-    expect(store.items.single.name, 'Tea');
-    expect(store.budgetPence, 900);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('Review list'), findsOneWidget);
+      expect(find.textContaining('not live quotes'), findsOneWidget);
+      expect(
+        find.textContaining('replaces your current basket'),
+        findsOneWidget,
+      );
+      await _reveal(
+        tester,
+        'reuse-quantity-${store.savedLists.single.items.first.id}',
+      );
+      expect(find.text('Quantity: 2'), findsOneWidget);
+      expect(find.text('£1.20 each'), findsOneWidget);
+      expect(store.items.single.name, 'Tea');
+      expect(store.budgetPence, 900);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'back from review keeps the mode and cancelling keeps the basket',
@@ -112,15 +130,18 @@ void main() {
       await _tap(tester, 'reuse-back');
 
       expect(find.text('How would you like to start?'), findsOneWidget);
-      final fresh = tester.widget<RadioListTile<bool>>(
+      await _reveal(tester, 'reuse-fresh');
+      final fresh = tester.widget<RadioListTile<SavedListMode>>(
         find.byKey(const ValueKey('reuse-fresh')),
       );
-      expect(fresh.value, isTrue);
+      expect(fresh.value, SavedListMode.startFresh);
       expect(
         tester
-            .widget<RadioGroup<bool>>(find.byType(RadioGroup<bool>))
+            .widget<RadioGroup<SavedListMode>>(
+              find.byType(RadioGroup<SavedListMode>),
+            )
             .groupValue,
-        isTrue,
+        SavedListMode.startFresh,
       );
 
       await _tap(tester, 'reuse-cancel');
@@ -139,16 +160,18 @@ void main() {
       final saved = store.savedLists.single;
       bool? result;
       await _openReuse(tester, store, onResult: (value) => result = value);
+      await _tap(tester, 'reuse-duplicate');
       await _tap(tester, 'reuse-continue');
 
       expect(store.items.single.name, 'Tea');
       await _tap(tester, 'reuse-apply');
+      await _tap(tester, 'switch-list-discard');
 
       expect(result, isTrue);
       expect(store.items.map((item) => item.name), ['Milk', 'Bread']);
       expect(store.items.map((item) => item.quantity), [2, 1]);
       expect(store.budgetPence, 2500);
-      expect(store.savedLists.single, same(saved));
+      expectListContentsPreserved(store.savedLists.single, saved);
       expect(store.items.first.id, isNot(saved.items.first.id));
       expect(tester.takeException(), isNull);
     },
@@ -166,6 +189,7 @@ void main() {
       expect(find.text('Quantity: 0'), findsNWidgets(2));
       expect(store.items.single.name, 'Tea');
       await _tap(tester, 'reuse-apply');
+      await _tap(tester, 'switch-list-discard');
 
       expect(store.items.map((item) => item.quantity), [0, 0]);
       expect(store.items.map((item) => item.unitPricePence), [120, 150]);
@@ -173,7 +197,7 @@ void main() {
       expect(store.budgetPence, isNull);
       expect(original.items.map((item) => item.quantity), [2, 1]);
       expect(original.budgetPence, 2500);
-      expect(store.savedLists.single, same(original));
+      expectListContentsPreserved(store.savedLists.single, original);
       expect(tester.takeException(), isNull);
     },
   );
@@ -299,6 +323,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _reveal(tester, 'saved-list-load-${list.id}');
     expect(find.text(list.name), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

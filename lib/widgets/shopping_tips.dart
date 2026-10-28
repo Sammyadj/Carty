@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../design/carty_design.dart';
+
 import '../core/money.dart';
 import '../state/cart_store.dart';
 
@@ -19,8 +20,8 @@ class ShoppingTips extends StatelessWidget {
   Widget build(BuildContext context) {
     final budget = store.budgetPence;
     final remaining = store.remainingPence;
-    final ratio = budget == null ? 0.0 : store.totalPence / budget;
-    final pending = store.items.where((item) => item.quantity == 0).length;
+    final ratio = budget == null ? 0.0 : store.budgetTotalPence / budget;
+    final pending = store.pendingCount;
     final alert = store.isOverBudget || ratio >= 0.8;
     final tips = <_Tip>[
       _Tip(
@@ -35,12 +36,16 @@ class ShoppingTips extends StatelessWidget {
             ? 'Set a budget, then add shelf prices as you shop. Your running total will do the rest.'
             : store.isOverBudget
             ? 'Your basket is ${Money.format(remaining!.abs())} over budget. Review your quantities before checkout.'
-            : 'You’ve used ${(ratio * 100).round()}% of your budget, with ${Money.format(remaining!)} left to spend.',
+            : '${store.isPlanning ? 'Your plan uses' : 'You’ve used'} ${(ratio * 100).round()}% of your budget, with ${Money.format(remaining!)} left${store.isPlanning ? ' in your plan' : ' to spend'}.',
         icon: alert
             ? Icons.notifications_active_outlined
             : Icons.lightbulb_outline_rounded,
-        color: alert ? AppColors.warning : AppColors.primaryColor,
-        background: alert ? AppColors.warningLight : AppColors.mint,
+        color: alert
+            ? CartyDesign.of(context).warning
+            : CartyDesign.of(context).primaryColor,
+        background: alert
+            ? CartyDesign.of(context).warningLight
+            : CartyDesign.of(context).mint,
       ),
       if (pending > 0)
         _Tip(
@@ -67,12 +72,12 @@ class ShoppingTips extends StatelessWidget {
         color: const Color(0xFF7155A5),
         background: const Color(0xFFF1EDFA),
       ),
-      const _Tip(
+      _Tip(
         title: 'Give saved prices a fresh look',
         body: 'Saved lists use your last entered prices. Check the shelf labels and edit any changes so your budget stays accurate.',
         icon: Icons.price_change_outlined,
-        color: AppColors.primaryColor,
-        background: AppColors.mint,
+        color: CartyDesign.of(context).primaryColor,
+        background: CartyDesign.of(context).mint,
       ),
     ];
     if (expanded) {
@@ -152,8 +157,10 @@ class _TipCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     tip.body,
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: AppColors.textPrimary, height: 1.5),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: CartyDesign.of(context).textPrimary,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),

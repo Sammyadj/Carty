@@ -1,34 +1,63 @@
 import 'package:flutter/material.dart';
 
 import '../../core/money.dart';
+import '../../data/item_suggestions.dart';
 import '../../models/cart_item.dart';
 import '../../models/saved_shopping_list.dart';
 import '../../state/cart_store.dart';
 import '../../screens/reuse_list_screen.dart';
 import '../../widgets/cart_area/cart_item_editor.dart';
+import 'list_dialogs.dart';
+
+export 'list_dialogs.dart' show showSaveList;
 
 Future<void> showItemEditor({
   required BuildContext context,
   required CartStore store,
   CartItem? item,
+  ItemSuggestion? initialSuggestion,
 }) async {
+  await store.load();
+  if (!context.mounted) return;
+  final planning = store.isPlanning;
+  final suggestions = item == null
+      ? ItemSuggestions.fromWorkspace(
+          items: store.items,
+          savedLists: store.savedLists,
+          history: store.history,
+        )
+      : null;
   final draft = await showDialog<CartItemDraft>(
     context: context,
-    builder: (_) => CartItemEditor(item: item),
+    builder: (_) => CartItemEditor(
+      item: item,
+      suggestions: suggestions,
+      initialSuggestion: initialSuggestion,
+      isPlanning: planning,
+    ),
   );
   if (draft == null || !context.mounted) return;
   if (item == null) {
     await store.addItem(
       name: draft.name,
       unitPricePence: draft.unitPricePence,
-      quantity: draft.quantity,
+      quantity: planning ? 0 : draft.quantity,
+      plannedQuantity: draft.quantity,
+      priceConfirmed: planning ? false : draft.priceConfirmed,
+      category: draft.category,
     );
   } else {
     await store.updateItem(
       item.copyWith(
         name: draft.name,
-        unitPricePence: draft.unitPricePence,
-        quantity: draft.quantity,
+        unitPricePence: planning ? item.unitPricePence : draft.unitPricePence,
+        quantity: planning ? item.quantity : draft.quantity,
+        plannedQuantity: planning ? draft.quantity : item.plannedQuantity,
+        estimatedUnitPricePence: planning
+            ? draft.unitPricePence
+            : item.estimatedUnitPricePence,
+        priceConfirmed: planning ? item.priceConfirmed : draft.priceConfirmed,
+        category: draft.category,
       ),
     );
   }
@@ -74,63 +103,17 @@ Future<void> confirmAndClearCart({
   await store.clearCart();
 }
 
-Future<bool> showSaveList({
-  required BuildContext context,
-  required CartStore store,
-}) async {
-  final name = await showDialog<String>(
-    context: context,
-    builder: (_) => const _ListNameDialog(),
-  );
-  if (name == null || !context.mounted) return false;
-  await store.saveList(name);
-  return store.storageError == null && !store.needsStorageReset;
-}
-
-enum _NewListChoice { save, discard }
-
 Future<bool> showNewList({
   required BuildContext context,
   required CartStore store,
 }) async {
-  if (store.isLoading) return false;
-  if (store.hasUnsavedList) {
-    final choice = await showDialog<_NewListChoice>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Save before starting a new list?'),
-        content: Text(
-          store.items.isEmpty
-              ? 'Your current budget has not been saved as a list. Starting a new list resets it. Add products first if you want to save this shop.'
-              : 'Your current products or budget are not saved as a matching shopping list. Save them for later, or start a new list without saving.',
-        ),
-        actions: [
-          TextButton(
-            key: const Key('new-list-cancel'),
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            key: const Key('new-list-discard'),
-            onPressed: () =>
-                Navigator.pop(dialogContext, _NewListChoice.discard),
-            child: const Text('Start without saving'),
-          ),
-          if (store.items.isNotEmpty)
-            FilledButton(
-              key: const Key('new-list-save'),
-              onPressed: () =>
-                  Navigator.pop(dialogContext, _NewListChoice.save),
-              child: const Text('Save and start new'),
-            ),
-        ],
-      ),
-    );
-    if (choice == null || !context.mounted) return false;
-    if (choice == _NewListChoice.save) {
-      final saved = await showSaveList(context: context, store: store);
-      if (!saved || !context.mounted) return false;
-    }
+  if (!await confirmLeaveList(
+        context: context,
+        store: store,
+        startingNew: true,
+      ) ||
+      !context.mounted) {
+    return false;
   }
   await store.startNewList();
   return true;
@@ -281,67 +264,4 @@ class _BudgetDialogState extends State<_BudgetDialog> {
       ],
     );
   }
-}
-
-class _ListNameDialog extends StatefulWidget {
-  const _ListNameDialog();
-  @override
-  State<_ListNameDialog> createState() => _ListNameDialogState();
-}
-
-class _ListNameDialogState extends State<_ListNameDialog> {
-  final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    if (!_form.currentState!.validate()) return;
-    Navigator.pop(context, _name.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Save shopping list'),
-    content: SingleChildScrollView(
-      child: Form(
-        key: _form,
-        child: TextFormField(
-          key: const Key('list-name-input'),
-          controller: _name,
-          autofocus: true,
-          maxLength: SavedShoppingList.maxNameLength,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'List name',
-            hintText: 'Weekly groceries',
-          ),
-          onFieldSubmitted: (_) => _save(),
-          validator: (value) {
-            final name = value?.trim() ?? '';
-            if (name.isEmpty) return 'Enter a list name';
-            if (name.length > SavedShoppingList.maxNameLength) {
-              return 'Please use a shorter list name';
-            }
-            return null;
-          },
-        ),
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        key: const Key('list-save'),
-        onPressed: _save,
-        child: const Text('Save list'),
-      ),
-    ],
-  );
 }

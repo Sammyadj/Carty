@@ -138,7 +138,7 @@ void main() {
     await _tapKey(tester, 'item-decrement-$id');
     expect(store.items.single.quantity, 0);
     expect(store.totalPence, 0);
-    expect(find.text('Not picked yet'), findsOneWidget);
+    expect(find.text('Not picked yet · 1 planned'), findsOneWidget);
 
     final decrement = find.byKey(ValueKey('item-decrement-$id'));
     expect(tester.widget<IconButton>(decrement).onPressed, isNull);
@@ -231,6 +231,11 @@ void main() {
 
     await _tapKey(tester, 'nav-lists');
     expect(find.text('Weekly groceries'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('save-list-from-library')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(
       find.byKey(const ValueKey('save-list-from-library')),
       findsOneWidget,

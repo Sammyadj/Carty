@@ -1,23 +1,44 @@
 import 'package:flutter/material.dart';
+
+import '../../design/carty_design.dart';
+
 import 'package:flutter/services.dart';
 
-import '../../base/res/styles/app_styles.dart';
 import '../../core/money.dart';
+import '../../data/item_suggestions.dart';
 import '../../models/cart_item.dart';
+import '../../models/grocery_category.dart';
 
 class CartItemDraft {
-  const CartItemDraft(this.name, this.unitPricePence, this.quantity);
+  const CartItemDraft(
+    this.name,
+    this.unitPricePence,
+    this.quantity, {
+    this.priceConfirmed = false,
+    this.category = GroceryCategory.automatic,
+  });
 
   final String name;
   final int unitPricePence;
   final int quantity;
+  final bool priceConfirmed;
+  final GroceryCategory category;
 }
 
 /// A form owns temporary input. Only a validated draft reaches the cart store.
 class CartItemEditor extends StatefulWidget {
-  const CartItemEditor({super.key, this.item});
+  const CartItemEditor({
+    super.key,
+    this.item,
+    this.suggestions,
+    this.initialSuggestion,
+    this.isPlanning = false,
+  }) : assert(item == null || initialSuggestion == null);
 
   final CartItem? item;
+  final ItemSuggestions? suggestions;
+  final ItemSuggestion? initialSuggestion;
+  final bool isPlanning;
 
   @override
   State<CartItemEditor> createState() => _CartItemEditorState();
@@ -25,18 +46,111 @@ class CartItemEditor extends StatefulWidget {
 
 class _CartItemEditorState extends State<CartItemEditor> {
   final _formKey = GlobalKey<FormState>();
-  late final _name = TextEditingController(text: widget.item?.name ?? '');
+  final _nameFocus = FocusNode();
+  final _priceFocus = FocusNode();
+  late final _suggestions =
+      widget.suggestions ?? ItemSuggestions.fromWorkspace();
+  String? _suggestedPriceText;
+  String? _suggestedPriceName;
+  late bool _priceConfirmed = widget.item?.priceConfirmed ?? false;
+  late GroceryCategory _category =
+      widget.item?.category ??
+      widget.initialSuggestion?.category ??
+      GroceryCategory.automatic;
+  bool _categoryWasEdited = false;
+  late String? _categorySuggestionName = widget.initialSuggestion?.name;
+  late final _name = TextEditingController(
+    text: widget.item?.name ?? widget.initialSuggestion?.name ?? '',
+  );
   late final _price = TextEditingController(
-    text: widget.item == null
-        ? ''
-        : Money.format(widget.item!.unitPricePence).replaceAll('£', ''),
+    text: _formatPrice(
+      (widget.isPlanning
+              ? widget.item?.estimatedUnitPricePence
+              : widget.item?.unitPricePence) ??
+          widget.initialSuggestion?.unitPricePence,
+    ),
   );
   late final _quantity = TextEditingController(
-    text: (widget.item?.quantity ?? 1).toString(),
+    text:
+        ((widget.isPlanning
+                    ? widget.item?.plannedQuantity
+                    : widget.item?.quantity) ??
+                1)
+            .toString(),
   );
 
   @override
+  void initState() {
+    super.initState();
+    _nameFocus.addListener(_refreshSuggestions);
+    if (widget.item == null &&
+        widget.initialSuggestion?.unitPricePence != null) {
+      _suggestedPriceText = _price.text;
+      _suggestedPriceName = ItemSuggestions.normalize(
+        widget.initialSuggestion!.name,
+      );
+    }
+  }
+
+  String _formatPrice(int? price) =>
+      price == null ? '' : Money.format(price).replaceAll('£', '');
+
+  void _refreshSuggestions() {
+    if (mounted) setState(() {});
+  }
+
+  void _nameChanged(String name) {
+    setState(() {
+      if (name.trim() != widget.item?.name) _priceConfirmed = false;
+      if (widget.item == null &&
+          !_categoryWasEdited &&
+          name != _categorySuggestionName) {
+        _category = GroceryCategory.automatic;
+      }
+      if (_suggestedPriceName != null &&
+          ItemSuggestions.normalize(name) != _suggestedPriceName) {
+        // A price supplied for one suggested product must not follow a new name.
+        if (_price.text == _suggestedPriceText) _price.clear();
+        _suggestedPriceText = null;
+        _suggestedPriceName = null;
+      }
+    });
+  }
+
+  void _useSuggestion(ItemSuggestion suggestion) {
+    setState(() {
+      if (!_categoryWasEdited) {
+        _category = suggestion.category;
+        _categorySuggestionName = suggestion.name;
+      }
+      if (_suggestedPriceText != null && _price.text == _suggestedPriceText) {
+        _price.clear();
+      }
+      _suggestedPriceText = null;
+      _suggestedPriceName = null;
+      _name.value = TextEditingValue(
+        text: suggestion.name,
+        selection: TextSelection.collapsed(offset: suggestion.name.length),
+      );
+      final price = suggestion.unitPricePence;
+      if (_price.text.trim().isEmpty && price != null) {
+        final text = Money.format(price).replaceAll('£', '');
+        _price.value = TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
+        _suggestedPriceText = text;
+        _suggestedPriceName = ItemSuggestions.normalize(suggestion.name);
+      }
+    });
+    _priceFocus.requestFocus();
+  }
+
+  @override
   void dispose() {
+    _nameFocus.removeListener(_refreshSuggestions);
+    _nameFocus.dispose();
+    _priceFocus.dispose();
     _name.dispose();
     _price.dispose();
     _quantity.dispose();
@@ -51,6 +165,8 @@ class _CartItemEditorState extends State<CartItemEditor> {
         _name.text.trim(),
         Money.tryParsePence(_price.text)!,
         int.parse(_quantity.text),
+        priceConfirmed: _priceConfirmed,
+        category: _category,
       ),
     );
   }
@@ -58,7 +174,14 @@ class _CartItemEditorState extends State<CartItemEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final compact =
+        MediaQuery.viewInsetsOf(context).bottom > 0 ||
+        MediaQuery.textScalerOf(context).scale(1) >= 1.6;
+    final matches = widget.item == null && _nameFocus.hasFocus
+        ? _suggestions.find(_name.text)
+        : const <ItemSuggestion>[];
     return AlertDialog(
+      scrollable: true,
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -69,39 +192,43 @@ class _CartItemEditorState extends State<CartItemEditor> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.mint,
-              borderRadius: BorderRadius.circular(12),
+          if (!compact) ...[
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: CartyDesign.of(context).mint,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                widget.item == null
+                    ? Icons.add_shopping_cart_outlined
+                    : Icons.edit_outlined,
+                color: CartyDesign.of(context).primaryColor,
+                size: 22,
+              ),
             ),
-            child: Icon(
-              widget.item == null
-                  ? Icons.add_shopping_cart_outlined
-                  : Icons.edit_outlined,
-              color: AppColors.primaryColor,
-              size: 22,
-            ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
+          ],
           Text(
             widget.item == null ? 'Add an item' : 'Edit item',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: AppColors.textPrimary,
+              color: CartyDesign.of(context).textPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            widget.item == null
-                ? 'Keep track of your shop as you go.'
-                : 'Update the details in your basket.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-              height: 1.5,
+          if (!compact) ...[
+            const SizedBox(height: 4),
+            Text(
+              widget.item == null
+                  ? 'Plan ahead or add something as you shop.'
+                  : 'Update the details in your basket.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: CartyDesign.of(context).textSecondary,
+                height: 1.5,
+              ),
             ),
-          ),
+          ],
         ],
       ),
       content: SizedBox(
@@ -116,10 +243,13 @@ class _CartItemEditorState extends State<CartItemEditor> {
                 TextFormField(
                   key: const Key('item-name-input'),
                   controller: _name,
-                  autofocus: true,
+                  focusNode: _nameFocus,
+                  autofocus: widget.initialSuggestion == null,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   maxLength: CartItem.maxNameLength,
+                  onChanged: _nameChanged,
+                  onFieldSubmitted: (_) => _priceFocus.requestFocus(),
                   decoration: _decoration(
                     'Item name',
                     hintText: 'e.g. Organic whole milk',
@@ -133,17 +263,32 @@ class _CartItemEditorState extends State<CartItemEditor> {
                     return null;
                   },
                 ),
+                if (matches.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _suggestionChoices(matches),
+                ],
                 const SizedBox(height: 12),
                 TextFormField(
                   key: const Key('item-price-input'),
                   controller: _price,
+                  autofocus: widget.initialSuggestion != null,
+                  focusNode: _priceFocus,
+                  onChanged: (_) {
+                    setState(() => _priceConfirmed = false);
+                    if (_suggestedPriceText != null) {
+                      setState(() {
+                        _suggestedPriceText = null;
+                        _suggestedPriceName = null;
+                      });
+                    }
+                  },
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   textInputAction: TextInputAction.next,
                   maxLength: 12,
                   decoration: _decoration(
-                    'Unit price',
+                    widget.isPlanning ? 'Estimated unit price' : 'Unit price',
                     prefixText: '£ ',
                     hintText: '0.00',
                   ),
@@ -155,6 +300,24 @@ class _CartItemEditorState extends State<CartItemEditor> {
                     return null;
                   },
                 ),
+                if (_suggestedPriceText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'A price you entered before. Check the shelf label when shopping.',
+                      key: const Key('suggested-price-note'),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                if (!widget.isPlanning)
+                  CheckboxListTile(
+                    key: const Key('item-price-confirmed'),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('I checked the shelf price'),
+                    value: _priceConfirmed,
+                    onChanged: (value) =>
+                        setState(() => _priceConfirmed = value ?? false),
+                  ),
                 const SizedBox(height: 16),
                 TextFormField(
                   key: const Key('item-quantity-input'),
@@ -163,7 +326,9 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _save(),
-                  decoration: _decoration('Quantity'),
+                  decoration: _decoration(
+                    widget.isPlanning ? 'Planned quantity' : 'Picked quantity',
+                  ),
                   validator: (value) {
                     final quantity = int.tryParse(value ?? '');
                     if (quantity == null ||
@@ -175,29 +340,59 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   },
                 ),
                 const SizedBox(height: 14),
+                DropdownButtonFormField<GroceryCategory>(
+                  key: const Key('item-category-input'),
+                  initialValue: _category,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    helperText: _category == GroceryCategory.automatic
+                        ? 'Suggested from name: ${GroceryCategories.suggest(_name.text).label}'
+                        : null,
+                    helperMaxLines: 2,
+                  ),
+                  items: [
+                    for (final category in GroceryCategory.values)
+                      DropdownMenuItem(
+                        value: category,
+                        child: Text(
+                          category.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) => setState(() {
+                    _category = value ?? GroceryCategory.automatic;
+                    _categoryWasEdited = true;
+                  }),
+                ),
+                const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.mint,
+                    color: CartyDesign.of(context).mint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
                         child: Icon(
                           Icons.info_outline,
                           size: 17,
-                          color: AppColors.primaryColor,
+                          color: CartyDesign.of(context).primaryColor,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Use 0 to keep an item on your list until you pick it up.',
+                          widget.isPlanning
+                              ? 'These quantities are a plan. They do not mark products as picked.'
+                              : 'Use 0 to keep an item on your list until you pick it up.',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.primaryDark,
+                            color: CartyDesign.of(context).primaryDark,
                             height: 1.5,
                           ),
                         ),
@@ -213,14 +408,16 @@ class _CartItemEditorState extends State<CartItemEditor> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+          style: TextButton.styleFrom(
+            foregroundColor: CartyDesign.of(context).textSecondary,
+          ),
           child: const Text('Cancel'),
         ),
         FilledButton(
           key: const Key('item-save'),
           onPressed: _save,
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primaryColor,
+            backgroundColor: CartyDesign.of(context).primaryColor,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             shape: RoundedRectangleBorder(
@@ -233,6 +430,58 @@ class _CartItemEditorState extends State<CartItemEditor> {
     );
   }
 
+  Widget _suggestionChoices(List<ItemSuggestion> matches) {
+    final design = CartyDesign.of(context);
+    return Material(
+      key: const Key('item-suggestions'),
+      color: design.mint.withValues(alpha: .45),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: design.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+            child: Text(
+              'Suggestions',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
+          for (var i = 0; i < matches.length; i++)
+            ListTile(
+              key: Key('item-suggestion-$i'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              title: Text(
+                matches[i].name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(_suggestionDescription(matches[i])),
+              trailing: const Icon(Icons.north_west_rounded, size: 18),
+              onTap: () => _useSuggestion(matches[i]),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _suggestionDescription(ItemSuggestion suggestion) {
+    final source = switch (suggestion.source) {
+      ItemSuggestionSource.basket => 'In your basket',
+      ItemSuggestionSource.savedList => 'From saved lists',
+      ItemSuggestionSource.history => 'From shopping history',
+      ItemSuggestionSource.favourite => 'From your favourites',
+      ItemSuggestionSource.common => 'Common item',
+    };
+    final price = suggestion.unitPricePence;
+    return price == null
+        ? '$source · Add your price'
+        : '$source · Saved price ${Money.format(price)}';
+  }
+
   InputDecoration _decoration(
     String label, {
     String? hintText,
@@ -243,15 +492,15 @@ class _CartItemEditorState extends State<CartItemEditor> {
     prefixText: prefixText,
     counterText: '',
     filled: true,
-    fillColor: AppColors.backgroundColor,
+    fillColor: CartyDesign.of(context).backgroundColor,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderColor),
+      borderSide: BorderSide(color: CartyDesign.of(context).borderColor),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderColor),
+      borderSide: BorderSide(color: CartyDesign.of(context).borderColor),
     ),
     errorMaxLines: 3,
   );

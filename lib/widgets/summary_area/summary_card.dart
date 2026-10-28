@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../base/res/styles/app_styles.dart';
+import '../../design/carty_design.dart';
+
 import '../../core/money.dart';
 
 class SummaryCard extends StatelessWidget {
@@ -9,42 +10,40 @@ class SummaryCard extends StatelessWidget {
     required this.totalPence,
     required this.budgetPence,
     required this.onEditBudget,
+    this.totalLabel = 'Picked total',
   });
 
   final int totalPence;
   final int? budgetPence;
   final VoidCallback onEditBudget;
+  final String totalLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final design = CartyDesign.of(context);
     final remaining = budgetPence == null ? null : budgetPence! - totalPence;
     final over = remaining != null && remaining < 0;
     final ratio = budgetPence == null ? 0.0 : totalPence / budgetPence!;
     final near = !over && ratio >= 0.8;
     final statusColor = over
-        ? AppColors.error
+        ? const Color(0xFFFFBAB6)
         : near
-        ? AppColors.warning
-        : AppColors.primaryColor;
+        ? const Color(0xFFFFD891)
+        : design.heroAccent;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [Colors.white, Color(0xFFF0F9F4)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: AppColors.borderColor),
+        borderRadius: BorderRadius.circular(design.radius),
+        color: design.heroColor,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryDark.withValues(alpha: 0.04),
+            color: CartyDesign.of(context).primaryDark.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -56,7 +55,10 @@ class SummaryCard extends StatelessWidget {
                   budgetPence == null
                       ? 'Your basket so far'
                       : 'Your shopping budget',
-                  style: theme.textTheme.titleSmall,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: design.heroInk.withValues(alpha: .8),
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -65,8 +67,8 @@ class SummaryCard extends StatelessWidget {
                   key: const Key('budget-edit'),
                   onPressed: onEditBudget,
                   style: TextButton.styleFrom(
-                    backgroundColor: AppColors.mint,
-                    foregroundColor: AppColors.primaryDark,
+                    backgroundColor: design.heroInk.withValues(alpha: .12),
+                    foregroundColor: design.heroInk,
                     minimumSize: const Size(48, 44),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
@@ -79,34 +81,45 @@ class SummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            Money.format(budgetPence ?? totalPence),
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontSize: 38,
-              color: AppColors.primaryDark,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  Money.format(budgetPence ?? totalPence),
+                  style: theme.textTheme.headlineLarge?.copyWith(
+                    fontSize: 44,
+                    color: design.heroInk,
+                    letterSpacing: -2,
+                  ),
+                ),
+              ),
+              if (MediaQuery.sizeOf(context).width >= 360 &&
+                  MediaQuery.textScalerOf(context).scale(1) < 1.3)
+                _BudgetMark(design: design),
+            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           if (remaining != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: LinearProgressIndicator(
                 value: ratio.clamp(0.0, 1.0),
-                minHeight: 10,
+                minHeight: 7,
                 color: statusColor,
-                backgroundColor: AppColors.borderColor,
+                backgroundColor: design.heroInk.withValues(alpha: .18),
                 semanticsLabel: 'Budget used',
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: _BudgetMetric(
-                    label: 'Spent',
+                    label: totalLabel,
                     value: Money.format(totalPence),
-                    color: AppColors.textPrimary,
+                    color: design.heroInk,
+                    labelColor: design.heroInk.withValues(alpha: .65),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -115,23 +128,16 @@ class SummaryCard extends StatelessWidget {
                     label: over ? 'Over budget' : 'Remaining',
                     value: Money.format(remaining.abs()),
                     color: statusColor,
+                    labelColor: design.heroInk.withValues(alpha: .65),
                     alignEnd: true,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: over
-                    ? const Color(0xFFFBECEC)
-                    : near
-                    ? AppColors.warningLight
-                    : AppColors.mint,
-                borderRadius: BorderRadius.circular(12),
-              ),
+              padding: const EdgeInsets.only(top: 4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -139,7 +145,7 @@ class SummaryCard extends StatelessWidget {
                     over || near
                         ? Icons.info_outline_rounded
                         : Icons.check_circle_outline_rounded,
-                    color: statusColor,
+                    color: design.heroInk,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -154,7 +160,7 @@ class SummaryCard extends StatelessWidget {
                         fontSize: 12,
                         height: 1.4,
                         fontWeight: FontWeight.w600,
-                        color: statusColor,
+                        color: design.heroInk,
                       ),
                     ),
                   ),
@@ -162,9 +168,12 @@ class SummaryCard extends StatelessWidget {
               ),
             ),
           ] else
-            const Text(
+            Text(
               'Give this shop a budget to keep your spending on track.',
-              style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+              style: TextStyle(
+                color: design.heroInk.withValues(alpha: .8),
+                height: 1.5,
+              ),
             ),
         ],
       ),
@@ -177,11 +186,13 @@ class _BudgetMetric extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    required this.labelColor,
     this.alignEnd = false,
   });
   final String label;
   final String value;
   final Color color;
+  final Color labelColor;
   final bool alignEnd;
 
   @override
@@ -192,7 +203,8 @@ class _BudgetMetric extends StatelessWidget {
     children: [
       Text(
         label,
-        style: Theme.of(context).textTheme.bodySmall,
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(color: labelColor),
         textAlign: alignEnd ? TextAlign.end : TextAlign.start,
       ),
       const SizedBox(height: 4),
@@ -207,5 +219,26 @@ class _BudgetMetric extends StatelessWidget {
         ),
       ),
     ],
+  );
+}
+
+class _BudgetMark extends StatelessWidget {
+  const _BudgetMark({required this.design});
+  final CartyDesign design;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: design.heroAccent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.account_balance_wallet_outlined,
+        color: design.heroColor,
+        size: 28,
+      ),
+    ),
   );
 }

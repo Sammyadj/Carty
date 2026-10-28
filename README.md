@@ -1,37 +1,163 @@
 # Carty
 
+Development follows [focused feature branches and pull requests](CONTRIBUTING.md)
+from `main`, with City as the selected design.
+
+**City** is Carty’s selected design: bold typography, a focused budget card, and lime accents. The earlier three-design experiment remains available on the [`codex/ui-exploration` branch](https://github.com/Sammyadj/Carty/tree/codex/ui-exploration).
+
 Carty is a Flutter shopping companion for keeping track of the cost of a basket and staying within a budget. It is being developed in small, understandable stages: a dependable manual shopping flow first, then useful automation.
 
 ## Current MVP
 
 - Add products with a name, unit price, and quantity; edit or remove them later.
+- Get offline item-name suggestions from the current basket, saved lists, and shopping history, with common grocery and household names for a new workspace. Reuse your own saved prices as planning estimates.
+- Discover items in Home's **You might need** section, with explanations based on recurring picks, products picked together, saved lists, or clearly labelled starting ideas.
 - Scan retail barcodes, look up products through Open Food Facts with a UPCitemdb general-retail fallback, then confirm the shelf price and quantity. Manual barcode entry and remembered product details cover missing matches.
 - See a live basket total, remaining budget, and progress. Near-budget feedback starts at 80% of the budget; spending above the budget has an explicit over-budget status.
-- Use a green Carty dashboard with product icon avatars and Home, Lists, and Tips navigation.
+- Use the City design with product icon avatars and Home, Lists, Tips, and History navigation.
+- Open with an animated City loading screen while account setup and saved-list restoration finish, with support for Reduce Motion and larger text.
 - Keep the total, budget status, Scan barcode, and Add item controls visible in a bottom bar on Home and the full basket screen.
 - Set or remove a budget. Money is represented as integer pence, with GBP formatting.
 - Search products in the active basket and filter to products still to pick.
-- Save the current basket as a reusable shopping list, then choose and review how to reuse it.
+- Save a named shopping list and continue editing it with automatic updates; duplicate it or start fresh for a separate shop.
 - Read simple tips based on the basket and budget. These are local rules, not AI recommendations or live store offers.
-- Restore the current basket, budget, and saved lists after restarting the app.
+- Restore the current basket, budget, saved lists, history, and the named list being edited after restarting the app.
+- Optionally sign in through an email link, set a display name, and sync a private shopping workspace through Supabase.
+- Keep shopping offline, review conflicting cloud changes, and explicitly copy guest lists into an account when wanted.
+- Finish a shop to retain its picked products and entered prices in History, independently of reusable lists.
 
 Cart changes flow through one `CartStore`, so the home and full-cart screens display the same state. Forms and layouts are designed for phone screens, keyboard input, and larger text.
 
 ## Using Carty
 
+Startup uses Carty's grocery illustration with gently moving products, a rocking bag, and animated lime accents, then fades into the restored shop. It shows real initialization work without an artificial minimum wait or a made-up progress percentage. Reduce Motion and accessibility navigation settings use a still illustration and instant handoff. A compact layout keeps the status visible with larger text or in landscape. See the [animation preview](docs/previews/city-loading.gif) and [large-text preview](docs/previews/city-loading-large-text.png).
+
 Choose **Create new list** on Home or Lists, or use the **New list** toolbar action, to begin a different shop with an empty basket and no budget. If the current products or budget differ from every named saved list, Carty offers **Save and start new**, **Start without saving**, or **Cancel**. Cancelling the name form or a failed save keeps the current basket. Existing saved lists stay available. A budget-only basket can be cancelled or discarded; add products before saving it as a named list.
 
 - **Home** shows the budget summary, a shopping tip, the first three basket products, and saved-list shortcuts. Use **View all** beside the shopping list to open the full basket, where **Search your basket** matches product names and **To pick** shows only products with quantity zero. Search covers the active basket only.
-- **Lists** shows saved shopping lists. Save the current basket from this tab or with **Save as list** on either shopping screen; reuse a saved list or delete it after confirmation.
+- **Lists** shows saved shopping lists. Save the current basket from this tab or with **Save as list** on either shopping screen. Continue editing a saved list, reuse its products in a separate basket, or delete it after confirmation. The list receiving your current edits is marked **Currently editing**.
 - **Tips** expands the local shopping guidance, including budget progress, products waiting to be picked, and reminders to check saved prices.
+- **History** contains completed shops. Choose **Finish shopping** on Home or the full basket, name the trip, and confirm. Only picked products (quantity above zero) enter the record; the active basket and budget are cleared, while named saved lists remain reusable. A recorded total uses your entered prices and is not a receipt or payment confirmation. Open a trip to review or delete its record.
 
 Set a product's quantity to zero to keep it on the list without adding to the total. Increase its quantity as you pick it up. Deleting a product removes it from the basket entirely.
 
-To reuse a saved list, choose **Duplicate list** to copy its products, prices, quantities, and budget, or **Start fresh** to keep its products and prices while resetting every quantity to zero and clearing the budget. Continue to **Review list**, check the products, starting total, and budget, then select **Use this list**. Only that final action replaces the active basket and budget; backing out before applying leaves them unchanged. The saved original stays unchanged when you edit the new basket. Saved prices are the last prices entered when the list was saved, so check them against shelf labels as you shop.
+To carry on an existing shop, open its saved list and choose **Continue editing** (the default). Continue to **Review list**, check the products and budget, then confirm **Continue editing**. Quantities, prices, pending products, and budget are retained. Edits and new scans update that same named list automatically. **Editing [list name]** identifies it on Home and the full basket screen. Closing and reopening Carty restores this editing state, so you can prepare a list at home and carry on in the shop without duplicating it. Saving a basket by name also starts this ongoing editing mode.
+
+Choose **Duplicate list** to copy products, prices, quantities, and budget into a separate basket, or **Start fresh** to copy the products and prices while resetting quantities to zero and clearing the budget. Review and confirm **Use this list**. These two modes keep the saved original unchanged. **Save a copy** creates another named version when you are already editing a saved list. Saved prices are your last entered prices; check them against shelf labels as you shop.
+
+Opening a different list prompts **Save and switch**, **Switch without saving**, or **Cancel** when the current basket has no matching named list. Cancelling the prompt or name form keeps the current shop. Pending writes settle before switching; if saving fails, switching is blocked until a successful retry. **Create new list** and **Clear cart** leave the named list intact and detach the new basket. Deleting a named list keeps the current basket but stops updates to the deleted list. Removing its last product keeps the named list available for editing.
+
+## Organise lists and completed shops
+
+Lists and History support searching names or products and filtering **Active**,
+**Favourites**, or **Archived** records. Sort lists by recent changes, name, last
+use, or budget; sort trips by date, name, or recorded total. A list's options menu
+also supports renaming. Last-used metadata changes when opening/reusing a list,
+without changing its saved products or budget.
+
+Archiving keeps a record for later restoration. Archiving the list currently being
+edited warns that the basket will stay but automatic updates to that named list
+will stop. Continue editing an archived list restores it; copying an archived list
+keeps the original archived. Home shortcuts omit archived lists and put favourites
+first. Archived lists do not supply automatic product suggestions; completed trips
+still provide real purchase-history evidence even when organised into the archive.
+
+**Plan this shop again** in History reviews a completed trip's recorded products,
+quantities, stored prices, and budget before creating a new plan. Existing unsaved
+baskets are protected. Copied products start unpicked with unconfirmed estimates
+and new IDs. The original trip's products, prices, total, and date stay unchanged.
+
+See [Lists](docs/previews/library-lists.png), [archives](docs/previews/library-archive.png),
+[History](docs/previews/library-history.png), and [trip reuse review](docs/previews/library-trip-review.png).
+Regenerate these actual-widget previews with `flutter test tool/render_library_previews.dart`.
+
+## Item-name suggestions and planning at home
+
+Choose **Add item** on Home or the full basket and type at least two characters in **Item name**. Up to three suggestions appear, prioritising your own products. Matching handles case, spaces, hyphens, and the start of words, so `mil` can find `Organic whole milk`. Common grocery and household names also work without a shopping history. You can always type a different name.
+
+Tap a suggestion to fill its name. If the price field is empty and the product has a price in your shopping data, Carty fills that saved price and labels it as a previously entered amount. This helps estimate a budget before visiting the shop; check the shelf label when shopping. Common starter names never invent a price. Prices and quantities you have already entered are kept. Changing to a different name clears an untouched auto-filled price; a price you edited yourself stays. Suggestions apply to new items, while existing-item edits remain explicit.
+
+Choosing a suggestion does not add anything to the basket. **Save item** confirms the name, price, and quantity; **Cancel** leaves shopping data unchanged. Completing a name does not attach a barcode or merge another product into the basket. The form stays scrollable with a phone keyboard and larger text, and the keyboard's Next action moves directly to price.
+
+Suggestions run entirely on the device, using an index of up to 200 recent distinct personal names and a small built-in list. Personal names and prices come only from the currently open guest/account workspace. Saved lists and completed shops retain familiar products after a restart or a new basket; removing all of their source records removes those personal suggestions. The device-wide barcode cache and other accounts are not searched. There is no extra suggestion-history database, AI subscription, or per-keystroke network lookup. Saving a signed-in basket still uses the existing private cloud sync.
+
+See [personal suggestions](docs/previews/suggestions-personal.png), [a reused estimate](docs/previews/suggestions-estimate.png), and [the larger-text layout](docs/previews/suggestions-large-text.png). Regenerate these actual Flutter renders with `flutter test tool/render_suggestion_previews.dart`; the keyboard previews reserve keyboard space without drawing native keyboard keys.
+
+## Plan at home, pick in the shop
+
+Use **Plan** on Home or Basket to enter intended quantities and estimated unit
+prices. New lists open in Plan mode. Planned products do not count as picked.
+Switch to **Shop** to adjust picked quantities, tick off a whole planned quantity,
+and edit the shelf price. **I checked the shelf price** marks a price as confirmed;
+editing it clears that confirmation until you check it again.
+
+Both totals stay visible in the progress panel. The budget summary and bottom bar
+use the estimated total in Plan mode and the picked total in Shop mode. Switching
+modes preserves the original estimate, picked progress, and budget. Continuing a
+saved list restores its mode as well as its progress; starting fresh retains the
+plan but clears picks and price confirmations.
+
+**Finish shopping** records only picked quantities, labels unconfirmed prices as
+estimates, and retains the complete original plan for comparison, including items
+not picked. It does not record a payment or verified receipt. Older records retain
+their entered quantities without inventing confirmations or missing history.
+
+See [planning](docs/previews/planning-home.png), [shopping progress](docs/previews/planning-shop.png),
+and [the original plan in History](docs/previews/planning-history.png).
+
+## Recommendations for your shop
+
+The item form includes **Category**. **Automatic** suggests a category from the
+name; choose a category yourself to override that hint. Unknown names stay in
+**Other**. Your choice survives edits, saved-list reuse, cloud saving, and History.
+Basket has a horizontal category filter and **Group by category**; category,
+name search, and **To pick** filters work together. Recommendations also have a
+horizontal category filter. These hints are local rules, not catalog metadata.
+See [grouped grocery browsing](docs/previews/planning-categories.png).
+
+**You might need** on Home groups recommendations into horizontal rows: **Your favourites**, **Picked together**, **Your regulars**, **From your saved lists**, **Pick up again**, **Pairing ideas**, and **Everyday essentials**. Only categories with suggestions appear, with up to six products in each row. Favourites take first priority. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
+
+Swipe a category sideways or use its next/back buttons. Each row scrolls independently, with a glimpse of the next card on phone screens. Illustrated cards use Carty's City palette and original icon artwork; their review controls and explanations grow with larger text. Navigation buttons respect Reduce Motion. A product appears in one category rather than being repeated across rows.
+
+The on-device engine prioritises products picked together with items in the current basket, then recurring picks, saved-list products, and previous-shop items. Completed shops supply the evidence for labels such as **Picked with Milk in 2 past shops** or **Picked in 3 of your last 3 shops**. Planned products in saved lists are labelled separately. Without personal history, common essentials and curated pairing ideas provide starting suggestions; they never claim that other customers bought something or that you have bought it before.
+
+Tap **Review & add** to open the item form with the proposed name and any saved unit price. Review the estimate and quantity, then select **Save item**. Unpriced ideas require your own price. Cancelling leaves the basket unchanged. Renaming a recommendation clears an untouched suggested price, while a price you edited yourself stays.
+
+Items already in the basket, including quantity-zero products, are excluded. Generic ideas also avoid basic variants already planned, such as Milk when Whole milk is present. Recommendations with a known saved unit price above the remaining budget are filtered out; the section is hidden when no budget remains. Unknown-price ideas may still appear while budget remains and need a price before adding. These are planning estimates, not a promise that the shop's current price or your final chosen quantity will fit.
+
+Matching uses the latest 40 completed shops and the existing bounded personal-name index. Duplicate lines or high quantities in one shop do not count as repeated shopping occasions. Pairing evidence requires at least two completed shops and a recurring association; common pairing ideas are labelled as ideas. Recommendations update as the basket and shopping records change, remain within the current guest/account workspace, and create no additional cloud records or AI requests.
+
+See [personal recommendation rows](docs/previews/recommendations-personal.png), [a swiped row](docs/previews/recommendations-scrolled.png), [starter ideas](docs/previews/recommendations-starter.png), and [the review form](docs/previews/recommendations-review.png). Regenerate the real Flutter previews with `flutter test tool/render_recommendation_previews.dart`.
+
+### Control your suggestions
+
+Use a basket product's star button or a recommendation's options menu to keep
+favourites. **Your products** on Home and **Manage** beside recommendations open
+searchable favourites, recurring picks, and hidden/less frequent choices. Products
+already in the basket open for editing; other products still require review and
+Save before adding. Regulars count distinct completed shops, not quantities.
+
+**Hide this suggestion** removes that name from automatic recommendations.
+**Suggest less often** waits for three new completed shops, then offers the name
+every third completed shop at a lower priority. It remains available for manual
+review in Your products. Use **Show suggestions again** or **Suggest normally**
+to reset these choices. Undo restores the prior choice only if it has not changed
+again. Choices persist in the current guest/account workspace, sync privately
+when signed in, and survive starting a new basket. Guest import includes choices,
+with existing account choices taking precedence. No shopping data is sent to an
+AI service.
+
+See [favourite recommendations](docs/previews/products-home.png),
+[Your products](docs/previews/products-favourites.png),
+[regulars](docs/previews/products-regulars.png), and
+[hidden choices](docs/previews/products-hidden.png). Regenerate with
+`flutter test tool/render_product_previews.dart`.
 
 ## Barcode scanning
 
 Select **Scan barcode** on Home or in the full basket. Allow camera access, hold a retail barcode inside the frame, and review the matched name, brand, and pack size. Correct the name if needed, enter the shop's **Shelf price per item**, choose the quantity to add, and confirm **Add to basket**. A scan alone never adds an item. Prices are always entered by you; the catalog supplies product identity, not a live retailer price.
+
+If the match is wrong, choose **Edit barcode** or **Scan again** directly on **Review product**. Editing starts with the current digits and validates the replacement. A different barcode loads a fresh review, clears the previous price, and resets the quantity to one. Cancelling either action or scanning the same barcode preserves your current entries. Your basket changes only after **Add to basket**.
 
 **Enter barcode manually** accepts the printed digits when camera access is denied or unavailable. EAN-8, UPC-A, EAN-13, and GTIN-14 barcodes are checksum validated; QR codes and UPC-E are outside this first version. Carty checks its local cache first, then Open Food Facts, and tries UPCitemdb if the food service has no usable match or is unavailable. Unknown barcodes, failed connections, and busy lookups still allow manual names and prices. Confirming **Add to basket** remembers your reviewed name locally; cancelling does not teach a new product.
 
@@ -39,7 +165,65 @@ Scanning a product already in the basket combines its quantity with the existing
 
 The last 100 catalog matches and confirmed products share a private on-device cache for offline reuse. This includes manually identified products, even after they are removed from a basket. Old entries may be evicted as the cache fills. **Look up again** requests fresh product details, without changing your price. Lookups are spaced at least five seconds apart; UPCitemdb requests are spaced at least ten seconds apart and only one retail request runs at a time. Its key-free trial allows 100 requests daily and may enforce shared-network limits. Rate-limit cooldowns are respected across app restarts; busy or failed lookups allow manual entry. Cached details can become outdated, so review the packaging and shelf label.
 
-The camera is opened only from the scanner screen. Camera images are processed on the device; Carty sends the barcode to [Open Food Facts](https://world.openfoodfacts.org/) and, if needed, [UPCitemdb](https://www.upcitemdb.com/api/), along with ordinary network request information. Basket contents, quantities, budgets, saved lists, and manually entered names are not uploaded. Sources are labelled in the review: Open Food Facts data is under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data is subject to [its own terms](https://www.upcitemdb.com/terms). User-entered details are labelled separately. Product photographs and provider prices are not used. No paid API key or subscription is configured; evaluate real-shop coverage and service terms before scaling a public release.
+The camera is opened only from the scanner screen. Camera images are processed on the device; Carty sends the barcode to [Open Food Facts](https://world.openfoodfacts.org/) and, if needed, [UPCitemdb](https://www.upcitemdb.com/api/), along with ordinary network request information. Product providers do not receive your basket, quantities, budget, saved lists, or manually entered names. When you sign in, your private shopping workspace is uploaded to Supabase as described below. Sources are labelled in the review: Open Food Facts data is under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data is subject to [its own terms](https://www.upcitemdb.com/terms). User-entered details are labelled separately. Product photographs and provider prices are not used. No paid product API key or subscription is configured; evaluate real-shop coverage and service terms before scaling a public release.
+
+## Accounts and private cloud saving
+
+Open the account icon on Home, enter your email, and request a sign-in link. Open the email on the **same device** to return to Carty. The SDK retains the session for later launches. For now, Supabase's built-in mail service is for testing: it only sends to organisation team members and currently allows two emails per hour. Public email sign-ups require custom SMTP. See [cloud setup and verification](docs/CLOUD_SETUP.md).
+
+Guest shopping remains available without an account. Signing in opens a separate account workspace; it does not silently upload existing guest data. **Copy guest lists** explicitly copies guest lists, any separate guest basket, and history into the account, retaining the guest originals. Signing out returns to guest data. Each account has its own on-device cache, so sign-out is not a device-data wipe; use device access controls on shared phones.
+
+Signed-in changes save on the device first, then sync the basket, budget, named lists, active editing link, and history to your private Supabase workspace. Your email and optional display name are stored for the account. The bounded product-lookup cache stays local. The sync notice distinguishes pending, failed, current, and conflicting copies. Reopen the app or use **Sync now** to retry after reconnecting.
+
+When another device and this device both changed the workspace, Carty asks whether to use the cloud or device version. It never silently merges product quantities or overwrites a competing revision. The replaced version is kept as one recovery copy on this device, available through **Restore previous version**. Review the cloud copy before switching between devices, and avoid simultaneous edits until the conflict is resolved.
+
+**Delete account** permanently deletes that account's profile, private cloud workspace and owned household lists after a warning. Owned shared lists disappear for everyone. Account caches on this device are removed after pending saves stop; guest data, other accounts and lists owned by someone else remain. Other offline devices and exported files cannot be remotely wiped. The app uses GBP and manually entered shelf prices; checkout remains deferred.
+
+## Household lists
+
+Open **Lists** and tap the people icon labelled **Household lists**. Sign in first
+if using a guest workspace. Create an empty shared list, or review a copy of the
+current basket or a saved list. The original private list stays available; its
+history and recommendation choices are not included. Household lists support up
+to 1,000 products each.
+
+Owners can use **Invite someone** to address an invitation to a verified email
+and choose Viewer or Editor. Invitations currently appear inside Carty; no
+notification email is sent. The recipient signs in with that email and accepts
+from Household lists. Public sign-in and invitations need the production email
+configuration described above; the default auth mail service is still limited
+to the test team.
+
+Owners and editors can plan, scan, pick products, edit prices and quantities, and
+change the budget. Viewers can read the list. Device saves finish before sync;
+previously opened lists can be reopened offline. Conflicting changes open a
+review of both complete copies, with a choice to keep local changes or use the
+household copy. Changes made while a review is open invalidate that review.
+The screen checks for household updates while visible and when the app resumes.
+
+Use **Household options → Manage people** to change viewer/editor permissions,
+remove members or revoke pending invitations. Members use **Your access** to
+leave; owners can delete the shared list for everyone after confirmation.
+Access changes require a fresh online check. Deletion refuses a list changed
+during confirmation. A read-only device copy, including unsynced work, stays in
+**Device recovery copies** after leaving or deleting; account deletion still
+clears that account’s device data. Regaining editing access requires review of
+retained changes before they can upload.
+
+Use **Household options → Device copies & backups** to review the current,
+last accepted or previous device copy. Export the selected shopping data, or
+save an independent private list without replacing your active basket. Editors
+can stage an older version for household conflict review before uploading it.
+Removing device copies requires confirmation and leaves the cloud list intact.
+Unreadable copies are retained until explicitly removed; other healthy copies
+remain available.
+
+Sharing is still in development: production notification delivery and physical
+two-account acceptance are outstanding. See
+[implementation and verification](docs/HOUSEHOLD_SHARING.md).
+
+The current release-test checkpoint and remaining work are recorded in
+[the testing handoff](docs/RELEASE_TEST_HANDOFF.md).
 
 ## Run locally
 
@@ -64,6 +248,8 @@ flutter test
 GitHub Actions checks formatting, analysis, and tests on pushes and pull requests. Tests should protect user-visible behavior: accurate totals, valid edits, state shared across screens, saved-list reuse, and storage failure handling.
 
 Scanner tests use a fake camera and HTTP client to cover duplicate detections, permission failures, lifecycle changes, product lookup, offline cache, manual fallback, and confirmed cart changes. Camera focus, flashlight behavior, permission settings, and detection speed still need checks on physical Android and iOS devices. Rebuild the app after adding the camera plugin; hot reload alone cannot install native plugins or permission descriptions. `mobile_scanner` remains pinned to the tested 7.0.0 version during the SDK migration.
+
+Loading tests cover first-frame account startup, local list restoration, guest fallback after initialization failure, disposal of late startup results, screen-reader status, reduced motion, and large text in portrait and landscape. Render the actual widget with `flutter test tool/render_loading_preview.dart`, then run `python3 tool/assemble_loading_preview.py` (Pillow required) to assemble the review GIF. The animation is drawn in Flutter; it adds no downloaded animation files or runtime packages.
 
 ## Development workflow
 
@@ -93,12 +279,16 @@ Flutter now links the scanner and preferences plugins through its generated Swif
 
 ```text
 lib/
+  auth/       Account session, guest/account separation, and profile actions
+  cloud/      Supabase adapter, revision checks, offline queue, and recovery
+  config/     Client-public Supabase configuration and exact auth callback
   core/       Money parsing and retail barcode validation
-  models/     Immutable cart items, product details, and saved shopping lists
+  models/     Immutable cart items, product details, saved lists, and completed trips
+  sharing/    Household permissions, scoped caches, offline conflict control, and login ownership
   state/      CartStore: basket actions, derived totals, and persistence coordination
   data/       Local cart storage and cached product lookup
-  screens/    Home, basket, list reuse, barcode capture, and product review
-  widgets/    Forms, cart tiles, budget summary, lists, and tips
+  screens/    Home, account, basket, list reuse, barcode capture, and product review
+  widgets/    Forms, cart tiles, budget summary, lists, tips, history, and sync status
   base/res/   Shared theme and styles
 ```
 
@@ -108,16 +298,18 @@ Prices are stored as pence rather than floating-point pounds. Totals and remaini
 
 ## Local data and limitations
 
-This MVP saves the basket, budget, and saved lists in a versioned JSON snapshot on the device using `shared_preferences`. It is convenient storage for a small personal basket and saved lists, not a durable financial record or backup service. Device removal, app-data clearing, or uninstalling the app can lose data.
+Shopping data now uses an app-private SQLite database with transactional updates to separate basket, list, trip, item, and product-choice records. Signed-in workspaces have separate account scopes and retain the accepted cloud revision and recovery data for offline shopping. Cloud saving adds recovery across installations after successful sync; unsynced edits remain vulnerable to uninstalling, clearing app data, or device loss. It is not a financial ledger.
 
-Saved lists live in the app's private preferences, not as files in your Documents folder. The product cache uses a separate preferences key and can be discarded without altering the basket or saved lists. Existing version-1 baskets without barcode metadata remain readable.
+Existing preference-based shopping data is validated and copied into SQLite on first use; its original preference value is kept as a migration backup. Saved lists do not become files in Documents automatically. The barcode product cache remains in separate preferences and can be discarded without changing shopping data. Portable version-3 snapshots retain history and the named list being edited; older versions remain readable without inventing past trips. Old saved lists become linked for ongoing updates when you explicitly choose **Continue editing**.
+
+Open the Home **Settings** gear → **Data & backups** to export a readable JSON file to a location you choose, import a backup after reviewing its contents, or recover the previous device save. Restoring replaces the current guest or signed-in workspace; signed-in restores subsequently sync to the account. Sessions and account access are excluded. A checksum detects file damage, not malicious changes; these files are not encrypted. Keep them private. See [storage and backup details](docs/DATA_AND_BACKUPS.md).
 
 Save failures show a **Retry** action; keep the app open while resolving them. If saved data cannot be read, Carty preserves it and blocks replacement writes. **Retry** can try loading it again before local edits are made. A confirmed **Reset saved data** allows the current basket and lists to replace the unreadable snapshot.
 
-There are no accounts, cloud sync, live retailer prices, AI calls, or shopping-history records in this stage. Prices are entered by the user, and a basket total is an estimate of the checkout amount. The app currently supports GBP only.
+Cloud protocol 2 stores private shopping records separately, downloads them in 500-row pages, and uploads only changed or deleted rows under an atomic revision check. Accounts migrate when opened by the updated app; their original cloud snapshot is retained, and older apps cannot save over the upgraded account. The former 2 MiB whole-workspace limit no longer applies to upgraded accounts. Conflict review still chooses a whole workspace, and the app currently holds that workspace in memory; this is not unlimited history or collaborative editing. See [cloud record storage](docs/CLOUD_RECORDS.md) for bounds, migration, and verification.
 
 ## Product direction and release preparation
 
-See [the mockup gap analysis](docs/MOCKUP_GAP_ANALYSIS.md) for what matches the three reference images and what remains, and [the roadmap](docs/ROADMAP.md) for the next stages and the choices behind them. The green brand, Home/Lists/Tips navigation, and barcode-to-review flow adapt the references to the current app. Product avatars are icon hints rather than catalog photos; live price refresh and the mockups' advanced recommendations still need their supporting data and integrations.
+See [the mockup gap analysis](docs/MOCKUP_GAP_ANALYSIS.md) for what matches the reference images and what remains, and [the roadmap](docs/ROADMAP.md) for the next stages. City is the selected interface. Product avatars are icon hints rather than catalog photos; live price refresh and advanced recommendations still need their supporting data and integrations.
 
-Before a store release, configure production Android signing, confirm app identifiers and iOS signing, finish the app icons and store metadata, and test on physical Android and iOS devices. The existing Android release configuration uses a debug key and must be replaced for publishing. Review platform minimum versions and privacy disclosures when adding new plugins. A Flutter SDK upgrade is a separate, tested migration; it is not required to understand or continue this MVP.
+Before a store release, configure production Android signing, confirm app identifiers and iOS signing, finish store metadata, configure production email delivery, review cloud privacy disclosures, and test real email sign-in and two-device sync on physical Android and iOS devices. The Android release configuration still uses a debug key and must be replaced for publishing. Passing automated checks does not make this a production-ready release.

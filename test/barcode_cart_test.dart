@@ -291,7 +291,7 @@ void main() {
 
     expect(restored.storageError, isNull);
     expect(restored.items.single.quantity, 3);
-    expect(restored.savedLists.single.items.single.quantity, 2);
+    expect(restored.savedLists.single.items.single.quantity, 3);
     for (final item in [
       restored.items.single,
       restored.savedLists.single.items.single,

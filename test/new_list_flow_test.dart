@@ -162,6 +162,7 @@ void main() {
     expect(store.budgetPence, 2000);
     expect(store.storageError, isNotNull);
     await tap(tester, 'new-list');
-    expect(find.byKey(const Key('new-list-save')), findsOneWidget);
+    expect(find.byKey(const Key('list-leave-retry')), findsOneWidget);
+    expect(store.items.single.name, 'Milk');
   });
 }

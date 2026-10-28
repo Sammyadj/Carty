@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../base/res/styles/app_styles.dart';
+import '../../design/carty_design.dart';
 
 class EmptyCartMessage extends StatelessWidget {
   const EmptyCartMessage({super.key});
@@ -18,13 +18,13 @@ class EmptyCartMessage extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: AppColors.mint,
+              color: CartyDesign.of(context).mint,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shopping_basket_outlined,
               size: 28,
-              color: AppColors.primaryColor,
+              color: CartyDesign.of(context).primaryColor,
             ),
           ),
           const SizedBox(height: 16),
@@ -33,7 +33,7 @@ class EmptyCartMessage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: CartyDesign.of(context).textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -41,7 +41,7 @@ class EmptyCartMessage extends StatelessWidget {
             'Add your first item to start tracking your shop.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: CartyDesign.of(context).textSecondary,
               height: 1.5,
             ),
           ),

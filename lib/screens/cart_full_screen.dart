@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../design/carty_design.dart';
+
 import '../base/utils/cart_dialogs.dart';
+import '../base/utils/shopping_history.dart';
 import '../state/cart_store.dart';
+import '../widgets/active_list_banner.dart';
+import '../widgets/cloud_sync_notice.dart';
 import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
 import '../widgets/storage_notice.dart';
+import '../widgets/shopping_mode_panel.dart';
+import '../models/grocery_category.dart';
+import '../widgets/grocery_category_filter.dart';
 import '../widgets/summary_area/summary_card.dart';
 
 class CartFullScreen extends StatefulWidget {
@@ -20,6 +27,8 @@ class CartFullScreen extends StatefulWidget {
 class _CartFullScreenState extends State<CartFullScreen> {
   final _search = TextEditingController();
   bool _pendingOnly = false;
+  GroceryCategory? _category;
+  bool _groupByCategory = true;
   CartStore get store => widget.store;
 
   @override
@@ -37,12 +46,17 @@ class _CartFullScreenState extends State<CartFullScreen> {
           .where(
             (item) =>
                 item.name.toLowerCase().contains(query) &&
-                (!_pendingOnly || item.quantity == 0),
+                (_category == null || item.resolvedCategory == _category) &&
+                (!_pendingOnly || item.needsPicking),
           )
           .toList();
-      final pendingCount = store.items
-          .where((item) => item.quantity == 0)
-          .length;
+      if (_groupByCategory) {
+        items.sort(
+          (a, b) =>
+              a.resolvedCategory.index.compareTo(b.resolvedCategory.index),
+        );
+      }
+      final pendingCount = store.pendingCount;
       return Scaffold(
         appBar: AppBar(
           title: const Text('Your basket'),
@@ -61,6 +75,7 @@ class _CartFullScreenState extends State<CartFullScreen> {
                         setState(() {
                           _search.clear();
                           _pendingOnly = false;
+                          _category = null;
                         });
                       }
                     },
@@ -83,14 +98,21 @@ class _CartFullScreenState extends State<CartFullScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           StorageNotice(store: store),
+                          const CloudSyncNotice(),
+                          ActiveListBanner(store: store),
                           SummaryCard(
-                            totalPence: store.totalPence,
+                            totalPence: store.budgetTotalPence,
+                            totalLabel: store.isPlanning
+                                ? 'Estimated total'
+                                : 'Picked total',
                             budgetPence: store.budgetPence,
                             onEditBudget: () => showBudgetEditor(
                               context: context,
                               store: store,
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          ShoppingModePanel(store: store),
                           const SizedBox(height: 24),
                           Text(
                             'Everything for this shop',
@@ -102,6 +124,19 @@ class _CartFullScreenState extends State<CartFullScreen> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           if (store.items.isNotEmpty) ...[
+                            if (store.items.any((item) => item.quantity > 0))
+                              OutlinedButton.icon(
+                                key: const Key('finish-shop'),
+                                onPressed: () => showFinishShopping(
+                                  context: context,
+                                  store: store,
+                                ),
+                                icon: const Icon(
+                                  Icons.task_alt_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Finish shopping'),
+                              ),
                             const SizedBox(height: 16),
                             TextField(
                               key: const Key('cart-search'),
@@ -145,6 +180,24 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 12),
+                            GroceryCategoryFilter(
+                              categories: store.items.map(
+                                (item) => item.resolvedCategory,
+                              ),
+                              selected: _category,
+                              onChanged: (value) =>
+                                  setState(() => _category = value),
+                              storageId: 'basket-categories',
+                            ),
+                            SwitchListTile(
+                              key: const Key('basket-group-categories'),
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Group by category'),
+                              value: _groupByCategory,
+                              onChanged: (value) =>
+                                  setState(() => _groupByCategory = value),
+                            ),
                           ],
                         ],
                       ),
@@ -156,22 +209,24 @@ class _CartFullScreenState extends State<CartFullScreen> {
                       sliver: SliverToBoxAdapter(child: EmptyCartMessage()),
                     ),
                   if (store.items.isNotEmpty && items.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
                             Icon(
                               Icons.search_off_rounded,
-                              color: AppColors.textSecondary,
+                              color: CartyDesign.of(context).textSecondary,
                               size: 36,
                             ),
-                            SizedBox(height: 12),
-                            Text('No products match this view.'),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 12),
+                            const Text('No products match this view.'),
+                            const SizedBox(height: 4),
                             Text(
-                              'Try a different search or choose All.',
-                              style: TextStyle(color: AppColors.textSecondary),
+                              'Try a different search, choose All, or clear the category filter.',
+                              style: TextStyle(
+                                color: CartyDesign.of(context).textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -183,20 +238,68 @@ class _CartFullScreenState extends State<CartFullScreen> {
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: CartItemTile(
-                            key: ValueKey(item.id),
-                            item: item,
-                            onEdit: () => showItemEditor(
-                              context: context,
-                              store: store,
-                              item: item,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_groupByCategory &&
+                                (index == 0 ||
+                                    items[index - 1].resolvedCategory !=
+                                        item.resolvedCategory))
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                child: Semantics(
+                                  header: true,
+                                  child: Text(
+                                    item.resolvedCategory.label,
+                                    key: ValueKey(
+                                      'basket-heading-${item.resolvedCategory.name}',
+                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium,
+                                  ),
+                                ),
+                              ),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: CartItemTile(
+                                key: ValueKey(item.id),
+                                item: item,
+                                isPlanning: store.isPlanning,
+                                onTogglePicked: () =>
+                                    store.togglePicked(item.id),
+                                isFavourite:
+                                    store.preferenceFor(item.name)?.favourite ??
+                                    false,
+                                onFavourite: () => store.setProductPreference(
+                                  name: item.name,
+                                  unitPricePence: store.isPlanning
+                                      ? item.estimatedUnitPricePence
+                                      : item.unitPricePence,
+                                  category: item.category,
+                                  favourite:
+                                      !(store
+                                              .preferenceFor(item.name)
+                                              ?.favourite ??
+                                          false),
+                                ),
+                                onEdit: () => showItemEditor(
+                                  context: context,
+                                  store: store,
+                                  item: item,
+                                ),
+                                onDelete: () => store.removeItem(item.id),
+                                onIncrement: () => store.isPlanning
+                                    ? store.adjustPlannedQuantity(item.id, 1)
+                                    : store.incrementQuantity(item.id),
+                                onDecrement: () => store.isPlanning
+                                    ? store.adjustPlannedQuantity(item.id, -1)
+                                    : store.decrementQuantity(item.id),
+                              ),
                             ),
-                            onDelete: () => store.removeItem(item.id),
-                            onIncrement: () => store.incrementQuantity(item.id),
-                            onDecrement: () => store.decrementQuantity(item.id),
-                          ),
+                          ],
                         );
                       },
                     ),
@@ -216,7 +319,11 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 Icons.bookmark_add_outlined,
                                 size: 18,
                               ),
-                              label: const Text('Save as list'),
+                              label: Text(
+                                store.activeList == null
+                                    ? 'Save as list'
+                                    : 'Save a copy',
+                              ),
                             ),
                             TextButton.icon(
                               key: const Key('clear-cart'),
@@ -225,7 +332,8 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 store: store,
                               ),
                               style: TextButton.styleFrom(
-                                foregroundColor: AppColors.textSecondary,
+                                foregroundColor: CartyDesign.of(context)
+                                    .textSecondary,
                               ),
                               icon: const Icon(
                                 Icons.delete_sweep_outlined,

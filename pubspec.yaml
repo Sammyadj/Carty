@@ -14,11 +14,23 @@ dependencies:
   # Retain the tested scanner version during SDK migration.
   mobile_scanner: 7.0.0
   http: ^1.4.0
+  supabase_flutter: ^2.18.3
+  sqflite: ^2.4.5
+  path: ^1.9.1
+  file_picker: ^13.3.0
+  crypto: ^3.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  sqflite_common_ffi: ^2.4.5
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/Manrope-OFL.txt
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope.ttf

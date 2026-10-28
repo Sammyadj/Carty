@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../base/res/styles/app_styles.dart';
+import '../base/utils/list_dialogs.dart';
+import '../design/carty_design.dart';
+
 import '../core/money.dart';
 import '../models/cart_item.dart';
 import '../models/saved_shopping_list.dart';
 import '../state/cart_store.dart';
 import '../widgets/product_avatar.dart';
 
-/// Choose how to reuse a saved snapshot, then review before replacing a basket.
+enum SavedListMode { continueEditing, duplicate, startFresh }
+
+/// Choose whether to edit a named shop or use its products in another basket.
 class ReuseListScreen extends StatefulWidget {
   const ReuseListScreen({super.key, required this.store, required this.list});
 
@@ -19,7 +23,9 @@ class ReuseListScreen extends StatefulWidget {
 }
 
 class _ReuseListScreenState extends State<ReuseListScreen> {
-  bool _startFresh = false;
+  SavedListMode _mode = SavedListMode.continueEditing;
+  bool get _startFresh => _mode == SavedListMode.startFresh;
+  bool get _editing => _mode == SavedListMode.continueEditing;
   bool _review = false;
   bool _applying = false;
   final ScrollController _scrollController = ScrollController();
@@ -46,10 +52,33 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
   }
 
   Future<void> _apply() async {
+    if (_applying) return;
     setState(() => _applying = true);
-    await widget.store.startFromList(widget.list.id, startFresh: _startFresh);
+    final alreadyEditing =
+        _editing && widget.store.activeList?.id == widget.list.id;
+    if (!alreadyEditing &&
+        !await confirmLeaveList(context: context, store: widget.store)) {
+      if (mounted) setState(() => _applying = false);
+      return;
+    }
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    final applied = _editing
+        ? await widget.store.resumeList(widget.list.id)
+        : await widget.store.startFromList(
+            widget.list.id,
+            startFresh: _startFresh,
+          );
+    if (!mounted) return;
+    if (applied) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() => _applying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This saved list is no longer available.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -67,9 +96,9 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
             onPressed: _applying ? null : _goBack,
             icon: const Icon(Icons.arrow_back_rounded),
           ),
-          title: Text(_review ? 'Review list' : 'Reuse shopping list'),
+          title: Text(_review ? 'Review list' : 'Open shopping list'),
           titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: AppColors.textPrimary,
+            color: CartyDesign.of(context).textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -79,10 +108,10 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
-              child: RadioGroup<bool>(
-                groupValue: _startFresh,
+              child: RadioGroup<SavedListMode>(
+                groupValue: _mode,
                 onChanged: (value) {
-                  if (value != null) setState(() => _startFresh = value);
+                  if (value != null) setState(() => _mode = value);
                 },
                 child: ListView(
                   controller: _scrollController,
@@ -115,16 +144,14 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
                           vertical: 16,
                         ),
                       ),
-                      child: _applying
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              _review ? 'Use this list' : 'Continue',
-                              textAlign: TextAlign.center,
-                            ),
+                      child: Text(
+                        _applying
+                            ? 'Opening…'
+                            : _review
+                            ? (_editing ? 'Continue editing' : 'Use this list')
+                            : 'Continue',
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton(
@@ -152,36 +179,46 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
     return [
       _ListHeading(list: widget.list),
       const SizedBox(height: 26),
-      const Text(
+      Text(
         'How would you like to start?',
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: CartyDesign.of(context).textPrimary,
           height: 1.35,
         ),
       ),
       const SizedBox(height: 14),
       _ReuseChoice(
+        controlKey: const ValueKey('reuse-edit'),
+        title: 'Continue editing',
+        description: 'Keep your products, quantities and budget. Changes update this saved list automatically.',
+        value: SavedListMode.continueEditing,
+        groupValue: _mode,
+      ),
+      const SizedBox(height: 12),
+      _ReuseChoice(
         controlKey: const ValueKey('reuse-duplicate'),
         title: 'Duplicate list',
         description:
-            'Keep the products, quantities and budget from your saved list.',
-        value: false,
-        groupValue: _startFresh,
+            'Copy your products, quantities and budget into a separate basket.',
+        value: SavedListMode.duplicate,
+        groupValue: _mode,
       ),
       const SizedBox(height: 12),
       _ReuseChoice(
         controlKey: const ValueKey('reuse-fresh'),
         title: 'Start fresh',
-        description: 'Keep the same products and stored prices. Reset quantities to zero and clear the budget for this shop.',
-        value: true,
-        groupValue: _startFresh,
+        description: 'Keep your planned quantities and estimates. Reset picked quantities and clear the budget.',
+        value: SavedListMode.startFresh,
+        groupValue: _mode,
       ),
       const SizedBox(height: 18),
-      const _Notice(
+      _Notice(
         icon: Icons.bookmark_border_rounded,
-        message: 'Your saved list stays unchanged. You can review everything before replacing your current basket.',
+        message: _editing
+            ? 'Continue this shop and keep updating the same saved list. Review everything before opening it.'
+            : 'Your saved list stays unchanged. You can review everything before replacing your current basket.',
       ),
     ];
   }
@@ -200,14 +237,20 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
       const SizedBox(height: 12),
       _Notice(
         icon: Icons.swap_horiz_rounded,
-        message: 'Using this list replaces your current basket and its budget. Your saved list stays unchanged.',
+        message: _editing
+            ? 'Opening this list replaces your current basket and its budget. Changes will save to “${widget.list.name}” as you shop.'
+            : 'Using this list replaces your current basket and its budget. Your saved list stays unchanged.',
         warning: true,
       ),
       const SizedBox(height: 24),
       Text(
-        _startFresh ? 'Ready for a fresh shop' : 'Products to bring back',
-        style: const TextStyle(
-          color: AppColors.textPrimary,
+        _editing
+            ? 'Pick up where you left off'
+            : _startFresh
+            ? 'Ready for a fresh shop'
+            : 'Products to bring back',
+        style: TextStyle(
+          color: CartyDesign.of(context).textPrimary,
           fontWeight: FontWeight.w700,
           fontSize: 20,
           height: 1.35,
@@ -215,24 +258,29 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
       ),
       const SizedBox(height: 6),
       Text(
-        _startFresh
-            ? 'All quantities start at zero. Add them as you shop.'
+        _editing
+            ? 'Your quantities, prices and budget are kept. You can edit them after opening the list.'
+            : _startFresh
+            ? 'Your plan is kept. Picked quantities start at zero and shelf prices need checking again.'
             : 'Your saved quantities and budget will be copied.',
-        style: const TextStyle(color: AppColors.textSecondary, height: 1.5),
+        style: TextStyle(
+          color: CartyDesign.of(context).textSecondary,
+          height: 1.5,
+        ),
       ),
       const SizedBox(height: 16),
       Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderColor),
+          border: Border.all(color: CartyDesign.of(context).borderColor),
         ),
         child: Column(
           children: [
             for (var i = 0; i < widget.list.items.length; i++) ...[
               if (i > 0)
-                const Divider(
-                  color: AppColors.borderColor,
+                Divider(
+                  color: CartyDesign.of(context).borderColor,
                   height: 1,
                   indent: 16,
                   endIndent: 16,
@@ -249,12 +297,22 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
       Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: AppColors.mint,
+          color: CartyDesign.of(context).mint,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           children: [
             _ReviewAmount(label: 'Starting total', value: Money.format(total)),
+            const SizedBox(height: 12),
+            _ReviewAmount(
+              label: 'Estimated plan total',
+              value: Money.format(
+                widget.list.items.fold<int>(
+                  0,
+                  (sum, item) => sum + item.estimatedTotalPence,
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             _ReviewAmount(
               label: 'Shopping budget',
@@ -280,7 +338,7 @@ class _ListHeading extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: CartyDesign.of(context).borderColor),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -288,13 +346,13 @@ class _ListHeading extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
-              color: AppColors.mint,
+              color: CartyDesign.of(context).mint,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shopping_basket_rounded,
               size: 30,
-              color: AppColors.primaryColor,
+              color: CartyDesign.of(context).primaryColor,
             ),
           ),
           const SizedBox(width: 14),
@@ -304,8 +362,8 @@ class _ListHeading extends StatelessWidget {
               children: [
                 Text(
                   list.name,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: CartyDesign.of(context).textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
@@ -314,8 +372,8 @@ class _ListHeading extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   '${list.items.length} ${list.items.length == 1 ? 'product' : 'products'} in this saved list',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: CartyDesign.of(context).textSecondary,
                     fontSize: 13,
                     height: 1.5,
                   ),
@@ -341,23 +399,25 @@ class _ReuseChoice extends StatelessWidget {
   final Key controlKey;
   final String title;
   final String description;
-  final bool value;
-  final bool groupValue;
+  final SavedListMode value;
+  final SavedListMode groupValue;
 
   @override
   Widget build(BuildContext context) {
     final selected = value == groupValue;
     return Material(
-      color: selected ? AppColors.mint : Colors.white,
+      color: selected ? CartyDesign.of(context).mint : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: selected ? AppColors.primaryColor : AppColors.borderColor,
+          color: selected
+              ? CartyDesign.of(context).primaryColor
+              : CartyDesign.of(context).borderColor,
           width: selected ? 1.5 : 1,
         ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: RadioListTile<bool>(
+      child: RadioListTile<SavedListMode>(
         key: controlKey,
         value: value,
         contentPadding: const EdgeInsets.symmetric(
@@ -365,11 +425,11 @@ class _ReuseChoice extends StatelessWidget {
           vertical: 12,
         ),
         controlAffinity: ListTileControlAffinity.trailing,
-        activeColor: AppColors.primaryColor,
+        activeColor: CartyDesign.of(context).primaryColor,
         title: Text(
           title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: CartyDesign.of(context).textPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 16,
             height: 1.35,
@@ -379,8 +439,8 @@ class _ReuseChoice extends StatelessWidget {
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             description,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: CartyDesign.of(context).textSecondary,
               fontSize: 13,
               height: 1.5,
             ),
@@ -407,7 +467,9 @@ class _Notice extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: warning ? AppColors.warningLight : AppColors.mint,
+        color: warning
+            ? CartyDesign.of(context).warningLight
+            : CartyDesign.of(context).mint,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -416,14 +478,16 @@ class _Notice extends StatelessWidget {
           Icon(
             icon,
             size: 21,
-            color: warning ? AppColors.warning : AppColors.primaryColor,
+            color: warning
+                ? CartyDesign.of(context).warning
+                : CartyDesign.of(context).primaryColor,
           ),
           const SizedBox(width: 11),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: CartyDesign.of(context).textPrimary,
                 fontSize: 13,
                 height: 1.5,
               ),
@@ -456,8 +520,8 @@ class _ReviewProduct extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: CartyDesign.of(context).textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                     height: 1.35,
@@ -466,8 +530,8 @@ class _ReviewProduct extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   '${Money.format(item.unitPricePence)} each',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: CartyDesign.of(context).textSecondary,
                     fontSize: 13,
                     height: 1.5,
                   ),
@@ -476,8 +540,8 @@ class _ReviewProduct extends StatelessWidget {
                 Text(
                   'Quantity: $quantity',
                   key: ValueKey('reuse-quantity-${item.id}'),
-                  style: const TextStyle(
-                    color: AppColors.primaryDark,
+                  style: TextStyle(
+                    color: CartyDesign.of(context).primaryDark,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     height: 1.5,
@@ -508,12 +572,15 @@ class _ReviewAmount extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+          style: TextStyle(
+            color: CartyDesign.of(context).textSecondary,
+            height: 1.4,
+          ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            color: AppColors.primaryDark,
+          style: TextStyle(
+            color: CartyDesign.of(context).primaryDark,
             fontWeight: FontWeight.w700,
             height: 1.4,
           ),
