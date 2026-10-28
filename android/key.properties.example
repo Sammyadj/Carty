@@ -1,0 +1,6 @@
+# Copy to ignored android/key.properties and replace all placeholders locally.
+# Paths are absolute or relative to android/. Never commit the real properties.
+storeFile=/absolute/path/to/carty-upload.jks
+storePassword=REPLACE_LOCALLY
+keyAlias=upload
+keyPassword=REPLACE_LOCALLY

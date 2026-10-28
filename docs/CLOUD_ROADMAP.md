@@ -10,7 +10,7 @@ The first backend's snapshot is retained as a migration fallback. Protocol 2 now
 
 ## Phase two: release readiness and richer planning
 
-Validate email delivery and two-device behavior, configure production SMTP, complete store/privacy work, and replace Android debug signing. Export/restore, list/history management, trip-to-plan reuse, and separate planned/picked totals are implemented. These keep historical records immutable. Further receipt-based paid totals and spending reports remain later integrations.
+Validate email delivery and two-device behavior, configure production SMTP, complete store/privacy work, and configure the owner's Android upload key. Android Release builds now require explicit signing credentials instead of falling back to a debug key. Export/restore, list/history management, trip-to-plan reuse, and separate planned/picked totals are implemented. These keep historical records immutable. Further receipt-based paid totals and spending reports remain later integrations.
 
 ## Phase three: shared shopping lists
 
