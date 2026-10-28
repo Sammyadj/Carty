@@ -11,6 +11,7 @@ class SavedShoppingList {
     required List<CartItem> items,
     required this.budgetPence,
     required this.savedAt,
+    this.isPlanning = false,
   }) : items = List.unmodifiable(items);
 
   final String id;
@@ -18,16 +19,19 @@ class SavedShoppingList {
   final List<CartItem> items;
   final int? budgetPence;
   final DateTime savedAt;
+  final bool isPlanning;
 
   SavedShoppingList updated({
     required List<CartItem> items,
     required int? budgetPence,
+    bool? isPlanning,
   }) => SavedShoppingList(
     id: id,
     name: name,
     items: items,
     budgetPence: budgetPence,
     savedAt: DateTime.now(),
+    isPlanning: isPlanning ?? this.isPlanning,
   );
 
   Map<String, Object?> toJson() => {
@@ -36,6 +40,7 @@ class SavedShoppingList {
     'items': items.map((item) => item.toJson()).toList(),
     'budgetPence': budgetPence,
     'savedAt': savedAt.toUtc().toIso8601String(),
+    'isPlanning': isPlanning,
   };
 
   static SavedShoppingList? fromJson(Map<String, dynamic> json) {
@@ -44,6 +49,8 @@ class SavedShoppingList {
     final budget = json['budgetPence'];
     final rawItems = json['items'];
     final rawDate = json['savedAt'];
+    if (json.containsKey('isPlanning') && json['isPlanning'] is! bool)
+      return null;
     if (id is! String ||
         id.isEmpty ||
         name is! String ||
@@ -73,6 +80,7 @@ class SavedShoppingList {
       items: items,
       budgetPence: budget as int?,
       savedAt: savedAt,
+      isPlanning: json['isPlanning'] as bool? ?? false,
     );
   }
 }

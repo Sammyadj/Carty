@@ -18,6 +18,9 @@ class ShoppingTrip {
   final int? budgetPence;
   final DateTime completedAt;
   int get totalPence => items.fold(0, (sum, item) => sum + item.totalPence);
+  int get estimatedTotalPence =>
+      items.fold(0, (sum, item) => sum + item.estimatedTotalPence);
+  bool get allPricesConfirmed => items.every((item) => item.priceConfirmed);
 
   Map<String, Object?> toJson() => {
     'id': id,
