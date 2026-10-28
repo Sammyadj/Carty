@@ -4,10 +4,13 @@
 
 The backend permission/invitation foundation, typed Flutter repository and
 account-scoped SQLite cache, offline sync controller and account lifecycle
-integration are implemented and verified. The app's household library, editing screens, conflict-review UI,
-and recipient notification delivery remain to be implemented. Household sharing
-is **not yet available as a completed app feature**. The account-delete dialog
-now explicitly warns that owned shared lists disappear for everyone.
+integration are implemented and verified. Household screens are accessible from
+the people icon in Lists: library, reviewed copy creation, owner invitations,
+recipient acceptance/decline, shared shopping, read-only viewers and conflict
+review. Member management, leaving/deleting shared lists, shared-copy recovery
+controls and notification delivery remain. Household sharing is **not complete
+or production-accepted**. The account-delete dialog explicitly warns that owned
+shared lists disappear for everyone.
 
 Approved defaults: invitations addressed by email; viewer/editor roles; only
 owners/editors change products; deleting an owner removes owned shared lists
@@ -90,11 +93,10 @@ before normal traffic; retain them for recipient lookup and account deletion.
 
 ## Required next work
 
-Add the household library, owner invite and
-member controls, recipient accept/decline flow, read-only viewer UI, and shared
-shopping controls that preserve estimates and picked quantities. Add adapter,
-offline/reconnect, two-user, and large-text regression checks. Verify real devices
-and notification delivery before marking the full sharing requirement complete.
+Add member/role management, invitation revocation, leaving/deleting shared lists,
+and review/export/recovery controls for unsynced or retained shared copies.
+Verify actual two-account flows on physical devices and production notification
+delivery before marking the sharing requirement complete.
 
 ## Flutter repository verification
 
@@ -127,7 +129,9 @@ database scope. It retains the accepted server base, pending local content,
 an explicit recovery copy and last-known header/role. Private lists/history and
 preferences are rejected. A remembered role is not current permission: the
 controller must recheck membership on reconnect and respect persisted access
-loss. No offline screen is wired yet.
+loss. A cache index discovers previously opened lists after restarting; cleared
+scopes and other accounts are excluded. Corrupt index data is preserved and
+reported rather than silently reset.
 
 Six real SQLite tests in `test/shared_list_cache_test.dart` cover database
 reopening, pending estimates/quantities, account/list isolation, malformed
@@ -165,9 +169,9 @@ real SQLite are tested separately. Physical-device acceptance is still required.
 
 `dispose()` stops callbacks and future queued edits. AppSession owns a
 `SharedWorkspace` for each login lifetime and awaits `writesSettled` before
-account erasure or creating a replacement lifetime. Shared screens are not yet
-accessible; keep the sharing requirement open until the user flows are wired
-and verified together.
+account erasure or creating a replacement lifetime. The app's navigation boundary
+also changes with login lifetime so a rapid return to the same account cannot
+leave a route attached to disposed household controllers.
 
 ## Account lifecycle verification
 
@@ -183,3 +187,29 @@ callbacks, rapid return during a device write, deletion waiting for shared saves
 failed remote deletion preserving access, and late sign-out/deletion actions not
 affecting a different account. The tests use synthetic account/repository/cache
 adapters; physical two-account device acceptance remains outstanding.
+
+## Screen verification
+
+Ten widget tests in `test/household_screens_test.dart` exercise the real screens
+with synthetic repositories: Lists entry and navigation cleanup on rapid login
+changes; editor quantity/product changes; barcode review isolated from private
+products; viewer controls; owner invitations without a false email claim;
+reviewed private-list copying; recipient acceptance; choosing a conflicting copy
+while retaining local recovery; offline cache opening at doubled text size; and
+mode-aware remaining budget with accessible over-budget feedback.
+Existing private-list flows remain covered by their original tests.
+The complete app suite passes 330 tests and Flutter analysis is clean at this
+milestone.
+
+The list screen refreshes every 15 seconds while its route is visible, pauses
+polling when backgrounded, and shares the login-owned controller used by app
+resume. It does not promise instantaneous realtime updates. Public SMTP remains
+unconfigured, so invitations to accounts outside the auth test team cannot yet
+be treated as a publicly accepted flow.
+
+`tool/render_household_previews.dart` renders actual Flutter widgets with
+synthetic products and bundled fonts. Reviewed images are in `docs/previews/`:
+`household-library.png`, `household-shopping.png`, `household-invite.png`,
+`household-conflict.png` and `household-viewer-large.png`. These verify layout
+and contrast; they do not replace camera, network and account acceptance on a
+real device.

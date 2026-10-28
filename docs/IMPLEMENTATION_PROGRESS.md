@@ -39,9 +39,11 @@ integrations, not promises of this implementation.
 Structured local storage, reviewed export/restore, previous-device-save recovery,
 and separate private cloud records are implemented. Household sharing's backend
 permission/invitation foundation, typed Flutter repository and isolated device
-caches, an offline sync controller and account lifecycle integration are verified;
-its app/offline flows and mail
-delivery remain, followed by release preparation. The full goal remains active.
+caches, an offline sync controller and account lifecycle integration are verified.
+Household library/editing/invitation/conflict screens are now accessible from
+Lists. Member management, shared-copy recovery controls, notification delivery
+and physical acceptance remain, followed by release preparation. The full goal
+remains active.
 
 ## Evidence
 
@@ -72,31 +74,43 @@ delivery remain, followed by release preparation. The full goal remains active.
 
 ## Remaining external inputs and compatibility work
 
+- Household UI: `26c6d1e` adds the Lists entry, reviewed private-list copying,
+  owner invitations, recipient acceptance/decline, editor shopping/scanning,
+  read-only viewers, offline reopening and conflict review. `ac0b3fc` adds
+  mode-aware remaining budget, near/over-budget feedback and accessible progress.
+  All 330 app tests pass and analysis is clean. Ten UI regressions cover these
+  flows and rapid login navigation cleanup.
+  Actual-widget City previews were rendered and reviewed. Member/role management,
+  invitation revocation, leaving/deleting shared lists, recovery/export controls,
+  public email delivery and real two-account devices remain required.
+
 - Household account lifecycle: production startup now creates account-bound
   sharing workspaces. All 320 tests pass and analysis is clean. Seven new session tests cover controller ownership,
   sign-out/switch isolation, rapid re-entry during a save, deletion barriers,
   and delayed account actions. Open household controllers refresh on app resume.
-  Household screens and real-device acceptance remain required.
+  Household screens are wired by the UI milestone above; real-device acceptance
+  remains required.
 
 - Household offline controller: all 313 tests pass and analysis is clean.
   Fourteen new tests verify reconnect, two-shopper conflicts, reviewed choices,
   pending edits during uploads, role downgrade/revocation, failed device writes,
-  stale reviews, automatic sync and shutdown barriers. Account lifecycle wiring,
-  household screens, conflict-review UI and real-device acceptance remain open.
+  stale reviews, automatic sync and shutdown barriers. Subsequent milestones
+  wire account lifecycle and screen flows; real-device acceptance remains open.
 
 - Household client foundation: typed models/repository and isolated SQLite
   caches are implemented. All 299 tests pass and analysis is clean. Adapter tests
   verify paging, revision/role changes, invitation scoping and late account-switch
   responses. Real SQLite tests verify reopen, pending/base/recovery separation,
-  rollback and account-wide cache erasure. The UI, reconnect controller and
-  controller shutdown before account erasure remain required.
+  rollback and account-wide cache erasure. Subsequent milestones wire the
+  reconnect controller, account-erasure barrier and UI.
 
 - Household backend: migrations `20261028065421` and `20261028065707` are applied.
   Rollback-only live tests verify owner/editor/viewer roles, actual verified-email
   invitation binding, viewer write denial, immediate downgrade/revocation, CAS,
   leaving, owner-deletion cascades, and cross-household isolation. The account
   deletion warning and cancellation pass their UI regression. App/offline sharing
-  and notification delivery are still open; see [sharing details](HOUSEHOLD_SHARING.md).
+  is wired above; membership controls, notification delivery and device acceptance
+  are still open. See [sharing details](HOUSEHOLD_SHARING.md).
 
 - Private cloud records: migration `20261028063541` is applied. All 280 app tests
   pass and analysis is clean. Live rollback-only SQL checks cover ownership,

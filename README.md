@@ -174,7 +174,33 @@ Signed-in changes save on the device first, then sync the basket, budget, named 
 
 When another device and this device both changed the workspace, Carty asks whether to use the cloud or device version. It never silently merges product quantities or overwrites a competing revision. The replaced version is kept as one recovery copy on this device, available through **Restore previous version**. Review the cloud copy before switching between devices, and avoid simultaneous edits until the conflict is resolved.
 
-**Delete account** permanently deletes that account's profile and cloud shopping workspace and removes its cache on this device. It leaves guest data and other accounts alone. Other offline devices cannot be remotely wiped; their retained copies stop syncing once the deleted account's session is rejected. Sharing and checkout are deferred. The app still uses GBP and manually entered shelf prices.
+**Delete account** permanently deletes that account's profile, private cloud workspace and owned household lists after a warning. Owned shared lists disappear for everyone. Account caches on this device are removed after pending saves stop; guest data, other accounts and lists owned by someone else remain. Other offline devices and exported files cannot be remotely wiped. The app uses GBP and manually entered shelf prices; checkout remains deferred.
+
+## Household lists
+
+Open **Lists** and tap the people icon labelled **Household lists**. Sign in first
+if using a guest workspace. Create an empty shared list, or review a copy of the
+current basket or a saved list. The original private list stays available; its
+history and recommendation choices are not included. Household lists support up
+to 1,000 products each.
+
+Owners can use **Invite someone** to address an invitation to a verified email
+and choose Viewer or Editor. Invitations currently appear inside Carty; no
+notification email is sent. The recipient signs in with that email and accepts
+from Household lists. Public sign-in and invitations need the production email
+configuration described above; the default auth mail service is still limited
+to the test team.
+
+Owners and editors can plan, scan, pick products, edit prices and quantities, and
+change the budget. Viewers can read the list. Device saves finish before sync;
+previously opened lists can be reopened offline. Conflicting changes open a
+review of both complete copies, with a choice to keep local changes or use the
+household copy. Changes made while a review is open invalidate that review.
+The screen checks for household updates while visible and when the app resumes.
+
+Sharing is still in development: member/role management, leaving/deleting shared
+lists, shared-copy recovery/export controls, notification delivery and physical
+two-account acceptance are outstanding. See [implementation and verification](docs/HOUSEHOLD_SHARING.md).
 
 ## Run locally
 
@@ -235,6 +261,7 @@ lib/
   config/     Client-public Supabase configuration and exact auth callback
   core/       Money parsing and retail barcode validation
   models/     Immutable cart items, product details, saved lists, and completed trips
+  sharing/    Household permissions, scoped caches, offline conflict control, and login ownership
   state/      CartStore: basket actions, derived totals, and persistence coordination
   data/       Local cart storage and cached product lookup
   screens/    Home, account, basket, list reuse, barcode capture, and product review
