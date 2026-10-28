@@ -6,7 +6,7 @@ separate action when authorised.
 
 ## Requirements and verification
 
-- [ ] Planning and shopping: separate planned quantities/estimated prices from
+- [x] Planning and shopping: separate planned quantities/estimated prices from
   picked quantities/confirmed shelf prices; show estimated and picked totals,
   budget remaining, and complete only picked items. Verify migration, restart,
   saved-list continuation, scan merging, and immutable history.
@@ -36,9 +36,15 @@ integrations, not promises of this implementation.
 
 ## Current milestone
 
-Inspecting the existing models, storage, cloud contract, and UI before extending
-planning and shopping. Baseline: clean working tree, 213 passing tests, City UI.
+Implementing grocery categories next. Planning and picking are now separate in
+Home, Basket, forms, saved-list continuation, and completed-trip history.
 
 ## Evidence
 
-Record each milestone's commit, checks, and remaining external requirements here.
+- `7ee8b98`: immutable planned quantities/estimates, strict validation, legacy
+  record migration, and the full implementation checklist.
+- `f8756e8`: Plan/Shop modes, independent totals, price confirmation, picker
+  controls, saved mode/progress, scanner merge preservation, and full original
+  plans in History. All 224 tests pass; Flutter analysis is clean. Actual-widget
+  phone previews are in `docs/previews/planning-*.png`; the renderer uses only
+  synthetic in-memory records. Production device acceptance remains outstanding.

@@ -56,6 +56,28 @@ Suggestions run entirely on the device, using an index of up to 200 recent disti
 
 See [personal suggestions](docs/previews/suggestions-personal.png), [a reused estimate](docs/previews/suggestions-estimate.png), and [the larger-text layout](docs/previews/suggestions-large-text.png). Regenerate these actual Flutter renders with `flutter test tool/render_suggestion_previews.dart`; the keyboard previews reserve keyboard space without drawing native keyboard keys.
 
+## Plan at home, pick in the shop
+
+Use **Plan** on Home or Basket to enter intended quantities and estimated unit
+prices. New lists open in Plan mode. Planned products do not count as picked.
+Switch to **Shop** to adjust picked quantities, tick off a whole planned quantity,
+and edit the shelf price. **I checked the shelf price** marks a price as confirmed;
+editing it clears that confirmation until you check it again.
+
+Both totals stay visible in the progress panel. The budget summary and bottom bar
+use the estimated total in Plan mode and the picked total in Shop mode. Switching
+modes preserves the original estimate, picked progress, and budget. Continuing a
+saved list restores its mode as well as its progress; starting fresh retains the
+plan but clears picks and price confirmations.
+
+**Finish shopping** records only picked quantities, labels unconfirmed prices as
+estimates, and retains the complete original plan for comparison, including items
+not picked. It does not record a payment or verified receipt. Older records retain
+their entered quantities without inventing confirmations or missing history.
+
+See [planning](docs/previews/planning-home.png), [shopping progress](docs/previews/planning-shop.png),
+and [the original plan in History](docs/previews/planning-history.png).
+
 ## Recommendations for your shop
 
 **You might need** on Home groups recommendations into horizontal rows: **Picked together**, **Your regulars**, **From your saved lists**, **Pick up again**, **Pairing ideas**, and **Everyday essentials**. Only categories with suggestions appear, with up to six products in each row. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
