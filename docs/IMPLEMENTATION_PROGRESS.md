@@ -36,9 +36,10 @@ integrations, not promises of this implementation.
 
 ## Current milestone
 
-Next: durable local storage, export/restore, and separate cloud records, followed
-by household sharing and release preparation. The first four product milestones
-are implemented. The full goal remains active.
+Structured local storage, reviewed export/restore, and previous-device-save
+recovery are implemented. Separate cloud records are next, followed by household
+sharing and release preparation. The durable-data requirement stays open until
+the cloud migration is complete. The full goal remains active.
 
 ## Evidence
 
@@ -68,6 +69,15 @@ are implemented. The full goal remains active.
   reviewed, including the larger-text archive flow.
 
 ## Remaining external inputs and compatibility work
+
+- Local SQLite and portable backups: all 275 tests pass; analysis is clean.
+  Real SQLite transactions test migration races, rollback, separate scopes,
+  malformed/future records, bounded row changes, and recovery. Restore tests
+  cover local/cloud edits arriving during review or a pending write. See
+  [data and backups](DATA_AND_BACKUPS.md) for the user flow and remaining limits.
+  iOS Simulator Debug and Android Debug builds pass with the new plugins.
+  Actual widget renders were reviewed, including larger text. Physical-device
+  file selection and restoration still need acceptance testing.
 
 - The user approved email invitations, viewer/editor roles, editor-only changes,
   deletion of owned shared lists on owner account deletion after a warning, and

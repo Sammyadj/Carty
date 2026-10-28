@@ -14,15 +14,13 @@ Validate email delivery and two-device behavior, configure production SMTP, comp
 
 ## Phase three: shared shopping lists
 
-Design the invitation and permission model before implementing it. The following user questions remain open:
+The user approved email invitations with viewer/editor roles, editor-only item
+changes (including checking products off), deletion of owned shared lists on
+account deletion after an explicit warning, and GBP for this phase. Prices
+continue to be entered per item. Receipt interpretation and currency expansion
+remain later decisions.
 
-- Invitations by email, shareable link, or both?
-- Can viewers check off products, or is that an editor action?
-- Are prices entered per item at the shop, derived from a reviewed receipt, or both?
-- If an owner deletes their account, should a shared list transfer, be archived, or be deleted?
-- Continue with GBP, or introduce explicit currency per list/trip?
-
-Sharing will need revocable invitations, owner/editor/viewer roles, membership RLS, item-level conflict behavior, offline changes, ownership transfer/deletion rules, and clear attribution. Private workspaces currently expose no share links or memberships. Do not retrofit sharing by weakening the private workspace policies.
+Sharing still needs revocable invitations, owner/editor/viewer roles, membership RLS, conflict behavior, offline changes, the approved deletion rules, and clear attribution. Private workspaces currently expose no share links or memberships. Do not retrofit sharing by weakening the private workspace policies. Local structured storage and portable backups are implemented; see [the active checklist](IMPLEMENTATION_PROGRESS.md) for remaining cloud and sharing work.
 
 ## Phase four: retailer integrations and optional checkout
 

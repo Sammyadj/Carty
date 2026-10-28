@@ -34,11 +34,11 @@ Workspace writes go through `carty_save_workspace(expected_revision, snapshot)`.
 
 ## Local saving, conflicts, and deletion
 
-Guest preferences remain at their original key. Each signed-in account gets a separate key and an envelope containing its current snapshot, accepted cloud snapshot/revision, and one recovery copy. Device writes finish before an upload is scheduled. Offline edits remain pending, with retry after reconnecting, resuming, or selecting Sync now. A failed local write blocks upload until local saving succeeds.
+Guest and account shopping data now use separate SQLite scopes. The original preference values are kept after a validated transactional migration. Account scopes preserve their current records, accepted cloud snapshot/revision, and conflict recovery copy; a separate one-step journal supports previous-device-save recovery. Device writes finish before an upload is scheduled. Offline edits remain pending, with retry after reconnecting, resuming, or selecting Sync now. A failed local write blocks upload until local saving succeeds. [Data & backups](DATA_AND_BACKUPS.md) documents reviewed export and restore.
 
 Cloud and device edits are compared against the accepted revision. Competing changes require an explicit whole-workspace choice; quantities are never silently added together. The replaced version becomes the local recovery copy. If the cloud changes again while the choice is being reviewed, resolution stops for another review. Late responses cannot replace newer local edits or switch another account's visible data.
 
-Guest lists/history are copied only after explicit confirmation. Sign-out retains the account cache for later offline use on the same device. Account deletion removes that account's server data and current-device cache; it cannot remotely erase another device's offline files. The product lookup cache is local and separate, and can still contain previously confirmed product names after account deletion. These are ordinary app-private preferences, not an encrypted vault or a remote device-management system.
+Guest lists/history are copied only after explicit confirmation. Sign-out retains the account cache for later offline use on the same device. Account deletion removes that account's server data, current-device SQLite scope, and old shopping preference key; it cannot remotely erase another device's offline files or exported backups. If device cleanup fails after successful cloud deletion, Carty still returns to guest mode and explains the incomplete cleanup. The product lookup cache is local and separate, and can still contain previously confirmed product names after account deletion. App-private storage is not an encrypted vault or a remote device-management system.
 
 ## Verification
 
@@ -47,7 +47,7 @@ Verified on 27–28 October 2026 with Flutter 3.47.8 / Dart 3.13.7:
 | Check | Result |
 | --- | --- |
 | Dart formatting and Flutter analysis | Pass |
-| Full regression suite, including planning, categories, personal controls, and library management | 248 tests pass |
+| Full regression suite, including SQLite, portable backups, planning, categories, personal controls, and library management | 275 tests pass |
 | Phone previews, including larger text | Rendered and reviewed |
 | iOS Simulator Debug build, Xcode 27.1 | Pass |
 | Android Debug build, Java 21 | Pass |

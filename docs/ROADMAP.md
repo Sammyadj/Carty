@@ -29,7 +29,7 @@ Navigation now includes Home, Lists, Tips, and History; the Home account action 
 
 Named editable lists and Finish shopping are available. History keeps completed picked products separate from reusable lists. Lists and History now have search, sorting, favourites, and archive/restore. Lists also support renaming and last-used tracking. A reviewed previous trip can seed a new unpicked plan while its recorded contents remain unchanged.
 
-Plan/Shop modes now keep intended quantities and estimates separate from picked quantities and confirmed shelf prices. History preserves the complete original plan and labels unconfirmed prices. Export/restore and structured database storage with migrations/recovery remain in the active implementation goal; the preferences snapshot is still an MVP storage choice.
+Plan/Shop modes now keep intended quantities and estimates separate from picked quantities and confirmed shelf prices. History preserves the complete original plan and labels unconfirmed prices. Structured SQLite storage now includes safe preference migration and previous-save recovery. Settings provides reviewed export/import. Separate cloud records and physical-device backup acceptance remain in the active implementation goal.
 
 ## Stage 3: product capture and useful comparisons
 
@@ -47,7 +47,7 @@ AI can suggest substitutions, remind someone about products they often buy, or e
 
 The mockup's cheaper-alternative, healthy-choice, and spending-forecast cards need separate foundations: comparable product/price data, suitable nutrition data and a defined scope, and enough completed-trip history to validate predictions. Do not fill these cards with invented savings or forecasts.
 
-Private accounts and Supabase cloud saving now include guest separation, offline synchronization, revision conflict handling, profile editing, and account deletion. See [setup](CLOUD_SETUP.md). Household sharing, export, and larger-scale record storage remain separate work; [the cloud roadmap](CLOUD_ROADMAP.md) retains the unanswered sharing and currency decisions.
+Private accounts and Supabase cloud saving now include guest separation, offline synchronization, revision conflict handling, profile editing, and account deletion. See [setup](CLOUD_SETUP.md). Local SQLite and portable export/restore are implemented. Separate cloud records and household sharing remain active work; email invitations, viewer/editor roles, editor-only changes, owner-deletion cleanup, and GBP were approved for this phase.
 
 ## Release work
 
