@@ -1,6 +1,31 @@
 import '../core/retail_barcode.dart';
 
-enum ProductSource { manual, openFoodFacts, upcitemdb }
+enum ProductSource {
+  manual,
+  openFoodFacts,
+  upcitemdb,
+  openBeautyFacts,
+  openPetFoodFacts,
+  openProductsFacts,
+}
+
+extension ProductSourceDescription on ProductSource {
+  bool get isOpenFacts => const {
+    ProductSource.openFoodFacts,
+    ProductSource.openBeautyFacts,
+    ProductSource.openPetFoodFacts,
+    ProductSource.openProductsFacts,
+  }.contains(this);
+
+  String get label => switch (this) {
+    ProductSource.manual => 'Details you entered',
+    ProductSource.openFoodFacts => 'Open Food Facts',
+    ProductSource.openBeautyFacts => 'Open Beauty Facts',
+    ProductSource.openPetFoodFacts => 'Open Pet Food Facts',
+    ProductSource.openProductsFacts => 'Open Products Facts',
+    ProductSource.upcitemdb => 'UPCitemdb',
+  };
+}
 
 /// Product identity and optional packaging information, without a shelf price.
 class ProductDetails {
