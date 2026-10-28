@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:carty_app/auth/account_gateway.dart';
 import 'package:carty_app/cloud/supabase_gateway.dart';
 import 'package:carty_app/config/supabase_config.dart';
+import 'package:carty_app/data/stored_workspace.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -71,6 +72,7 @@ void main() {
     'cloud writes use the revision RPC and never accept an owner parameter',
     () async {
       final snapshot = await exampleSnapshot('Milk');
+      final records = WorkspaceRows.fromSnapshot(snapshot);
       late http.Request request;
       final client = testClient((value) async {
         request = value;
@@ -78,8 +80,10 @@ void main() {
           jsonEncode([
             {
               'user_id': 'alice',
-              'revision': 4,
-              'snapshot': jsonDecode(snapshot),
+              'revision': 1,
+              'protocol': 2,
+              'metadata': jsonDecode(records.metadata),
+              'record_count': records.records.length,
             },
           ]),
           200,
@@ -90,14 +94,21 @@ void main() {
         );
       });
       await identify(client, 'alice');
-      final result = await SupabaseGateway(client).save('alice', 3, snapshot);
-      expect(request.url.path, '/rest/v1/rpc/carty_save_workspace');
+      final result = await SupabaseGateway(client).save('alice', 0, snapshot);
+      expect(request.url.path, '/rest/v1/rpc/carty_save_record_delta');
       expect(request.method, 'POST');
-      expect(jsonDecode(request.body), {
-        'p_expected_revision': 3,
-        'p_snapshot': jsonDecode(snapshot),
+      final body = jsonDecode(request.body) as Map;
+      expect(body.keys.toSet(), {
+        'p_protocol',
+        'p_expected_revision',
+        'p_metadata',
+        'p_upserts',
+        'p_deletes',
       });
-      expect(result!.revision, 4);
+      expect(body['p_expected_revision'], 0);
+      expect(body['p_upserts'], hasLength(records.records.length));
+      expect(body['p_deletes'], isEmpty);
+      expect(result!.revision, 1);
       expect(result.ownerId, 'alice');
     },
   );
@@ -149,10 +160,10 @@ void main() {
       );
       await identify(client, 'alice');
       final gateway = SupabaseGateway(client);
-      expect(await gateway.save('alice', 1, snapshot), isNull);
+      expect(await gateway.save('alice', 0, snapshot), isNull);
       foreign = true;
       await expectLater(
-        gateway.save('alice', 1, snapshot),
+        gateway.save('alice', 0, snapshot),
         throwsA(isA<FormatException>()),
       );
     },

@@ -1,14 +1,17 @@
-import 'dart:convert';
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/account_gateway.dart';
 import '../config/supabase_config.dart';
 import 'cloud_workspace.dart';
+import 'record_cloud_repository.dart';
 
 class SupabaseGateway implements AccountGateway, CloudWorkspaceRepository {
   SupabaseGateway(this.client);
   final SupabaseClient client;
+  late final _records = RecordCloudRepository(
+    client,
+    requireOwner: _requireOwner,
+  );
   static const _timeout = Duration(seconds: 12);
 
   AccountIdentity? _identity(User? user) => user == null
@@ -85,53 +88,13 @@ class SupabaseGateway implements AccountGateway, CloudWorkspaceRepository {
     _requireOwner(ownerId);
   }
 
-  CloudWorkspace _workspace(Map<String, dynamic> row, String ownerId) {
-    if (row['user_id'] != ownerId ||
-        row['revision'] is! int ||
-        row['snapshot'] is! Map) {
-      throw const FormatException('Invalid cloud response');
-    }
-    return CloudWorkspace(
-      ownerId: ownerId,
-      revision: row['revision'] as int,
-      snapshot: canonicalSnapshot(jsonEncode(row['snapshot'])),
-    );
-  }
-
   @override
-  Future<CloudWorkspace?> fetch(String ownerId) async {
-    _requireOwner(ownerId);
-    final row = await client
-        .from('carty_workspaces')
-        .select('user_id,revision,snapshot')
-        .eq('user_id', ownerId)
-        .maybeSingle()
-        .timeout(_timeout);
-    _requireOwner(ownerId);
-    return row == null ? null : _workspace(row, ownerId);
-  }
+  Future<CloudWorkspace?> fetch(String ownerId) => _records.fetch(ownerId);
 
   @override
   Future<CloudWorkspace?> save(
     String ownerId,
     int expectedRevision,
     String snapshot,
-  ) async {
-    _requireOwner(ownerId);
-    final result = await client
-        .rpc(
-          'carty_save_workspace',
-          params: {
-            'p_expected_revision': expectedRevision,
-            'p_snapshot': jsonDecode(snapshot),
-          },
-        )
-        .timeout(_timeout);
-    _requireOwner(ownerId);
-    if (result is! List || result.length > 1) {
-      throw const FormatException('Invalid save response');
-    }
-    if (result.isEmpty) return null;
-    return _workspace(Map<String, dynamic>.from(result.single as Map), ownerId);
-  }
+  ) => _records.save(ownerId, expectedRevision, snapshot);
 }
