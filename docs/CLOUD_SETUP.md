@@ -42,12 +42,12 @@ Guest lists/history are copied only after explicit confirmation. Sign-out retain
 
 ## Verification
 
-Verified on 27 October 2026 with Flutter 3.47.8 / Dart 3.13.7:
+Verified on 27–28 October 2026 with Flutter 3.47.8 / Dart 3.13.7:
 
 | Check | Result |
 | --- | --- |
 | Dart formatting and Flutter analysis | Pass |
-| Full regression suite | 166 tests pass |
+| Full regression suite, including animated startup | 173 tests pass |
 | Phone previews, including larger text | Rendered and reviewed |
 | iOS Simulator Debug build, Xcode 27.1 | Pass |
 | Android Debug build, Java 21 | Pass |

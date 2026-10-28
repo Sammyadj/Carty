@@ -10,6 +10,7 @@ Carty is a Flutter shopping companion for keeping track of the cost of a basket 
 - Scan retail barcodes, look up products through Open Food Facts with a UPCitemdb general-retail fallback, then confirm the shelf price and quantity. Manual barcode entry and remembered product details cover missing matches.
 - See a live basket total, remaining budget, and progress. Near-budget feedback starts at 80% of the budget; spending above the budget has an explicit over-budget status.
 - Use the City design with product icon avatars and Home, Lists, Tips, and History navigation.
+- Open with an animated City loading screen while account setup and saved-list restoration finish, with support for Reduce Motion and larger text.
 - Keep the total, budget status, Scan barcode, and Add item controls visible in a bottom bar on Home and the full basket screen.
 - Set or remove a budget. Money is represented as integer pence, with GBP formatting.
 - Search products in the active basket and filter to products still to pick.
@@ -23,6 +24,8 @@ Carty is a Flutter shopping companion for keeping track of the cost of a basket 
 Cart changes flow through one `CartStore`, so the home and full-cart screens display the same state. Forms and layouts are designed for phone screens, keyboard input, and larger text.
 
 ## Using Carty
+
+Startup uses Carty's grocery illustration with gently moving products, a rocking bag, and animated lime accents, then fades into the restored shop. It shows real initialization work without an artificial minimum wait or a made-up progress percentage. Reduce Motion and accessibility navigation settings use a still illustration and instant handoff. A compact layout keeps the status visible with larger text or in landscape. See the [animation preview](docs/previews/city-loading.gif) and [large-text preview](docs/previews/city-loading-large-text.png).
 
 Choose **Create new list** on Home or Lists, or use the **New list** toolbar action, to begin a different shop with an empty basket and no budget. If the current products or budget differ from every named saved list, Carty offers **Save and start new**, **Start without saving**, or **Cancel**. Cancelling the name form or a failed save keeps the current basket. Existing saved lists stay available. A budget-only basket can be cancelled or discarded; add products before saving it as a named list.
 
@@ -88,6 +91,8 @@ flutter test
 GitHub Actions checks formatting, analysis, and tests on pushes and pull requests. Tests should protect user-visible behavior: accurate totals, valid edits, state shared across screens, saved-list reuse, and storage failure handling.
 
 Scanner tests use a fake camera and HTTP client to cover duplicate detections, permission failures, lifecycle changes, product lookup, offline cache, manual fallback, and confirmed cart changes. Camera focus, flashlight behavior, permission settings, and detection speed still need checks on physical Android and iOS devices. Rebuild the app after adding the camera plugin; hot reload alone cannot install native plugins or permission descriptions. `mobile_scanner` remains pinned to the tested 7.0.0 version during the SDK migration.
+
+Loading tests cover first-frame account startup, local list restoration, guest fallback after initialization failure, disposal of late startup results, screen-reader status, reduced motion, and large text in portrait and landscape. Render the actual widget with `flutter test tool/render_loading_preview.dart`, then run `python3 tool/assemble_loading_preview.py` (Pillow required) to assemble the review GIF. The animation is drawn in Flutter; it adds no downloaded animation files or runtime packages.
 
 ## Development workflow
 
