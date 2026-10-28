@@ -140,6 +140,17 @@ void main() {
       await store.setBudget(5000);
       await store.saveList('Groceries');
       final original = store.activeList!;
+      final originalRecord = jsonEncode(original.toJson());
+      void expectOriginalContents() {
+        final current = Map<String, Object?>.from(
+          store.savedLists.single.toJson(),
+        )..remove('lastUsedAt');
+        final expected = Map<String, Object?>.from(original.toJson())
+          ..remove('lastUsedAt');
+        expect(current, expected);
+        expect(jsonEncode(original.toJson()), originalRecord);
+      }
+
       for (final fresh in [false, true]) {
         await store.resumeList(original.id);
         await store.startFromList(original.id, startFresh: fresh);
@@ -147,20 +158,20 @@ void main() {
         expect(store.items.single.id, isNot(original.items.single.id));
         await store.incrementQuantity(store.items.single.id);
         await store.setBudget(2000);
-        expect(store.savedLists.single, same(original));
+        expectOriginalContents();
       }
       await store.resumeList(original.id);
       await store.clearCart();
       expect(store.activeList, isNull);
       expect(store.budgetPence, 5000);
       await store.addItem(name: 'Tea', unitPricePence: 200);
-      expect(store.savedLists.single, same(original));
+      expectOriginalContents();
       await store.resumeList(original.id);
       await store.startNewList();
       expect(store.activeList, isNull);
       expect(store.items, isEmpty);
       expect(store.budgetPence, isNull);
-      expect(store.savedLists.single, same(original));
+      expectOriginalContents();
     },
   );
 

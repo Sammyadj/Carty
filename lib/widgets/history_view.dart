@@ -3,55 +3,175 @@ import 'package:flutter/material.dart';
 import '../core/money.dart';
 import '../models/shopping_trip.dart';
 import '../state/cart_store.dart';
+import '../data/shopping_library.dart';
+import '../base/utils/library_actions.dart';
+import '../screens/cart_full_screen.dart';
+import 'library_controls.dart';
 
-class HistoryView extends StatelessWidget {
+enum _TripAction { favourite, archive, plan }
+
+class HistoryView extends StatefulWidget {
   const HistoryView({super.key, required this.store});
   final CartStore store;
   @override
+  State<HistoryView> createState() => _HistoryViewState();
+}
+
+class _HistoryViewState extends State<HistoryView> {
+  final _search = TextEditingController();
+  LibraryFilter _filter = LibraryFilter.active;
+  TripSort _sort = TripSort.recent;
+  CartStore get store => widget.store;
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: store,
-    builder: (context, _) => ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      children: [
-        Text(
-          'Shopping history',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'Your completed baskets and the prices you entered. These records are not receipts or proof of payment.',
-        ),
-        const SizedBox(height: 24),
-        if (store.history.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Finish a shopping trip to see it here. Your saved lists stay available to reuse.',
-              ),
-            ),
+    builder: (context, _) {
+      final trips = ShoppingLibrary.trips(
+        store.history,
+        query: _search.text,
+        filter: _filter,
+        sort: _sort,
+      );
+      return ListView(
+        key: const PageStorageKey('shopping-history'),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        children: [
+          Text(
+            'Shopping history',
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
-        for (final trip in store.history)
-          Card(
-            child: ListTile(
-              key: ValueKey('history-trip-${trip.id}'),
-              contentPadding: const EdgeInsets.all(16),
-              title: Text(trip.name),
-              subtitle: Text(
-                '${MaterialLocalizations.of(context).formatMediumDate(trip.completedAt.toLocal())}\n${trip.items.length} products · ${Money.format(trip.totalPence)}',
-              ),
-              isThreeLine: true,
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => Navigator.push<void>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => _TripDetails(trip: trip, store: store),
+          const SizedBox(height: 10),
+          const Text(
+            'Your completed baskets and the prices you entered. These records are not receipts or proof of payment.',
+          ),
+          const SizedBox(height: 24),
+          if (store.history.isNotEmpty)
+            LibraryControls<TripSort>(
+              prefix: 'history',
+              search: _search,
+              onSearch: (_) => setState(() {}),
+              filter: _filter,
+              onFilter: (value) => setState(() => _filter = value),
+              sort: _sort,
+              onSort: (value) => setState(() => _sort = value),
+              sortItems: const [
+                DropdownMenuItem(
+                  value: TripSort.recent,
+                  child: Text('Most recent'),
+                ),
+                DropdownMenuItem(value: TripSort.name, child: Text('Name A–Z')),
+                DropdownMenuItem(
+                  value: TripSort.total,
+                  child: Text('Recorded total: low to high'),
+                ),
+              ],
+            ),
+          if (store.history.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'Finish a shopping trip to see it here. Your saved lists stay available to reuse.',
                 ),
               ),
             ),
-          ),
-      ],
-    ),
+          if (store.history.isNotEmpty && trips.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'No shopping records match this view. Try another search or filter.',
+              ),
+            ),
+          for (final trip in trips)
+            Card(
+              child: ListTile(
+                key: ValueKey('history-trip-${trip.id}'),
+                contentPadding: const EdgeInsets.all(16),
+                title: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (trip.favourite) ...[
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 18,
+                        semanticLabel: 'Favourite trip',
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Expanded(child: Text(trip.name)),
+                  ],
+                ),
+                subtitle: Text(
+                  '${MaterialLocalizations.of(context).formatMediumDate(trip.completedAt.toLocal())}\n${trip.items.length} products · ${Money.format(trip.totalPence)}',
+                ),
+                isThreeLine: true,
+                trailing: PopupMenuButton<_TripAction>(
+                  key: ValueKey('history-actions-${trip.id}'),
+                  tooltip: 'Options for ${trip.name}',
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: _TripAction.favourite,
+                      child: Text(
+                        trip.favourite ? 'Remove favourite' : 'Favourite trip',
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _TripAction.archive,
+                      child: Text(
+                        trip.archived ? 'Restore trip' : 'Archive trip',
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: _TripAction.plan,
+                      child: Text('Plan this shop again'),
+                    ),
+                  ],
+                  onSelected: (action) async {
+                    switch (action) {
+                      case _TripAction.favourite:
+                        await store.setTripFlags(
+                          trip.id,
+                          favourite: !trip.favourite,
+                        );
+                      case _TripAction.archive:
+                        await store.setTripFlags(
+                          trip.id,
+                          archived: !trip.archived,
+                        );
+                      case _TripAction.plan:
+                        if (await showPlanFromTrip(
+                              context: context,
+                              store: store,
+                              trip: trip,
+                            ) &&
+                            context.mounted) {
+                          await Navigator.push<void>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CartFullScreen(store: store),
+                            ),
+                          );
+                        }
+                    }
+                  },
+                ),
+                onTap: () => Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => _TripDetails(trip: trip, store: store),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    },
   );
 }
 
@@ -128,6 +248,27 @@ class _TripDetails extends StatelessWidget {
                       ),
                   ],
                 ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                key: const Key('history-plan-trip'),
+                onPressed: () async {
+                  if (await showPlanFromTrip(
+                        context: context,
+                        store: store,
+                        trip: trip,
+                      ) &&
+                      context.mounted) {
+                    await Navigator.pushReplacement<void, void>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CartFullScreen(store: store),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.playlist_add_rounded),
+                label: const Text('Plan this shop again'),
+              ),
               TextButton(
                 key: const Key('history-delete-trip'),
                 onPressed: () async {

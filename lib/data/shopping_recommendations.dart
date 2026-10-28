@@ -108,7 +108,7 @@ class ShoppingRecommendations {
         ItemSuggestions.normalize(item.name): item,
     };
     final savedNames = {
-      for (final list in savedLists)
+      for (final list in savedLists.where((list) => !list.archived))
         for (final item in list.items) ItemSuggestions.normalize(item.name),
     };
     final choices = {

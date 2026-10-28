@@ -13,6 +13,7 @@ class SavedListCard extends StatelessWidget {
     this.onDelete,
     this.compact = false,
     this.isActive = false,
+    this.actions,
   });
 
   final SavedShoppingList list;
@@ -20,6 +21,7 @@ class SavedListCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool compact;
   final bool isActive;
+  final Widget? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -61,14 +63,33 @@ class SavedListCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              list.name,
-                              style: TextStyle(
-                                color: CartyDesign.of(context).textPrimary,
-                                fontSize: compact ? 15 : 17,
-                                fontWeight: FontWeight.w700,
-                                height: 1.3,
-                              ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (list.favourite) ...[
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 2),
+                                    child: Icon(
+                                      Icons.star_rounded,
+                                      size: 18,
+                                      semanticLabel: 'Favourite list',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    list.name,
+                                    style: TextStyle(
+                                      color: CartyDesign.of(context)
+                                          .textPrimary,
+                                      fontSize: compact ? 15 : 17,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 5),
                             Text(
@@ -90,6 +111,7 @@ class SavedListCard extends StatelessWidget {
                                 ),
                               ),
                             ],
+                            if (list.archived) const Text('Archived'),
                           ],
                         ),
                       ),
@@ -104,7 +126,9 @@ class SavedListCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (onDelete != null)
+            if (actions != null)
+              Padding(padding: const EdgeInsets.only(right: 4), child: actions!)
+            else if (onDelete != null)
               Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: IconButton(

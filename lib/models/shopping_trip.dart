@@ -11,6 +11,8 @@ class ShoppingTrip {
     List<CartItem>? plannedItems,
     required this.budgetPence,
     required this.completedAt,
+    this.favourite = false,
+    this.archived = false,
   }) : items = List.unmodifiable(items),
        plannedItems = List.unmodifiable(plannedItems ?? items);
 
@@ -20,6 +22,18 @@ class ShoppingTrip {
   final List<CartItem> plannedItems;
   final int? budgetPence;
   final DateTime completedAt;
+  final bool favourite;
+  final bool archived;
+  ShoppingTrip copyWith({bool? favourite, bool? archived}) => ShoppingTrip(
+    id: id,
+    name: name,
+    items: items,
+    plannedItems: plannedItems,
+    budgetPence: budgetPence,
+    completedAt: completedAt,
+    favourite: favourite ?? this.favourite,
+    archived: archived ?? this.archived,
+  );
   int get totalPence => items.fold(0, (sum, item) => sum + item.totalPence);
   int get estimatedTotalPence =>
       plannedItems.fold(0, (sum, item) => sum + item.estimatedTotalPence);
@@ -33,6 +47,8 @@ class ShoppingTrip {
     'budgetPence': budgetPence,
     'completedAt': completedAt.toUtc().toIso8601String(),
     'currency': 'GBP',
+    'favourite': favourite,
+    'archived': archived,
   };
 
   static ShoppingTrip? fromJson(Map<String, dynamic> json) {
@@ -41,6 +57,9 @@ class ShoppingTrip {
     final rawItems = json['items'];
     final budget = json['budgetPence'];
     final date = json['completedAt'];
+    for (final field in ['favourite', 'archived']) {
+      if (json.containsKey(field) && json[field] is! bool) return null;
+    }
     if (id is! String ||
         id.isEmpty ||
         name is! String ||
@@ -83,6 +102,8 @@ class ShoppingTrip {
       plannedItems: json.containsKey('plannedItems') ? plannedItems : items,
       budgetPence: budget as int?,
       completedAt: completed,
+      favourite: json['favourite'] as bool? ?? false,
+      archived: json['archived'] as bool? ?? false,
     );
   }
 }

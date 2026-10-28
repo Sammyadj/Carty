@@ -39,6 +39,12 @@ class CartStore extends ChangeNotifier {
 
   List<CartItem> get items => _items;
   List<SavedShoppingList> get savedLists => _savedLists;
+  List<SavedShoppingList> get visibleSavedLists => List.unmodifiable(
+    _savedLists.where((list) => !list.archived).toList()..sort((a, b) {
+      if (a.favourite != b.favourite) return a.favourite ? -1 : 1;
+      return (b.lastUsedAt ?? b.savedAt).compareTo(a.lastUsedAt ?? a.savedAt);
+    }),
+  );
   List<ShoppingTrip> get history => _history;
   List<ProductPreference> get productPreferences => _productPreferences;
   bool get hasData =>
@@ -435,6 +441,9 @@ class CartStore extends ChangeNotifier {
           budgetPence: list.budgetPence,
           savedAt: DateTime.now(),
           isPlanning: list.isPlanning,
+          favourite: list.favourite,
+          archived: list.archived,
+          lastUsedAt: list.lastUsedAt,
         ),
       if (guest.activeList == null &&
           (guest.items.isNotEmpty || guest.budgetPence != null))
@@ -457,6 +466,8 @@ class CartStore extends ChangeNotifier {
           plannedItems: copyItems(trip.plannedItems),
           budgetPence: trip.budgetPence,
           completedAt: trip.completedAt,
+          favourite: trip.favourite,
+          archived: trip.archived,
         ),
       ..._history,
     ]);
@@ -482,6 +493,84 @@ class CartStore extends ChangeNotifier {
     if (_disposed) return;
     _budgetPence = budgetPence;
     await _commit();
+  }
+
+  Future<void> renameSavedList(String id, String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || trimmed.length > SavedShoppingList.maxNameLength) {
+      throw ArgumentError.value(name, 'name');
+    }
+    await load();
+    if (_disposed) return;
+    _savedLists = List.unmodifiable(
+      _savedLists.map(
+        (list) => list.id == id ? list.copyWith(name: trimmed) : list,
+      ),
+    );
+    await _commit();
+  }
+
+  Future<void> setSavedListFlags(
+    String id, {
+    bool? favourite,
+    bool? archived,
+  }) async {
+    await load();
+    if (_disposed) return;
+    _savedLists = List.unmodifiable(
+      _savedLists.map(
+        (list) => list.id == id
+            ? list.copyWith(favourite: favourite, archived: archived)
+            : list,
+      ),
+    );
+    if (archived == true && _activeListId == id) _activeListId = null;
+    await _commit();
+  }
+
+  Future<void> setTripFlags(
+    String id, {
+    bool? favourite,
+    bool? archived,
+  }) async {
+    await load();
+    if (_disposed) return;
+    _history = List.unmodifiable(
+      _history.map(
+        (trip) => trip.id == id
+            ? trip.copyWith(favourite: favourite, archived: archived)
+            : trip,
+      ),
+    );
+    await _commit();
+  }
+
+  Future<bool> startFromTrip(String id) async {
+    await load();
+    if (_disposed) return false;
+    final matches = _history.where((trip) => trip.id == id);
+    if (matches.isEmpty) return false;
+    final trip = matches.single;
+    _activeListId = null;
+    _isPlanning = true;
+    _budgetPence = trip.budgetPence;
+    _items = List.unmodifiable(
+      trip.items.map(
+        (item) => CartItem(
+          id: _newId(),
+          name: item.name,
+          unitPricePence: item.unitPricePence,
+          quantity: 0,
+          plannedQuantity: item.quantity,
+          estimatedUnitPricePence: item.unitPricePence,
+          priceConfirmed: false,
+          category: item.category,
+          product: item.product,
+        ),
+      ),
+    );
+    await _commit();
+    return true;
   }
 
   Future<void> addItem({
@@ -679,6 +768,7 @@ class CartStore extends ChangeNotifier {
       budgetPence: _budgetPence,
       savedAt: DateTime.now(),
       isPlanning: _isPlanning,
+      lastUsedAt: DateTime.now(),
     );
     _savedLists = List.unmodifiable([saved, ..._savedLists]);
     _activeListId = saved.id;
@@ -691,6 +781,13 @@ class CartStore extends ChangeNotifier {
     if (_disposed) return false;
     final saved = _savedListForId(id);
     if (saved == null) return false;
+    _savedLists = List.unmodifiable(
+      _savedLists.map(
+        (list) => list.id == id
+            ? list.copyWith(lastUsedAt: DateTime.now(), archived: false)
+            : list,
+      ),
+    );
     _items = saved.items;
     _budgetPence = saved.budgetPence;
     _activeListId = saved.id;
@@ -704,6 +801,12 @@ class CartStore extends ChangeNotifier {
     if (_disposed) return false;
     final savedList = _savedListForId(id);
     if (savedList == null) return false;
+    _savedLists = List.unmodifiable(
+      _savedLists.map(
+        (list) =>
+            list.id == id ? list.copyWith(lastUsedAt: DateTime.now()) : list,
+      ),
+    );
     _activeListId = null;
     _items = List.unmodifiable(
       savedList.items.map(

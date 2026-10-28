@@ -70,7 +70,7 @@ class ItemSuggestions {
       remember(item, ItemSuggestionSource.basket);
     }
     final records = <_ShoppingRecord>[
-      for (final list in savedLists)
+      for (final list in savedLists.where((list) => !list.archived))
         _ShoppingRecord(
           list.savedAt,
           list.items,

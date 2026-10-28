@@ -6,6 +6,8 @@ import 'package:carty_app/state/cart_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'list_content_expectations.dart';
+
 class _FailingStorage extends InMemoryCartStorage {
   bool fail = false;
   @override
@@ -224,9 +226,9 @@ void main() {
     expect(store.savedLists, hasLength(2));
     expect(store.activeList!.name, 'Next month');
     await store.incrementQuantity(store.items.first.id);
-    expect(
+    expectListContentsPreserved(
       store.savedLists.firstWhere((list) => list.id == original.id),
-      same(original),
+      original,
     );
     expect(tester.takeException(), isNull);
   });

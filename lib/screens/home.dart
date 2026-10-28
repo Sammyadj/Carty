@@ -376,7 +376,7 @@ class _Dashboard extends StatelessWidget {
         actionLabel: 'See all',
         onAction: onOpenLists,
       ),
-      if (store.savedLists.isEmpty)
+      if (store.visibleSavedLists.isEmpty)
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
@@ -404,7 +404,7 @@ class _Dashboard extends StatelessWidget {
             ],
           ),
         ),
-      for (final list in store.savedLists.take(2))
+      for (final list in store.visibleSavedLists.take(2))
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: SavedListCard(

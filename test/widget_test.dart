@@ -231,6 +231,11 @@ void main() {
 
     await _tapKey(tester, 'nav-lists');
     expect(find.text('Weekly groceries'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('save-list-from-library')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(
       find.byKey(const ValueKey('save-list-from-library')),
       findsOneWidget,

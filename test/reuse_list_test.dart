@@ -8,6 +8,8 @@ import 'package:carty_app/widgets/saved_lists_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'list_content_expectations.dart';
+
 Future<CartStore> _savedListStore() async {
   final store = CartStore(storage: InMemoryCartStorage());
   await store.load();
@@ -169,7 +171,7 @@ void main() {
       expect(store.items.map((item) => item.name), ['Milk', 'Bread']);
       expect(store.items.map((item) => item.quantity), [2, 1]);
       expect(store.budgetPence, 2500);
-      expect(store.savedLists.single, same(saved));
+      expectListContentsPreserved(store.savedLists.single, saved);
       expect(store.items.first.id, isNot(saved.items.first.id));
       expect(tester.takeException(), isNull);
     },
@@ -195,7 +197,7 @@ void main() {
       expect(store.budgetPence, isNull);
       expect(original.items.map((item) => item.quantity), [2, 1]);
       expect(original.budgetPence, 2500);
-      expect(store.savedLists.single, same(original));
+      expectListContentsPreserved(store.savedLists.single, original);
       expect(tester.takeException(), isNull);
     },
   );
@@ -321,6 +323,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _reveal(tester, 'saved-list-load-${list.id}');
     expect(find.text(list.name), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
