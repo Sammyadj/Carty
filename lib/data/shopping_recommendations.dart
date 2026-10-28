@@ -23,6 +23,15 @@ class ShoppingRecommendation {
   final String explanation;
 }
 
+class ShoppingRecommendationGroup {
+  ShoppingRecommendationGroup({
+    required this.reason,
+    required List<ShoppingRecommendation> items,
+  }) : items = List.unmodifiable(items);
+  final RecommendationReason reason;
+  final List<ShoppingRecommendation> items;
+}
+
 /// Private, on-device recommendations. Counts come only from completed shops;
 /// templates and common pairings never pretend to be purchase evidence.
 class ShoppingRecommendations {
@@ -35,7 +44,49 @@ class ShoppingRecommendations {
     int? remainingPence,
     int limit = 3,
   }) {
-    if (limit <= 0 || (remainingPence != null && remainingPence <= 0)) {
+    if (limit <= 0) return const [];
+    return List.unmodifiable(
+      _rankedForWorkspace(
+        items: items,
+        savedLists: savedLists,
+        history: history,
+        remainingPence: remainingPence,
+      ).take(limit.clamp(1, 6)),
+    );
+  }
+
+  static List<ShoppingRecommendationGroup> groupsForWorkspace({
+    required List<CartItem> items,
+    List<SavedShoppingList> savedLists = const [],
+    List<ShoppingTrip> history = const [],
+    int? remainingPence,
+  }) {
+    final ranked = _rankedForWorkspace(
+      items: items,
+      savedLists: savedLists,
+      history: history,
+      remainingPence: remainingPence,
+    );
+    return List.unmodifiable([
+      for (final reason in RecommendationReason.values)
+        if (ranked.any((item) => item.reason == reason))
+          ShoppingRecommendationGroup(
+            reason: reason,
+            items: ranked
+                .where((item) => item.reason == reason)
+                .take(6)
+                .toList(),
+          ),
+    ]);
+  }
+
+  static List<ShoppingRecommendation> _rankedForWorkspace({
+    required List<CartItem> items,
+    required List<SavedShoppingList> savedLists,
+    required List<ShoppingTrip> history,
+    required int? remainingPence,
+  }) {
+    if (remainingPence != null && remainingPence <= 0) {
       return const [];
     }
     final basket = {
@@ -209,7 +260,6 @@ class ShoppingRecommendations {
         continue;
       }
       result.add(candidate.value);
-      if (result.length >= limit.clamp(1, 6)) break;
     }
     return List.unmodifiable(result);
   }

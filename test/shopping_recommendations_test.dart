@@ -22,6 +22,87 @@ ShoppingTrip trip(int day, List<CartItem> items) => ShoppingTrip(
 );
 
 void main() {
+  test(
+    'category rows keep starter ideas instead of a three-item global cutoff',
+    () {
+      final groups = ShoppingRecommendations.groupsForWorkspace(items: []);
+      expect(groups, hasLength(1));
+      expect(groups.single.reason, RecommendationReason.starter);
+      expect(groups.single.items, hasLength(6));
+      expect(ShoppingRecommendations.forWorkspace(items: []), hasLength(3));
+    },
+  );
+
+  test(
+    'each category gets a bounded row with no product repeated between rows',
+    () {
+      final groups = ShoppingRecommendations.groupsForWorkspace(
+        items: [item('Milk')],
+        savedLists: [
+          SavedShoppingList(
+            id: 'plan',
+            name: 'Plan',
+            items: [
+              for (var i = 0; i < 8; i++)
+                item('Planned product $i', quantity: 0),
+            ],
+            budgetPence: null,
+            savedAt: DateTime(2026, 10, 28),
+          ),
+        ],
+        history: [
+          trip(1, [item('Milk'), item('Oats'), item('Coffee')]),
+          trip(2, [item('Milk'), item('Oats'), item('Coffee')]),
+        ],
+      );
+      final planned = groups.singleWhere(
+        (group) => group.reason == RecommendationReason.savedList,
+      );
+      expect(planned.items, hasLength(6));
+      expect(
+        groups.any(
+          (group) => group.reason == RecommendationReason.pickedTogether,
+        ),
+        isTrue,
+      );
+      expect(
+        groups.any((group) => group.reason == RecommendationReason.starter),
+        isTrue,
+      );
+      final names = groups
+          .expand((group) => group.items)
+          .map((rec) => ItemSuggestions.normalize(rec.item.name))
+          .toList();
+      expect(names.toSet(), hasLength(names.length));
+      expect(names, isNot(contains('milk')));
+    },
+  );
+
+  test('category rows retain the remaining-budget checks', () {
+    final history = [
+      trip(1, [item('Milk', price: 500), item('Bread', price: 100)]),
+    ];
+    final groups = ShoppingRecommendations.groupsForWorkspace(
+      items: [],
+      history: history,
+      remainingPence: 150,
+    );
+    expect(
+      groups
+          .expand((group) => group.items)
+          .any((rec) => rec.item.name == 'Milk'),
+      isFalse,
+    );
+    expect(
+      ShoppingRecommendations.groupsForWorkspace(
+        items: [],
+        history: history,
+        remainingPence: 0,
+      ),
+      isEmpty,
+    );
+  });
+
   test('a new workspace gets honest starter ideas with no invented prices', () {
     final result = ShoppingRecommendations.forWorkspace(items: []);
     expect(result, hasLength(3));
