@@ -81,6 +81,12 @@ unconfigured. See [the checkpoint](RELEASE_TEST_HANDOFF.md) and
 
 ## Remaining external inputs and compatibility work
 
+- Settings now includes **Your data**, an offline explanation of device/cloud
+  storage, barcode providers, sharing, exports and account deletion, with links
+  to backup/account controls. The [data inventory](DATA_DISCLOSURES.md) records
+  the remaining operator contact, public policy URL and processor-retention
+  decisions. These notes do not constitute completed store declarations.
+
 - `f396404`: household device-copy review, portable export, independent private
   copies, explicit removal and staged restoration are verified. All 367 app tests
   pass; formatting and analysis are clean. Corrupt scopes remain discoverable
