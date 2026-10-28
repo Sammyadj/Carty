@@ -207,9 +207,20 @@ during confirmation. A read-only device copy, including unsynced work, stays in
 clears that account’s device data. Regaining editing access requires review of
 retained changes before they can upload.
 
-Sharing is still in development: shared-copy recovery/export/removal controls,
-notification delivery and physical two-account acceptance are outstanding. See
+Use **Household options → Device copies & backups** to review the current,
+last accepted or previous device copy. Export the selected shopping data, or
+save an independent private list without replacing your active basket. Editors
+can stage an older version for household conflict review before uploading it.
+Removing device copies requires confirmation and leaves the cloud list intact.
+Unreadable copies are retained until explicitly removed; other healthy copies
+remain available.
+
+Sharing is still in development: production notification delivery and physical
+two-account acceptance are outstanding. See
 [implementation and verification](docs/HOUSEHOLD_SHARING.md).
+
+The current release-test checkpoint and remaining work are recorded in
+[the testing handoff](docs/RELEASE_TEST_HANDOFF.md).
 
 ## Run locally
 

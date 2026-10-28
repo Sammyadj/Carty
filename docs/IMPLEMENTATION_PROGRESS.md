@@ -42,9 +42,11 @@ permission/invitation foundation, typed Flutter repository and isolated device
 caches, an offline sync controller and account lifecycle integration are verified.
 Household library/editing/invitation/conflict screens are now accessible from
 Lists. Member management, revocation and leaving/deleting shared lists are wired,
-with retained read-only device copies. Shared-copy export/removal/restoration,
-notification delivery and physical acceptance remain, followed by release preparation. The full goal
-remains active.
+with retained read-only device copies. Shared-copy export, independent private
+copies, confirmed removal and reviewed restoration are implemented. Production
+notification delivery and physical acceptance remain, followed by store release
+preparation. Broad development is paused at the user's request for physical
+Release-build testing. See [the handoff](RELEASE_TEST_HANDOFF.md) before resuming.
 
 ## Evidence
 
@@ -75,6 +77,13 @@ remains active.
 
 ## Remaining external inputs and compatibility work
 
+- `f396404`: household device-copy review, portable export, independent private
+  copies, explicit removal and staged restoration are verified. All 367 app tests
+  pass; formatting and analysis are clean. Corrupt scopes remain discoverable
+  without blocking healthy offline copies. The iPhone Release build succeeds;
+  physical acceptance is the next user task. Production invitation email and
+  store preparation are still outstanding.
+
 - Household member controls (`8df40de`) pass all 346 app tests with clean analysis.
   They use fresh access checks, confirmed role
   changes/removal, invitation revocation, member leaving, and revision-guarded
@@ -82,8 +91,8 @@ remains active.
   stay readable and locked if a metadata save fails. Restored editing access
   requires explicit review of retained edits. Twelve UI tests and four additional
   controller tests cover these paths; SQLite tests cover persisted review state.
-  Export/removal/restoration, public notification email and physical two-account
-  acceptance remain open.
+  Export/removal/restoration were completed by the recovery milestone above.
+  Public notification email and physical two-account acceptance remain open.
 
 - Household UI: `26c6d1e` adds the Lists entry, reviewed private-list copying,
   owner invitations, recipient acceptance/decline, editor shopping/scanning,

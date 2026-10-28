@@ -8,8 +8,9 @@ integration are implemented and verified. Household screens are accessible from
 the people icon in Lists: library, reviewed copy creation, owner invitations,
 recipient acceptance/decline, shared shopping, read-only viewers and conflict
 review. Member/role management, invitation revocation, and leaving/deleting
-shared lists are now wired. Shared-copy recovery/export/removal controls and
-notification delivery remain. Household sharing is **not complete
+shared lists are now wired. Device-copy recovery/export/removal controls are
+implemented. Production notification delivery and physical acceptance remain.
+Household sharing is **not complete
 or production-accepted**. The account-delete dialog explicitly warns that owned
 shared lists disappear for everyone.
 
@@ -94,10 +95,34 @@ before normal traffic; retain them for recipient lookup and account deletion.
 
 ## Required next work
 
-Add export, removal and reviewed restoration controls for unsynced or retained
-shared copies; read-only device-copy viewing is already available.
 Verify actual two-account flows on physical devices and production notification
 delivery before marking the sharing requirement complete.
+
+## Device-copy recovery milestone
+
+`f396404` adds **Household options → Device copies & backups**. Review the current
+device, last accepted household and previous device versions, including products,
+budget, estimates and picked progress. Export a selected version as an ordinary
+Carty portable backup, excluding household identifiers, membership and auth
+metadata. A private-list copy receives new identifiers and leaves the active
+private basket, history and preferences intact. Failed saves retry the same copy.
+
+Editors can stage a different accepted/previous version; this preserves the
+current version as recovery and requires household conflict review before sync.
+Stale review tokens and revoked permissions refuse restoration. Confirmed local
+removal drains pending work, participates in account shutdown barriers, and does
+not delete the cloud list. Reopening an accessible list downloads it again.
+
+Unreadable scopes stay discoverable and do not block healthy offline copies.
+Their separate removal confirmation explains that unreadable unsynced data will
+be lost; no automatic reset occurs. Account-wide database failures still need
+storage recovery rather than silent replacement.
+
+All 367 app tests pass with clean analysis and formatting at this checkpoint.
+Twenty-one new regressions cover portable data, independent copying and failed
+saves, staged restoration, stale reviews, removal barriers, unreadable SQLite
+catalog entries, export cancellation, UI actions and larger text. Native file
+selection and actual two-account/offline behaviour still require physical tests.
 
 ## Flutter repository verification
 
