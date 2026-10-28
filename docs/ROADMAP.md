@@ -11,7 +11,7 @@ The current implementation establishes:
 - One reactive cart state shared by all screens.
 - Immutable item records with stable IDs and integer-pence calculations.
 - Validated add/edit forms and quantities that can be zero for products not yet picked up.
-- A green Carty theme and home dashboard with budget progress, near-budget and over-budget feedback, running cost, and simple shopping tips.
+- The selected City theme and home dashboard with budget progress, near-budget and over-budget feedback, running cost, and simple shopping tips.
 - A bottom bar that keeps the total, remaining budget, and Add item control visible on home and full-cart screens.
 - Home, Lists, and Tips navigation with functional destinations for current local data.
 - Basket icon avatars that make rows easier to recognize; these are visual hints, not catalog photos or product categories.
@@ -27,15 +27,15 @@ Navigation now includes Home, Lists, Tips, and History; the Home account action 
 
 ## Stage 2: planning and shopping history
 
-Named editable lists and Finish shopping are available. History keeps completed picked products separate from reusable lists. Favourites, saved-list search, and reusing a previous trip as a new basket remain future work.
+Named editable lists and Finish shopping are available. History keeps completed picked products separate from reusable lists. Lists and History now have search, sorting, favourites, and archive/restore. Lists also support renaming and last-used tracking. A reviewed previous trip can seed a new unpicked plan while its recorded contents remain unchanged.
 
-Track planned and actual prices explicitly before introducing price history or spending summaries. Add export and restore, and move shopping records to a database with migrations and appropriate recovery behavior as the data grows. The current preferences snapshot is a small-MVP storage choice.
+Plan/Shop modes now keep intended quantities and estimates separate from picked quantities and confirmed shelf prices. History preserves the complete original plan and labels unconfirmed prices. Export/restore and structured database storage with migrations/recovery remain in the active implementation goal; the preferences snapshot is still an MVP storage choice.
 
 ## Stage 3: product capture and useful comparisons
 
 Product capture includes camera or manual barcode entry, checksum validation, Open Food Facts lookup with UPCitemdb general-retail fallback, editable name review, manual shelf-price confirmation, and duplicate-product merging. Product identifiers, sources, brand, and display pack size persist in baskets and saved lists. A bounded local cache supports matched products and manually confirmed names offline; unknown or unavailable matches allow manual details. The review attributes each source and explains that prices come from the shopper. UPCitemdb's free-tier quota limits evaluation capacity; assess real-shop coverage before selecting a production plan. Physical-device scanner checks remain release work.
 
-Catalog search, normalized pack sizes/units, categories, and licensed product images remain future work. Product icon avatars do not supply these. A barcode does not provide a universal current price: automated price lookup needs a reliable retailer or product-price source, and users must be able to enter or correct a price manually.
+Editable grocery categories and local name hints now support grouped baskets and horizontal category filters. Broader catalog search, normalized pack sizes/units, authoritative catalog classifications, and licensed product images remain future work. Product icon avatars do not supply these. A barcode does not provide a universal current price: automated price lookup needs a reliable retailer or product-price source, and users must be able to enter or correct a price manually.
 
 Introduce normalized pack sizes and units before unit-price comparisons such as pounds per kilogram or litre. Price refresh on list reuse and “was/current” highlights require store-specific source and timestamp data; until then reuse retains last-entered prices. Receipt capture can later help record actual purchases, with a review step for uncertain text and amounts. Any price comparison should show its source, store, and freshness rather than implying a live offer.
 

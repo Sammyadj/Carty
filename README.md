@@ -44,6 +44,30 @@ Choose **Duplicate list** to copy products, prices, quantities, and budget into 
 
 Opening a different list prompts **Save and switch**, **Switch without saving**, or **Cancel** when the current basket has no matching named list. Cancelling the prompt or name form keeps the current shop. Pending writes settle before switching; if saving fails, switching is blocked until a successful retry. **Create new list** and **Clear cart** leave the named list intact and detach the new basket. Deleting a named list keeps the current basket but stops updates to the deleted list. Removing its last product keeps the named list available for editing.
 
+## Organise lists and completed shops
+
+Lists and History support searching names or products and filtering **Active**,
+**Favourites**, or **Archived** records. Sort lists by recent changes, name, last
+use, or budget; sort trips by date, name, or recorded total. A list's options menu
+also supports renaming. Last-used metadata changes when opening/reusing a list,
+without changing its saved products or budget.
+
+Archiving keeps a record for later restoration. Archiving the list currently being
+edited warns that the basket will stay but automatic updates to that named list
+will stop. Continue editing an archived list restores it; copying an archived list
+keeps the original archived. Home shortcuts omit archived lists and put favourites
+first. Archived lists do not supply automatic product suggestions; completed trips
+still provide real purchase-history evidence even when organised into the archive.
+
+**Plan this shop again** in History reviews a completed trip's recorded products,
+quantities, stored prices, and budget before creating a new plan. Existing unsaved
+baskets are protected. Copied products start unpicked with unconfirmed estimates
+and new IDs. The original trip's products, prices, total, and date stay unchanged.
+
+See [Lists](docs/previews/library-lists.png), [archives](docs/previews/library-archive.png),
+[History](docs/previews/library-history.png), and [trip reuse review](docs/previews/library-trip-review.png).
+Regenerate these actual-widget previews with `flutter test tool/render_library_previews.dart`.
+
 ## Item-name suggestions and planning at home
 
 Choose **Add item** on Home or the full basket and type at least two characters in **Item name**. Up to three suggestions appear, prioritising your own products. Matching handles case, spaces, hyphens, and the start of words, so `mil` can find `Organic whole milk`. Common grocery and household names also work without a shopping history. You can always type a different name.

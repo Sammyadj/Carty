@@ -15,7 +15,7 @@ separate action when authorised.
   overrides, uncategorised products, search combinations, and larger text.
 - [x] Personal recommendations: favourites, hide suggestions, suggest less often,
   and frequent-product access. Verify workspace/account isolation and persistence.
-- [ ] List/history management: search, sorting, favourites, archive/unarchive, and
+- [x] List/history management: search, sorting, favourites, archive/unarchive, and
   copying a completed trip into a new planned list without changing history.
 - [ ] Durable data: structured local storage with migration/recovery, export and
   reviewed import/restore, and separate cloud records that can grow without
@@ -36,8 +36,9 @@ integrations, not promises of this implementation.
 
 ## Current milestone
 
-Implementing saved-list/history search, sorting, favourites, archiving, and
-copying a completed trip into a new plan next.
+Next: durable local storage, export/restore, and separate cloud records, followed
+by household sharing and release preparation. The first four product milestones
+are implemented. The full goal remains active.
 
 ## Evidence
 
@@ -59,3 +60,26 @@ copying a completed trip into a new plan next.
   Guest import explicitly includes choices and retains account choices on clashes.
   All 240 tests pass; analysis is clean. Widget renders for Home, favourites,
   regulars, hidden choices, and menus were reviewed.
+- `347bfcc`: searchable/sortable Lists and History, record favourites, reversible
+  archives, saved-list renaming/last-used tracking, and reviewed trip-to-plan
+  copying with save-before-switch protection. History contents and timestamps
+  remain immutable. All 248 tests pass; analysis and iOS Simulator/Android Debug
+  builds pass. Actual library/archive/history/reuse screens were rendered and
+  reviewed, including the larger-text archive flow.
+
+## Remaining external inputs and compatibility work
+
+- The user approved email invitations, viewer/editor roles, editor-only changes,
+  deletion of owned shared lists on owner account deletion after a warning, and
+  GBP for this phase.
+- A question about an existing email provider/verified sender domain is pending.
+  Never request passwords or private API keys in chat. Public mail delivery needs
+  provider/domain configuration and an actual delivery check.
+- Existing development snapshots still use version 3 with additive fields. The
+  structured-storage/cloud migration must preserve every new field and gate old
+  writers before public release. No database DDL has been applied in this goal.
+- Supabase project `igytgwdxljbnxfjtufui` was rechecked: ACTIVE_HEALTHY, Postgres
+  17.11, two existing migrations. Its current changelog was fetched and scanned;
+  new tables require explicit API grants and RLS. Review current docs before DDL.
+- Physical-device acceptance, production signing, and store/provider ownership
+  still require real external verification. Build success is not release approval.
