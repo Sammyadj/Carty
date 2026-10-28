@@ -15,6 +15,7 @@ Future<void> showItemEditor({
   required BuildContext context,
   required CartStore store,
   CartItem? item,
+  ItemSuggestion? initialSuggestion,
 }) async {
   await store.load();
   if (!context.mounted) return;
@@ -27,7 +28,11 @@ Future<void> showItemEditor({
       : null;
   final draft = await showDialog<CartItemDraft>(
     context: context,
-    builder: (_) => CartItemEditor(item: item, suggestions: suggestions),
+    builder: (_) => CartItemEditor(
+      item: item,
+      suggestions: suggestions,
+      initialSuggestion: initialSuggestion,
+    ),
   );
   if (draft == null || !context.mounted) return;
   if (item == null) {

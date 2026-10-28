@@ -18,6 +18,7 @@ import '../widgets/saved_list_card.dart';
 import '../widgets/saved_lists_view.dart';
 import '../widgets/section_heading.dart';
 import '../widgets/shopping_tips.dart';
+import '../widgets/shopping_recommendations.dart';
 import '../widgets/storage_notice.dart';
 import '../widgets/summary_area/summary_card.dart';
 import 'cart_full_screen.dart';
@@ -334,6 +335,7 @@ class _Dashboard extends StatelessWidget {
         ),
       const SizedBox(height: 20),
       ShoppingTips(store: store, onViewAll: onOpenTips),
+      ShoppingRecommendationsSection(store: store),
       const SizedBox(height: 28),
       SectionHeading(
         title: 'Your saved lists',

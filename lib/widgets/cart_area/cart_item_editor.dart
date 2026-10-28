@@ -18,10 +18,16 @@ class CartItemDraft {
 
 /// A form owns temporary input. Only a validated draft reaches the cart store.
 class CartItemEditor extends StatefulWidget {
-  const CartItemEditor({super.key, this.item, this.suggestions});
+  const CartItemEditor({
+    super.key,
+    this.item,
+    this.suggestions,
+    this.initialSuggestion,
+  }) : assert(item == null || initialSuggestion == null);
 
   final CartItem? item;
   final ItemSuggestions? suggestions;
+  final ItemSuggestion? initialSuggestion;
 
   @override
   State<CartItemEditor> createState() => _CartItemEditorState();
@@ -35,11 +41,13 @@ class _CartItemEditorState extends State<CartItemEditor> {
       widget.suggestions ?? ItemSuggestions.fromWorkspace();
   String? _suggestedPriceText;
   String? _suggestedPriceName;
-  late final _name = TextEditingController(text: widget.item?.name ?? '');
+  late final _name = TextEditingController(
+    text: widget.item?.name ?? widget.initialSuggestion?.name ?? '',
+  );
   late final _price = TextEditingController(
-    text: widget.item == null
-        ? ''
-        : Money.format(widget.item!.unitPricePence).replaceAll('£', ''),
+    text: _formatPrice(
+      widget.item?.unitPricePence ?? widget.initialSuggestion?.unitPricePence,
+    ),
   );
   late final _quantity = TextEditingController(
     text: (widget.item?.quantity ?? 1).toString(),
@@ -49,7 +57,17 @@ class _CartItemEditorState extends State<CartItemEditor> {
   void initState() {
     super.initState();
     _nameFocus.addListener(_refreshSuggestions);
+    if (widget.item == null &&
+        widget.initialSuggestion?.unitPricePence != null) {
+      _suggestedPriceText = _price.text;
+      _suggestedPriceName = ItemSuggestions.normalize(
+        widget.initialSuggestion!.name,
+      );
+    }
   }
+
+  String _formatPrice(int? price) =>
+      price == null ? '' : Money.format(price).replaceAll('£', '');
 
   void _refreshSuggestions() {
     if (mounted) setState(() {});
@@ -188,7 +206,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   key: const Key('item-name-input'),
                   controller: _name,
                   focusNode: _nameFocus,
-                  autofocus: true,
+                  autofocus: widget.initialSuggestion == null,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   maxLength: CartItem.maxNameLength,
@@ -215,6 +233,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
                 TextFormField(
                   key: const Key('item-price-input'),
                   controller: _price,
+                  autofocus: widget.initialSuggestion != null,
                   focusNode: _priceFocus,
                   onChanged: (_) {
                     if (_suggestedPriceText != null) {
