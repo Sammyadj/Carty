@@ -23,6 +23,9 @@ class ItemSuggestions {
   static const maxPersonalItems = 200;
   final List<ItemSuggestion> _items;
 
+  Iterable<ItemSuggestion> get personalItems =>
+      _items.where((item) => item.source != ItemSuggestionSource.common);
+
   static String normalize(String name) => name
       .trim()
       .toLowerCase()
