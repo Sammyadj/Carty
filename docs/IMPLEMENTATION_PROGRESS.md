@@ -10,7 +10,7 @@ separate action when authorised.
   picked quantities/confirmed shelf prices; show estimated and picked totals,
   budget remaining, and complete only picked items. Verify migration, restart,
   saved-list continuation, scan merging, and immutable history.
-- [ ] Grocery categories: editable product classification, category filtering,
+- [x] Grocery categories: editable product classification, category filtering,
   grouped shopping lists, and horizontal product browsing. Verify manual
   overrides, uncategorised products, search combinations, and larger text.
 - [ ] Personal recommendations: favourites, hide suggestions, suggest less often,
@@ -36,8 +36,8 @@ integrations, not promises of this implementation.
 
 ## Current milestone
 
-Implementing grocery categories next. Planning and picking are now separate in
-Home, Basket, forms, saved-list continuation, and completed-trip history.
+Implementing recommendation controls and favourites next. Planning and picking
+are separate, and grocery categories can be edited, browsed, and filtered.
 
 ## Evidence
 
@@ -48,3 +48,8 @@ Home, Basket, forms, saved-list continuation, and completed-trip history.
   plans in History. All 224 tests pass; Flutter analysis is clean. Actual-widget
   phone previews are in `docs/previews/planning-*.png`; the renderer uses only
   synthetic in-memory records. Production device acceptance remains outstanding.
+- `f1caee7`: grocery category suggestions with manual overrides, persisted
+  categories across list/history/import flows, independent category filters,
+  grouped Basket sections, and category browsing for recommendations. All 230
+  tests pass; analysis is clean. Category and recommendation phone renders were
+  regenerated and reviewed, including the original next-card peek.

@@ -58,7 +58,8 @@ void main() {
         find.byWidgetPredicate(
           (widget) =>
               widget is SingleChildScrollView &&
-              widget.scrollDirection == Axis.horizontal,
+              widget.scrollDirection == Axis.horizontal &&
+              widget.controller != null,
         ),
       )) {
         expect(row.controller!.offset, 0);
@@ -75,7 +76,8 @@ void main() {
         find.byWidgetPredicate(
           (widget) =>
               widget is SingleChildScrollView &&
-              widget.scrollDirection == Axis.horizontal,
+              widget.scrollDirection == Axis.horizontal &&
+              widget.controller != null,
         ),
       )) {
         expect(row.controller!.offset, 0);

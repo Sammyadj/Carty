@@ -80,6 +80,14 @@ and [the original plan in History](docs/previews/planning-history.png).
 
 ## Recommendations for your shop
 
+The item form includes **Category**. **Automatic** suggests a category from the
+name; choose a category yourself to override that hint. Unknown names stay in
+**Other**. Your choice survives edits, saved-list reuse, cloud saving, and History.
+Basket has a horizontal category filter and **Group by category**; category,
+name search, and **To pick** filters work together. Recommendations also have a
+horizontal category filter. These hints are local rules, not catalog metadata.
+See [grouped grocery browsing](docs/previews/planning-categories.png).
+
 **You might need** on Home groups recommendations into horizontal rows: **Picked together**, **Your regulars**, **From your saved lists**, **Pick up again**, **Pairing ideas**, and **Everyday essentials**. Only categories with suggestions appear, with up to six products in each row. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
 
 Swipe a category sideways or use its next/back buttons. Each row scrolls independently, with a glimpse of the next card on phone screens. Illustrated cards use Carty's City palette and original icon artwork; their review controls and explanations grow with larger text. Navigation buttons respect Reduce Motion. A product appears in one category rather than being repeated across rows.

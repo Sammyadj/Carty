@@ -85,6 +85,16 @@ void main() {
 
     await showMode();
     await capture('home');
+    final basket = find.byKey(const Key('cart-open'));
+    await tester.ensureVisible(basket);
+    await tester.tap(basket);
+    await tester.pumpAndSettle();
+    final search = find.byKey(const Key('cart-search'));
+    await Scrollable.ensureVisible(tester.element(search));
+    await tester.pumpAndSettle();
+    await capture('categories');
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     await store.setPlanning(false);
     await store.updateItem(
       store.items.first.copyWith(
