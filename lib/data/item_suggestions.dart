@@ -2,6 +2,7 @@ import '../core/money.dart';
 import '../models/cart_item.dart';
 import '../models/saved_shopping_list.dart';
 import '../models/shopping_trip.dart';
+import '../models/grocery_category.dart';
 
 enum ItemSuggestionSource { basket, savedList, history, common }
 
@@ -10,10 +11,15 @@ class ItemSuggestion {
     required this.name,
     required this.source,
     this.unitPricePence,
+    this.category = GroceryCategory.automatic,
   });
   final String name;
   final ItemSuggestionSource source;
   final int? unitPricePence;
+  final GroceryCategory category;
+  GroceryCategory get resolvedCategory => category == GroceryCategory.automatic
+      ? GroceryCategories.suggest(name)
+      : category;
 }
 
 /// A bounded name index derived only from the workspace being edited.
@@ -54,6 +60,7 @@ class ItemSuggestions {
           name: name,
           source: source,
           unitPricePence: item.unitPricePence,
+          category: item.category,
         ),
       );
     }

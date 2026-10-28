@@ -12,6 +12,8 @@ import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
 import '../widgets/storage_notice.dart';
 import '../widgets/shopping_mode_panel.dart';
+import '../models/grocery_category.dart';
+import '../widgets/grocery_category_filter.dart';
 import '../widgets/summary_area/summary_card.dart';
 
 class CartFullScreen extends StatefulWidget {
@@ -25,6 +27,8 @@ class CartFullScreen extends StatefulWidget {
 class _CartFullScreenState extends State<CartFullScreen> {
   final _search = TextEditingController();
   bool _pendingOnly = false;
+  GroceryCategory? _category;
+  bool _groupByCategory = true;
   CartStore get store => widget.store;
 
   @override
@@ -42,9 +46,16 @@ class _CartFullScreenState extends State<CartFullScreen> {
           .where(
             (item) =>
                 item.name.toLowerCase().contains(query) &&
+                (_category == null || item.resolvedCategory == _category) &&
                 (!_pendingOnly || item.needsPicking),
           )
           .toList();
+      if (_groupByCategory) {
+        items.sort(
+          (a, b) =>
+              a.resolvedCategory.index.compareTo(b.resolvedCategory.index),
+        );
+      }
       final pendingCount = store.pendingCount;
       return Scaffold(
         appBar: AppBar(
@@ -64,6 +75,7 @@ class _CartFullScreenState extends State<CartFullScreen> {
                         setState(() {
                           _search.clear();
                           _pendingOnly = false;
+                          _category = null;
                         });
                       }
                     },
@@ -168,6 +180,24 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 12),
+                            GroceryCategoryFilter(
+                              categories: store.items.map(
+                                (item) => item.resolvedCategory,
+                              ),
+                              selected: _category,
+                              onChanged: (value) =>
+                                  setState(() => _category = value),
+                              storageId: 'basket-categories',
+                            ),
+                            SwitchListTile(
+                              key: const Key('basket-group-categories'),
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Group by category'),
+                              value: _groupByCategory,
+                              onChanged: (value) =>
+                                  setState(() => _groupByCategory = value),
+                            ),
                           ],
                         ],
                       ),
@@ -193,7 +223,7 @@ class _CartFullScreenState extends State<CartFullScreen> {
                             const Text('No products match this view.'),
                             const SizedBox(height: 4),
                             Text(
-                              'Try a different search or choose All.',
+                              'Try a different search, choose All, or clear the category filter.',
                               style: TextStyle(
                                 color: CartyDesign.of(context).textSecondary,
                               ),
@@ -208,26 +238,53 @@ class _CartFullScreenState extends State<CartFullScreen> {
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: CartItemTile(
-                            key: ValueKey(item.id),
-                            item: item,
-                            isPlanning: store.isPlanning,
-                            onTogglePicked: () => store.togglePicked(item.id),
-                            onEdit: () => showItemEditor(
-                              context: context,
-                              store: store,
-                              item: item,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_groupByCategory &&
+                                (index == 0 ||
+                                    items[index - 1].resolvedCategory !=
+                                        item.resolvedCategory))
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                child: Semantics(
+                                  header: true,
+                                  child: Text(
+                                    item.resolvedCategory.label,
+                                    key: ValueKey(
+                                      'basket-heading-${item.resolvedCategory.name}',
+                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium,
+                                  ),
+                                ),
+                              ),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: CartItemTile(
+                                key: ValueKey(item.id),
+                                item: item,
+                                isPlanning: store.isPlanning,
+                                onTogglePicked: () =>
+                                    store.togglePicked(item.id),
+                                onEdit: () => showItemEditor(
+                                  context: context,
+                                  store: store,
+                                  item: item,
+                                ),
+                                onDelete: () => store.removeItem(item.id),
+                                onIncrement: () => store.isPlanning
+                                    ? store.adjustPlannedQuantity(item.id, 1)
+                                    : store.incrementQuantity(item.id),
+                                onDecrement: () => store.isPlanning
+                                    ? store.adjustPlannedQuantity(item.id, -1)
+                                    : store.decrementQuantity(item.id),
+                              ),
                             ),
-                            onDelete: () => store.removeItem(item.id),
-                            onIncrement: () => store.isPlanning
-                                ? store.adjustPlannedQuantity(item.id, 1)
-                                : store.incrementQuantity(item.id),
-                            onDecrement: () => store.isPlanning
-                                ? store.adjustPlannedQuantity(item.id, -1)
-                                : store.decrementQuantity(item.id),
-                          ),
+                          ],
                         );
                       },
                     ),

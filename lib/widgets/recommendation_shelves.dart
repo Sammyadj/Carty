@@ -7,13 +7,25 @@ import '../core/money.dart';
 import '../data/item_suggestions.dart';
 import '../data/shopping_recommendations.dart';
 import '../design/carty_design.dart';
+import '../models/grocery_category.dart';
 import '../state/cart_store.dart';
 import 'product_avatar.dart';
 import 'section_heading.dart';
+import 'grocery_category_filter.dart';
 
-class ShoppingRecommendationsSection extends StatelessWidget {
+class ShoppingRecommendationsSection extends StatefulWidget {
   const ShoppingRecommendationsSection({super.key, required this.store});
   final CartStore store;
+
+  @override
+  State<ShoppingRecommendationsSection> createState() =>
+      _ShoppingRecommendationsSectionState();
+}
+
+class _ShoppingRecommendationsSectionState
+    extends State<ShoppingRecommendationsSection> {
+  GroceryCategory? _category;
+  CartStore get store => widget.store;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +36,17 @@ class ShoppingRecommendationsSection extends StatelessWidget {
       remainingPence: store.remainingPence,
     );
     if (groups.isEmpty) return const SizedBox.shrink();
+    final filtered = [
+      for (final group in groups)
+        ShoppingRecommendationGroup(
+          reason: group.reason,
+          items: [
+            for (final item in group.items)
+              if (_category == null || item.item.resolvedCategory == _category)
+                item,
+          ],
+        ),
+    ].where((group) => group.items.isNotEmpty).toList();
     return Padding(
       key: const Key('recommendations-section'),
       padding: const EdgeInsets.only(top: 24, bottom: 8),
@@ -35,8 +58,19 @@ class ShoppingRecommendationsSection extends StatelessWidget {
             'Ideas for this basket. Saved prices are estimates.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          const SizedBox(height: 12),
+          GroceryCategoryFilter(
+            categories: groups
+                .expand((group) => group.items)
+                .map((item) => item.item.resolvedCategory),
+            selected: _category,
+            onChanged: (value) => setState(() => _category = value),
+            storageId: 'recommendation-categories',
+          ),
           const SizedBox(height: 20),
-          for (final group in groups)
+          if (filtered.isEmpty)
+            const Text('No ideas in this category for the current basket.'),
+          for (final group in filtered)
             _RecommendationShelf(
               key: ValueKey('recommendation-group-${group.reason.name}'),
               group: group,

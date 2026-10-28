@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../core/money.dart';
 import '../../data/item_suggestions.dart';
 import '../../models/cart_item.dart';
+import '../../models/grocery_category.dart';
 
 class CartItemDraft {
   const CartItemDraft(
@@ -14,12 +15,14 @@ class CartItemDraft {
     this.unitPricePence,
     this.quantity, {
     this.priceConfirmed = false,
+    this.category = GroceryCategory.automatic,
   });
 
   final String name;
   final int unitPricePence;
   final int quantity;
   final bool priceConfirmed;
+  final GroceryCategory category;
 }
 
 /// A form owns temporary input. Only a validated draft reaches the cart store.
@@ -50,6 +53,12 @@ class _CartItemEditorState extends State<CartItemEditor> {
   String? _suggestedPriceText;
   String? _suggestedPriceName;
   late bool _priceConfirmed = widget.item?.priceConfirmed ?? false;
+  late GroceryCategory _category =
+      widget.item?.category ??
+      widget.initialSuggestion?.category ??
+      GroceryCategory.automatic;
+  bool _categoryWasEdited = false;
+  late String? _categorySuggestionName = widget.initialSuggestion?.name;
   late final _name = TextEditingController(
     text: widget.item?.name ?? widget.initialSuggestion?.name ?? '',
   );
@@ -93,6 +102,11 @@ class _CartItemEditorState extends State<CartItemEditor> {
   void _nameChanged(String name) {
     setState(() {
       if (name.trim() != widget.item?.name) _priceConfirmed = false;
+      if (widget.item == null &&
+          !_categoryWasEdited &&
+          name != _categorySuggestionName) {
+        _category = GroceryCategory.automatic;
+      }
       if (_suggestedPriceName != null &&
           ItemSuggestions.normalize(name) != _suggestedPriceName) {
         // A price supplied for one suggested product must not follow a new name.
@@ -105,6 +119,10 @@ class _CartItemEditorState extends State<CartItemEditor> {
 
   void _useSuggestion(ItemSuggestion suggestion) {
     setState(() {
+      if (!_categoryWasEdited) {
+        _category = suggestion.category;
+        _categorySuggestionName = suggestion.name;
+      }
       if (_suggestedPriceText != null && _price.text == _suggestedPriceText) {
         _price.clear();
       }
@@ -148,6 +166,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
         Money.tryParsePence(_price.text)!,
         int.parse(_quantity.text),
         priceConfirmed: _priceConfirmed,
+        category: _category,
       ),
     );
   }
@@ -319,6 +338,34 @@ class _CartItemEditorState extends State<CartItemEditor> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<GroceryCategory>(
+                  key: const Key('item-category-input'),
+                  initialValue: _category,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    helperText: _category == GroceryCategory.automatic
+                        ? 'Suggested from name: ${GroceryCategories.suggest(_name.text).label}'
+                        : null,
+                    helperMaxLines: 2,
+                  ),
+                  items: [
+                    for (final category in GroceryCategory.values)
+                      DropdownMenuItem(
+                        value: category,
+                        child: Text(
+                          category.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) => setState(() {
+                    _category = value ?? GroceryCategory.automatic;
+                    _categoryWasEdited = true;
+                  }),
                 ),
                 const SizedBox(height: 14),
                 Container(

@@ -9,6 +9,7 @@ import '../models/cart_item.dart';
 import '../models/product_details.dart';
 import '../models/saved_shopping_list.dart';
 import '../models/shopping_trip.dart';
+import '../models/grocery_category.dart';
 
 /// One source of truth for the active basket and named shopping lists.
 ///
@@ -313,6 +314,7 @@ class CartStore extends ChangeNotifier {
             plannedQuantity: item.plannedQuantity,
             estimatedUnitPricePence: item.estimatedUnitPricePence,
             priceConfirmed: item.priceConfirmed,
+            category: item.category,
             product: item.product,
           ),
         )
@@ -372,6 +374,7 @@ class CartStore extends ChangeNotifier {
     int? plannedQuantity,
     int? estimatedUnitPricePence,
     bool priceConfirmed = false,
+    GroceryCategory category = GroceryCategory.automatic,
   }) async {
     final trimmedName = name.trim();
     _validateItem(trimmedName, unitPricePence, quantity);
@@ -399,6 +402,7 @@ class CartStore extends ChangeNotifier {
         plannedQuantity: plannedQuantity,
         estimatedUnitPricePence: estimatedUnitPricePence,
         priceConfirmed: priceConfirmed,
+        category: category,
       ),
     ]);
     await _commit();
@@ -594,6 +598,7 @@ class CartStore extends ChangeNotifier {
           plannedQuantity: item.plannedQuantity,
           estimatedUnitPricePence: item.estimatedUnitPricePence,
           priceConfirmed: startFresh ? false : item.priceConfirmed,
+          category: item.category,
           product: item.product,
         ),
       ),

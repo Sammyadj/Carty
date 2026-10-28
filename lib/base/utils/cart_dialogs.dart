@@ -44,6 +44,7 @@ Future<void> showItemEditor({
       quantity: planning ? 0 : draft.quantity,
       plannedQuantity: draft.quantity,
       priceConfirmed: planning ? false : draft.priceConfirmed,
+      category: draft.category,
     );
   } else {
     await store.updateItem(
@@ -56,6 +57,7 @@ Future<void> showItemEditor({
             ? draft.unitPricePence
             : item.estimatedUnitPricePence,
         priceConfirmed: planning ? item.priceConfirmed : draft.priceConfirmed,
+        category: draft.category,
       ),
     );
   }

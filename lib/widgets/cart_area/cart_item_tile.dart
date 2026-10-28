@@ -63,6 +63,11 @@ class CartItemTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
+                      Text(
+                        item.resolvedCategory.label,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 4),
                       Wrap(
                         spacing: 12,
                         runSpacing: 4,
