@@ -6,6 +6,7 @@
 - Use concise, descriptive commit messages explaining the outcome of the change.
 - Commit only the changes belonging to the active task, preserving unrelated user work.
 - Local milestone commits are part of the development workflow. Push them when the user authorizes publishing to the remote repository.
-- Keep `main` as the integration baseline. Start each new feature or fix from an updated `main` on a focused branch named `codex/feat-<topic>`, `codex/fix-<topic>`, or `codex/chore-<topic>`.
+- Keep `main` as the integration baseline. Start each new feature or fix from an updated `main` on a focused branch named `feature/<topic>`, `fix/<topic>`, or `chore/<topic>`.
+- Use Carty-owned names in code, documentation and branches. Do not add assistant/tool branding or third-party design-inspiration references. Preserve required data-source attribution and license notices.
 - Use Conventional Commits for new work, such as `feat(lists): ...`, `fix(scanner): ...`, `docs(workflow): ...`, or `chore(release): ...`. Do not rewrite published milestone history just to rename older commits.
 - Integrate through a pull request with a clear scope and validation results. Wait for required checks; do not bypass branch protection or force-push shared branches. Preserve milestone commits with a merge commit when useful.
