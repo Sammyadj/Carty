@@ -88,7 +88,7 @@ name search, and **To pick** filters work together. Recommendations also have a
 horizontal category filter. These hints are local rules, not catalog metadata.
 See [grouped grocery browsing](docs/previews/planning-categories.png).
 
-**You might need** on Home groups recommendations into horizontal rows: **Picked together**, **Your regulars**, **From your saved lists**, **Pick up again**, **Pairing ideas**, and **Everyday essentials**. Only categories with suggestions appear, with up to six products in each row. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
+**You might need** on Home groups recommendations into horizontal rows: **Your favourites**, **Picked together**, **Your regulars**, **From your saved lists**, **Pick up again**, **Pairing ideas**, and **Everyday essentials**. Only categories with suggestions appear, with up to six products in each row. Favourites take first priority. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
 
 Swipe a category sideways or use its next/back buttons. Each row scrolls independently, with a glimpse of the next card on phone screens. Illustrated cards use Carty's City palette and original icon artwork; their review controls and explanations grow with larger text. Navigation buttons respect Reduce Motion. A product appears in one category rather than being repeated across rows.
 
@@ -101,6 +101,30 @@ Items already in the basket, including quantity-zero products, are excluded. Gen
 Matching uses the latest 40 completed shops and the existing bounded personal-name index. Duplicate lines or high quantities in one shop do not count as repeated shopping occasions. Pairing evidence requires at least two completed shops and a recurring association; common pairing ideas are labelled as ideas. Recommendations update as the basket and shopping records change, remain within the current guest/account workspace, and create no additional cloud records or AI requests.
 
 See [personal recommendation rows](docs/previews/recommendations-personal.png), [a swiped row](docs/previews/recommendations-scrolled.png), [starter ideas](docs/previews/recommendations-starter.png), and [the review form](docs/previews/recommendations-review.png). Regenerate the real Flutter previews with `flutter test tool/render_recommendation_previews.dart`.
+
+### Control your suggestions
+
+Use a basket product's star button or a recommendation's options menu to keep
+favourites. **Your products** on Home and **Manage** beside recommendations open
+searchable favourites, recurring picks, and hidden/less frequent choices. Products
+already in the basket open for editing; other products still require review and
+Save before adding. Regulars count distinct completed shops, not quantities.
+
+**Hide this suggestion** removes that name from automatic recommendations.
+**Suggest less often** waits for three new completed shops, then offers the name
+every third completed shop at a lower priority. It remains available for manual
+review in Your products. Use **Show suggestions again** or **Suggest normally**
+to reset these choices. Undo restores the prior choice only if it has not changed
+again. Choices persist in the current guest/account workspace, sync privately
+when signed in, and survive starting a new basket. Guest import includes choices,
+with existing account choices taking precedence. No shopping data is sent to an
+AI service.
+
+See [favourite recommendations](docs/previews/products-home.png),
+[Your products](docs/previews/products-favourites.png),
+[regulars](docs/previews/products-regulars.png), and
+[hidden choices](docs/previews/products-hidden.png). Regenerate with
+`flutter test tool/render_product_previews.dart`.
 
 ## Barcode scanning
 

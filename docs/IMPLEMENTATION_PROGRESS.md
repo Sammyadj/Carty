@@ -13,7 +13,7 @@ separate action when authorised.
 - [x] Grocery categories: editable product classification, category filtering,
   grouped shopping lists, and horizontal product browsing. Verify manual
   overrides, uncategorised products, search combinations, and larger text.
-- [ ] Personal recommendations: favourites, hide suggestions, suggest less often,
+- [x] Personal recommendations: favourites, hide suggestions, suggest less often,
   and frequent-product access. Verify workspace/account isolation and persistence.
 - [ ] List/history management: search, sorting, favourites, archive/unarchive, and
   copying a completed trip into a new planned list without changing history.
@@ -36,8 +36,8 @@ integrations, not promises of this implementation.
 
 ## Current milestone
 
-Implementing recommendation controls and favourites next. Planning and picking
-are separate, and grocery categories can be edited, browsed, and filtered.
+Implementing saved-list/history search, sorting, favourites, archiving, and
+copying a completed trip into a new plan next.
 
 ## Evidence
 
@@ -53,3 +53,9 @@ are separate, and grocery categories can be edited, browsed, and filtered.
   grouped Basket sections, and category browsing for recommendations. All 230
   tests pass; analysis is clean. Category and recommendation phone renders were
   regenerated and reviewed, including the original next-card peek.
+- `bdb3186`: private product favourites, hidden and less frequent suggestions,
+  reversible controls with protection against overwriting newer choices, and
+  Your products with searchable/category-filtered favourites and recurring picks.
+  Guest import explicitly includes choices and retains account choices on clashes.
+  All 240 tests pass; analysis is clean. Widget renders for Home, favourites,
+  regulars, hidden choices, and menus were reviewed.
