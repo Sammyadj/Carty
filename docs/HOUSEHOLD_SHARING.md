@@ -7,8 +7,9 @@ account-scoped SQLite cache, offline sync controller and account lifecycle
 integration are implemented and verified. Household screens are accessible from
 the people icon in Lists: library, reviewed copy creation, owner invitations,
 recipient acceptance/decline, shared shopping, read-only viewers and conflict
-review. Member management, leaving/deleting shared lists, shared-copy recovery
-controls and notification delivery remain. Household sharing is **not complete
+review. Member/role management, invitation revocation, and leaving/deleting
+shared lists are now wired. Shared-copy recovery/export/removal controls and
+notification delivery remain. Household sharing is **not complete
 or production-accepted**. The account-delete dialog explicitly warns that owned
 shared lists disappear for everyone.
 
@@ -93,8 +94,8 @@ before normal traffic; retain them for recipient lookup and account deletion.
 
 ## Required next work
 
-Add member/role management, invitation revocation, leaving/deleting shared lists,
-and review/export/recovery controls for unsynced or retained shared copies.
+Add export, removal and reviewed restoration controls for unsynced or retained
+shared copies; read-only device-copy viewing is already available.
 Verify actual two-account flows on physical devices and production notification
 delivery before marking the sharing requirement complete.
 
@@ -126,7 +127,7 @@ header separately; optimise that if household counts justify batching.
 
 `SqliteSharedListCache` stores each account/list pair in a separate structured
 database scope. It retains the accepted server base, pending local content,
-an explicit recovery copy and last-known header/role. Private lists/history and
+an explicit recovery copy, a persisted review-required flag and last-known header/role. Private lists/history and
 preferences are rejected. A remembered role is not current permission: the
 controller must recheck membership on reconnect and respect persisted access
 loss. A cache index discovers previously opened lists after restarting; cleared
@@ -160,11 +161,11 @@ revision again; choosing remote retains the discarded local content as recovery.
 No quantities are silently combined. Downgraded viewers cannot submit pending
 edits, and revoked access persists across restart while retaining unsynced work.
 
-Fourteen controller tests cover offline restart/reconnect, two independent
+Eighteen controller tests cover offline restart/reconnect, two independent
 shoppers, competing writes, both conflict choices, edits during upload, stale
 forms/reviews, role downgrade, revocation, post-fetch permission denial, device
-write failure, corrupt caches, automatic sync, and late callbacks after account
-switch/disposal. They use synthetic repositories and caches; server checks and
+write failure, corrupt caches, automatic sync, access-change barriers, restored
+permissions, and late callbacks after account switch/disposal. They use synthetic repositories and caches; server checks and
 real SQLite are tested separately. Physical-device acceptance is still required.
 
 `dispose()` stops callbacks and future queued edits. AppSession owns a
@@ -213,3 +214,44 @@ synthetic products and bundled fonts. Reviewed images are in `docs/previews/`:
 `household-conflict.png` and `household-viewer-large.png`. These verify layout
 and contrast; they do not replace camera, network and account acceptance on a
 real device.
+
+## Member management and retained copies
+
+The shared-list options menu opens **Manage people** for owners or **Your access**
+for members. This screen checks the server before enabling access changes; a
+cached owner role alone is insufficient. Owners can change viewer/editor roles,
+remove access, revoke pending invitations and delete the shared list. Members
+can leave. Each destructive action has a confirmation and is still authorised
+by the server. If an invitation was accepted just before revocation, the screen
+reports that separate member removal is needed rather than claiming access was
+revoked.
+
+Leaving/deleting pauses new list edits and sync, drains in-flight uploads/device
+saves, then confirms against a fresh server copy. Delete uses that exact
+revision; a competing edit requires another review. Cancellation/failure resumes
+local editing. After success the local payload/base/recovery remain in a
+read-only **Device recovery copies** section. They are not erased by deleting a
+cloud list; account deletion still clears all of that account's device scopes.
+Failed device metadata writes preserve the saved products and keep the live
+controller read only, with an explicit partial-success message.
+
+Retained edits require review when editing access is restored, even if the
+household content did not change. This requirement survives further local edits,
+refreshes and restarts until a reviewed choice is made. Cache metadata adds an
+optional boolean `requiresReview`; existing caches without it remain readable,
+and malformed values are rejected. Older viewer/ended-access caches with pending
+work are also forced into review before uploading.
+
+Twelve member-screen tests cover role changes/removal/cancellation, revocation
+and acceptance races, viewer restrictions, leaving/deletion, revision conflicts,
+unsynced retention, unavailable servers, device-write failure, actual options
+navigation and doubled text. Four additional controller regressions cover
+upload barriers, cancellation/resume, retained access loss and review after
+permission restoration. Real SQLite tests verify the review flag across reopen
+and reject malformed metadata without replacing existing records. The tests use
+synthetic clients alongside the previously verified server SQL and SQLite
+layers; physical acceptance and notification delivery remain outstanding.
+The complete app suite passes 346 tests and analysis is clean at this milestone.
+Reviewed actual-widget renders additionally cover `household-members.png`,
+`household-delete-review.png`, `household-access-large.png` and
+`household-recovery-library.png`.

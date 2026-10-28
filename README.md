@@ -198,9 +198,18 @@ review of both complete copies, with a choice to keep local changes or use the
 household copy. Changes made while a review is open invalidate that review.
 The screen checks for household updates while visible and when the app resumes.
 
-Sharing is still in development: member/role management, leaving/deleting shared
-lists, shared-copy recovery/export controls, notification delivery and physical
-two-account acceptance are outstanding. See [implementation and verification](docs/HOUSEHOLD_SHARING.md).
+Use **Household options → Manage people** to change viewer/editor permissions,
+remove members or revoke pending invitations. Members use **Your access** to
+leave; owners can delete the shared list for everyone after confirmation.
+Access changes require a fresh online check. Deletion refuses a list changed
+during confirmation. A read-only device copy, including unsynced work, stays in
+**Device recovery copies** after leaving or deleting; account deletion still
+clears that account’s device data. Regaining editing access requires review of
+retained changes before they can upload.
+
+Sharing is still in development: shared-copy recovery/export/removal controls,
+notification delivery and physical two-account acceptance are outstanding. See
+[implementation and verification](docs/HOUSEHOLD_SHARING.md).
 
 ## Run locally
 

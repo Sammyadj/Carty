@@ -41,8 +41,9 @@ and separate private cloud records are implemented. Household sharing's backend
 permission/invitation foundation, typed Flutter repository and isolated device
 caches, an offline sync controller and account lifecycle integration are verified.
 Household library/editing/invitation/conflict screens are now accessible from
-Lists. Member management, shared-copy recovery controls, notification delivery
-and physical acceptance remain, followed by release preparation. The full goal
+Lists. Member management, revocation and leaving/deleting shared lists are wired,
+with retained read-only device copies. Shared-copy export/removal/restoration,
+notification delivery and physical acceptance remain, followed by release preparation. The full goal
 remains active.
 
 ## Evidence
@@ -74,14 +75,24 @@ remains active.
 
 ## Remaining external inputs and compatibility work
 
+- Household member controls (`8df40de`) pass all 346 app tests with clean analysis.
+  They use fresh access checks, confirmed role
+  changes/removal, invitation revocation, member leaving, and revision-guarded
+  deletion. In-flight saves drain before access changes; retained device copies
+  stay readable and locked if a metadata save fails. Restored editing access
+  requires explicit review of retained edits. Twelve UI tests and four additional
+  controller tests cover these paths; SQLite tests cover persisted review state.
+  Export/removal/restoration, public notification email and physical two-account
+  acceptance remain open.
+
 - Household UI: `26c6d1e` adds the Lists entry, reviewed private-list copying,
   owner invitations, recipient acceptance/decline, editor shopping/scanning,
   read-only viewers, offline reopening and conflict review. `ac0b3fc` adds
   mode-aware remaining budget, near/over-budget feedback and accessible progress.
   All 330 app tests pass and analysis is clean. Ten UI regressions cover these
   flows and rapid login navigation cleanup.
-  Actual-widget City previews were rendered and reviewed. Member/role management,
-  invitation revocation, leaving/deleting shared lists, recovery/export controls,
+  Actual-widget City previews were rendered and reviewed. Member controls were
+  added by the following milestone. Shared-copy export/removal/restoration,
   public email delivery and real two-account devices remain required.
 
 - Household account lifecycle: production startup now creates account-bound
@@ -109,7 +120,7 @@ remains active.
   invitation binding, viewer write denial, immediate downgrade/revocation, CAS,
   leaving, owner-deletion cascades, and cross-household isolation. The account
   deletion warning and cancellation pass their UI regression. App/offline sharing
-  is wired above; membership controls, notification delivery and device acceptance
+  is wired above; notification delivery and device acceptance
   are still open. See [sharing details](HOUSEHOLD_SHARING.md).
 
 - Private cloud records: migration `20261028063541` is applied. All 280 app tests

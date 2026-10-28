@@ -10,6 +10,7 @@ import 'package:carty_app/models/cart_item.dart';
 import 'package:carty_app/screens/household_conflict_screen.dart';
 import 'package:carty_app/screens/household_library_screen.dart';
 import 'package:carty_app/screens/household_list_screen.dart';
+import 'package:carty_app/screens/household_members_screen.dart';
 import 'package:carty_app/sharing/shared_list.dart';
 import 'package:carty_app/sharing/shared_list_controller.dart';
 import 'package:carty_app/state/cart_store.dart';
@@ -129,6 +130,62 @@ void main() {
         scale: 2,
       );
       await capture('viewer-large');
+      final bobInvite = await owner.repository.invite(
+        'weekly',
+        'bob@example.invalid',
+        SharedRole.editor,
+      );
+      await HouseholdTestRepository(data, 'bob').accept(bobInvite.id);
+      final viewerInvite = await owner.repository.invite(
+        'weekly',
+        'viewer@example.invalid',
+        SharedRole.viewer,
+      );
+      await HouseholdTestRepository(data, 'viewer').accept(viewerInvite.id);
+      await owner.repository.invite(
+        'weekly',
+        'new@example.invalid',
+        SharedRole.viewer,
+      );
+      await show(HouseholdMembersScreen(workspace: owner, listId: 'weekly'));
+      await capture('members');
+      final delete = find.byKey(const Key('household-delete'));
+      if (delete.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          delete,
+          180,
+          scrollable: find.byType(Scrollable).first,
+        );
+      }
+      await tester.ensureVisible(delete);
+      await tester.pumpAndSettle();
+      await tester.tap(delete);
+      await tester.pumpAndSettle();
+      await capture('delete-review');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await show(
+        HouseholdMembersScreen(workspace: viewer, listId: 'weekly'),
+        scale: 2,
+      );
+      await capture('access-large');
+      await owner.openList('weekly').pauseForAccessChange();
+      await owner.openList('weekly').retainWithoutAccess();
+      owner.openList('weekly').resumeSync();
+      data.exists = false;
+      data.roles.clear();
+      await show(HouseholdLibraryScreen(workspace: owner, privateStore: store));
+      final recovery = find.byKey(const Key('household-recovery-weekly'));
+      if (recovery.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          recovery,
+          180,
+          scrollable: find.byType(Scrollable).first,
+        );
+      }
+      await tester.ensureVisible(recovery);
+      await tester.pumpAndSettle();
+      await capture('recovery-library');
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
