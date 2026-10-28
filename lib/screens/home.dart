@@ -25,6 +25,7 @@ import '../widgets/summary_area/summary_card.dart';
 import 'cart_full_screen.dart';
 import 'account_screen.dart';
 import 'product_library_screen.dart';
+import 'settings_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.store});
@@ -125,28 +126,14 @@ class _HomePageState extends State<HomePage> {
             icon: const Icon(Icons.playlist_add_rounded),
           ),
           IconButton(
-            tooltip: 'About Carty',
-            onPressed: () => showAboutDialog(
-              context: context,
-              applicationName: 'Carty',
-              applicationVersion: '1.0.0',
-              applicationIcon: Icon(
-                Icons.shopping_cart_rounded,
-                color: CartyDesign.of(context).primaryColor,
-                size: 36,
-              ),
-              children: [
-                const Text(
-                  'Your smart shopping companion. Plan a basket, stay within budget and reuse your regular lists. Your shopping data is saved on this device.',
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Barcode lookups use Open Food Facts (openfoodfacts.org), then UPCitemdb (upcitemdb.com) if needed. Open Food Facts data is under the Open Database License (opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data has its own terms. Camera images stay on your device. Prices are entered by you. Confirmed product details are remembered locally.',
-                ),
-              ],
+            key: const Key('settings-open'),
+            tooltip: 'Settings',
+            onPressed: () => Navigator.push<void>(
+              context,
+              MaterialPageRoute(builder: (_) => SettingsScreen(store: store)),
             ),
             icon: Icon(
-              Icons.info_outline_rounded,
+              Icons.settings_outlined,
               color: CartyDesign.of(context).textSecondary,
             ),
           ),
