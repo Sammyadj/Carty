@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:carty_app/auth/app_session.dart';
 import 'package:carty_app/data/cart_storage.dart';
 import 'package:carty_app/design/carty_design.dart';
 import 'package:carty_app/design/design_theme.dart';
@@ -73,7 +74,12 @@ void main() {
         ),
       );
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('Your shop.\nYour rules.'), findsOneWidget);
+      final message = find.text('Getting your shop ready…');
+      expect(message, findsOneWidget);
+      expect(
+        tester.getBottomRight(message).dy,
+        lessThanOrEqualTo(size.height - 20),
+      );
       expect(tester.takeException(), isNull);
     });
   }
@@ -108,6 +114,66 @@ void main() {
     expect(tester.hasRunningAnimations, isFalse);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('the first screen animates while account startup is pending', (
+    tester,
+  ) async {
+    final startup = Completer<AppSession?>();
+    final storage = _DelayedStorage();
+    final guest = CartStore(storage: storage);
+    addTearDown(guest.dispose);
+    await tester.pumpWidget(
+      CartyStartup(initializeSession: () => startup.future, guestStore: guest),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Getting your shop ready…'), findsOneWidget);
+    expect(tester.hasRunningAnimations, isTrue);
+    expect(find.byType(HomePage), findsNothing);
+    startup.complete(null);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Opening your lists…'), findsOneWidget);
+    storage.contents.complete(null);
+    await tester.pumpAndSettle();
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CartyLoadingScreen), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('failed account startup opens guest shopping with saved data', (
+    tester,
+  ) async {
+    final guest = CartStore(storage: InMemoryCartStorage());
+    addTearDown(guest.dispose);
+    await guest.addItem(name: 'Guest apples', unitPricePence: 225);
+    await tester.pumpWidget(
+      CartyStartup(
+        initializeSession: () async => throw StateError('SDK unavailable'),
+        guestStore: guest,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(guest.items.single.name, 'Guest apples');
+    expect(find.byType(CartyLoadingScreen), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a late startup result is disposed when the screen has closed', (
+    tester,
+  ) async {
+    final startup = Completer<AppSession?>();
+    final guest = CartStore(storage: InMemoryCartStorage());
+    addTearDown(guest.dispose);
+    final session = _TrackedSession(guestStore: guest);
+    await tester.pumpWidget(
+      CartyStartup(initializeSession: () => startup.future),
+    );
+    await tester.pumpWidget(const SizedBox());
+    startup.complete(session);
+    await tester.pump();
+    expect(session.closed, isTrue);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _DelayedStorage implements CartStorage {
@@ -116,4 +182,14 @@ class _DelayedStorage implements CartStorage {
   Future<String?> read() => contents.future;
   @override
   Future<void> write(String value) async {}
+}
+
+class _TrackedSession extends AppSession {
+  _TrackedSession({required super.guestStore});
+  bool closed = false;
+  @override
+  void dispose() {
+    closed = true;
+    super.dispose();
+  }
 }

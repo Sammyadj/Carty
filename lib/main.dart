@@ -15,27 +15,78 @@ import 'screens/home.dart';
 import 'state/cart_store.dart';
 import 'widgets/product_catalog_scope.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   registerDesignFontLicenses();
-  AppSession? session;
-  if (!SupabaseConfig.disabled) {
-    try {
-      final supabase = await Supabase.initialize(
-        url: SupabaseConfig.url,
-        publishableKey: SupabaseConfig.publishableKey,
-        debug: false,
-        authOptions: const FlutterAuthClientOptions(
-          detectSessionInUriPredicate: SupabaseConfig.isAuthCallback,
-        ),
-      );
-      final gateway = SupabaseGateway(supabase.client);
-      session = AppSession(gateway: gateway, repository: gateway);
-    } catch (_) {
-      /* Offline shopping remains available if auth cannot initialize. */
-    }
+  runApp(const CartyStartup());
+}
+
+Future<AppSession?> _initializeCloudSession() async {
+  if (SupabaseConfig.disabled) return null;
+  final supabase = await Supabase.initialize(
+    url: SupabaseConfig.url,
+    publishableKey: SupabaseConfig.publishableKey,
+    debug: false,
+    authOptions: const FlutterAuthClientOptions(
+      detectSessionInUriPredicate: SupabaseConfig.isAuthCallback,
+    ),
+  );
+  final gateway = SupabaseGateway(supabase.client);
+  return AppSession(gateway: gateway, repository: gateway);
+}
+
+/// Draw the loading screen before SDK initialization or local restoration.
+class CartyStartup extends StatefulWidget {
+  const CartyStartup({super.key, this.initializeSession, this.guestStore});
+  final Future<AppSession?> Function()? initializeSession;
+  final CartStore? guestStore;
+
+  @override
+  State<CartyStartup> createState() => _CartyStartupState();
+}
+
+class _CartyStartupState extends State<CartyStartup> {
+  AppSession? _session;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_prepare());
+    });
   }
-  runApp(MyApp(session: session));
+
+  Future<void> _prepare() async {
+    AppSession? session;
+    try {
+      session = await (widget.initializeSession ?? _initializeCloudSession)();
+    } catch (_) {
+      // Guest shopping remains available if account setup cannot initialize.
+    }
+    if (!mounted) {
+      session?.dispose();
+      return;
+    }
+    setState(() {
+      _session = session ?? AppSession(guestStore: widget.guestStore);
+    });
+  }
+
+  @override
+  void dispose() {
+    _session?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _session == null
+      ? MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Carty',
+          theme: buildDesignTheme(CartyDesign.city),
+          home: const CartyLoadingScreen(),
+        )
+      : MyApp(session: _session);
 }
 
 class MyApp extends StatefulWidget {
@@ -96,9 +147,26 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             debugShowCheckedModeBanner: false,
             title: 'Carty',
             theme: buildDesignTheme(CartyDesign.city),
-            home: _session.isLoading
-                ? const CartyLoadingScreen(message: 'Opening your lists…')
-                : HomePage(store: _session.store),
+            home: Builder(
+              builder: (context) => AnimatedSwitcher(
+                duration:
+                    MediaQuery.disableAnimationsOf(context) ||
+                        MediaQuery.accessibleNavigationOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 240),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: _session.isLoading
+                    ? const CartyLoadingScreen(
+                        key: ValueKey('opening-lists'),
+                        message: 'Opening your lists…',
+                      )
+                    : HomePage(
+                        key: const ValueKey('shopping-home'),
+                        store: _session.store,
+                      ),
+              ),
+            ),
           ),
         ),
       ),
