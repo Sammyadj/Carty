@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/money.dart';
+import '../../data/item_suggestions.dart';
 import '../../models/cart_item.dart';
 import '../../models/saved_shopping_list.dart';
 import '../../state/cart_store.dart';
@@ -15,9 +16,18 @@ Future<void> showItemEditor({
   required CartStore store,
   CartItem? item,
 }) async {
+  await store.load();
+  if (!context.mounted) return;
+  final suggestions = item == null
+      ? ItemSuggestions.fromWorkspace(
+          items: store.items,
+          savedLists: store.savedLists,
+          history: store.history,
+        )
+      : null;
   final draft = await showDialog<CartItemDraft>(
     context: context,
-    builder: (_) => CartItemEditor(item: item),
+    builder: (_) => CartItemEditor(item: item, suggestions: suggestions),
   );
   if (draft == null || !context.mounted) return;
   if (item == null) {
