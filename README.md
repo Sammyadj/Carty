@@ -7,6 +7,7 @@ Carty is a Flutter shopping companion for keeping track of the cost of a basket 
 ## Current MVP
 
 - Add products with a name, unit price, and quantity; edit or remove them later.
+- Get offline item-name suggestions from the current basket, saved lists, and shopping history, with common grocery and household names for a new workspace. Reuse your own saved prices as planning estimates.
 - Scan retail barcodes, look up products through Open Food Facts with a UPCitemdb general-retail fallback, then confirm the shelf price and quantity. Manual barcode entry and remembered product details cover missing matches.
 - See a live basket total, remaining budget, and progress. Near-budget feedback starts at 80% of the budget; spending above the budget has an explicit over-budget status.
 - Use the City design with product icon avatars and Home, Lists, Tips, and History navigation.
@@ -41,6 +42,18 @@ To carry on an existing shop, open its saved list and choose **Continue editing*
 Choose **Duplicate list** to copy products, prices, quantities, and budget into a separate basket, or **Start fresh** to copy the products and prices while resetting quantities to zero and clearing the budget. Review and confirm **Use this list**. These two modes keep the saved original unchanged. **Save a copy** creates another named version when you are already editing a saved list. Saved prices are your last entered prices; check them against shelf labels as you shop.
 
 Opening a different list prompts **Save and switch**, **Switch without saving**, or **Cancel** when the current basket has no matching named list. Cancelling the prompt or name form keeps the current shop. Pending writes settle before switching; if saving fails, switching is blocked until a successful retry. **Create new list** and **Clear cart** leave the named list intact and detach the new basket. Deleting a named list keeps the current basket but stops updates to the deleted list. Removing its last product keeps the named list available for editing.
+
+## Item-name suggestions and planning at home
+
+Choose **Add item** on Home or the full basket and type at least two characters in **Item name**. Up to three suggestions appear, prioritising your own products. Matching handles case, spaces, hyphens, and the start of words, so `mil` can find `Organic whole milk`. Common grocery and household names also work without a shopping history. You can always type a different name.
+
+Tap a suggestion to fill its name. If the price field is empty and the product has a price in your shopping data, Carty fills that saved price and labels it as a previously entered amount. This helps estimate a budget before visiting the shop; check the shelf label when shopping. Common starter names never invent a price. Prices and quantities you have already entered are kept. Changing to a different name clears an untouched auto-filled price; a price you edited yourself stays. Suggestions apply to new items, while existing-item edits remain explicit.
+
+Choosing a suggestion does not add anything to the basket. **Save item** confirms the name, price, and quantity; **Cancel** leaves shopping data unchanged. Completing a name does not attach a barcode or merge another product into the basket. The form stays scrollable with a phone keyboard and larger text, and the keyboard's Next action moves directly to price.
+
+Suggestions run entirely on the device, using an index of up to 200 recent distinct personal names and a small built-in list. Personal names and prices come only from the currently open guest/account workspace. Saved lists and completed shops retain familiar products after a restart or a new basket; removing all of their source records removes those personal suggestions. The device-wide barcode cache and other accounts are not searched. There is no extra suggestion-history database, AI subscription, or per-keystroke network lookup. Saving a signed-in basket still uses the existing private cloud sync.
+
+See [personal suggestions](docs/previews/suggestions-personal.png), [a reused estimate](docs/previews/suggestions-estimate.png), and [the larger-text layout](docs/previews/suggestions-large-text.png). Regenerate these actual Flutter renders with `flutter test tool/render_suggestion_previews.dart`; the keyboard previews reserve keyboard space without drawing native keyboard keys.
 
 ## Barcode scanning
 
