@@ -64,8 +64,13 @@ class HouseholdTestData {
 class HouseholdTestCache implements SharedListCache {
   CachedSharedList? value;
   bool failWrites = false;
+  bool failClear = false, unreadable = false;
   @override
-  Future<CachedSharedList?> read() async => value;
+  Future<CachedSharedList?> read() async {
+    if (unreadable) throw const FormatException('Unreadable device copy');
+    return value;
+  }
+
   @override
   Future<void> write(CachedSharedList value) async {
     if (failWrites) throw const FileSystemException('Device save failed');
@@ -74,7 +79,9 @@ class HouseholdTestCache implements SharedListCache {
 
   @override
   Future<void> clear() async {
+    if (failClear) throw const FileSystemException('Cannot remove device copy');
     value = null;
+    unreadable = false;
   }
 }
 

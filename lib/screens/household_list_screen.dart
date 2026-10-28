@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../auth/account_gateway.dart';
+import '../auth/app_session.dart';
 import '../base/utils/barcode_flow.dart';
 import '../core/money.dart';
 import '../data/cart_storage.dart';
@@ -20,17 +21,20 @@ import '../widgets/product_avatar.dart';
 import 'household_conflict_screen.dart';
 import 'household_list_details_dialog.dart';
 import 'household_members_screen.dart';
+import 'household_copies_screen.dart';
 
-enum _HouseholdAction { details, people }
+enum _HouseholdAction { details, people, copies }
 
 class HouseholdListScreen extends StatefulWidget {
   const HouseholdListScreen({
     super.key,
     required this.workspace,
     required this.listId,
+    this.privateStore,
   });
   final SharedWorkspace workspace;
   final String listId;
+  final CartStore? privateStore;
   @override
   State<HouseholdListScreen> createState() => _HouseholdListScreenState();
 }
@@ -313,6 +317,26 @@ class _HouseholdListScreenState extends State<HouseholdListScreen>
     }
   }
 
+  Future<void> _deviceCopies() async {
+    final store = widget.privateStore ?? AccountScope.maybeOf(context)?.store;
+    final removed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HouseholdCopiesScreen(
+          workspace: widget.workspace,
+          listId: widget.listId,
+          privateStore: store,
+        ),
+      ),
+    );
+    if (!mounted || !widget.workspace.isActive) return;
+    if (removed == true) {
+      if (Navigator.canPop(context)) Navigator.pop(context);
+    } else {
+      await controller.refresh();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.workspace.isActive) {
@@ -364,30 +388,36 @@ class _HouseholdListScreenState extends State<HouseholdListScreen>
                 onPressed: _busy ? null : () => controller.refresh(),
                 icon: const Icon(Icons.refresh_rounded),
               ),
-              if (content != null && !controller.accessUnavailable)
+              if (content != null)
                 PopupMenuButton<_HouseholdAction>(
                   key: const Key('household-options'),
                   tooltip: 'Household options',
                   enabled: !_busy,
-                  onSelected: (action) => _run(
-                    action == _HouseholdAction.details
-                        ? _details
-                        : _managePeople,
-                  ),
+                  onSelected: (action) => _run(switch (action) {
+                    _HouseholdAction.details => _details,
+                    _HouseholdAction.people => _managePeople,
+                    _HouseholdAction.copies => _deviceCopies,
+                  }),
                   itemBuilder: (_) => [
                     if (controller.canEdit)
                       const PopupMenuItem(
                         value: _HouseholdAction.details,
                         child: Text('List details'),
                       ),
-                    PopupMenuItem(
-                      key: const Key('household-manage'),
-                      value: _HouseholdAction.people,
-                      child: Text(
-                        controller.state?.header.role == SharedRole.owner
-                            ? 'Manage people'
-                            : 'Your access',
+                    if (!controller.accessUnavailable)
+                      PopupMenuItem(
+                        key: const Key('household-manage'),
+                        value: _HouseholdAction.people,
+                        child: Text(
+                          controller.state?.header.role == SharedRole.owner
+                              ? 'Manage people'
+                              : 'Your access',
+                        ),
                       ),
+                    const PopupMenuItem(
+                      key: Key('household-copies'),
+                      value: _HouseholdAction.copies,
+                      child: Text('Device copies & backups'),
                     ),
                   ],
                 ),

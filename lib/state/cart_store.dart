@@ -814,6 +814,46 @@ class CartStore extends ChangeNotifier {
     await _commit();
   }
 
+  /// Adds an independent saved list without replacing the active basket.
+  /// Like other edits it remains visible if saving fails; callers can retry
+  /// saving that same copy rather than importing it a second time.
+  Future<SavedShoppingList> addSavedListCopy(SavedShoppingList source) async {
+    final valid = SavedShoppingList.fromJson(
+      Map<String, dynamic>.from(source.toJson()),
+    );
+    if (valid == null) {
+      throw const FormatException('Invalid shopping list copy');
+    }
+    await load();
+    if (_disposed || _needsStorageReset) {
+      throw StateError('Private lists are not available for copying');
+    }
+    final copy = SavedShoppingList(
+      id: _newId(),
+      name: valid.name,
+      budgetPence: valid.budgetPence,
+      savedAt: DateTime.now(),
+      isPlanning: valid.isPlanning,
+      items: [
+        for (final item in valid.items)
+          CartItem(
+            id: _newId(),
+            name: item.name,
+            unitPricePence: item.unitPricePence,
+            quantity: item.quantity,
+            plannedQuantity: item.plannedQuantity,
+            estimatedUnitPricePence: item.estimatedUnitPricePence,
+            priceConfirmed: item.priceConfirmed,
+            category: item.category,
+            product: item.product,
+          ),
+      ],
+    );
+    _savedLists = List.unmodifiable([copy, ..._savedLists]);
+    await _commit();
+    return copy;
+  }
+
   Future<void> saveList(String name) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty ||

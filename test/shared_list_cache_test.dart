@@ -7,8 +7,11 @@ import 'package:carty_app/data/sqlite_cart_storage.dart';
 import 'package:carty_app/models/cart_item.dart';
 import 'package:carty_app/sharing/shared_list.dart';
 import 'package:carty_app/sharing/shared_list_cache.dart';
+import 'package:carty_app/sharing/shared_workspace.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'household_test_support.dart';
 
 SharedContent basket(String name, {int quantity = 1}) => SharedContent(
   name: name,
@@ -78,6 +81,40 @@ void main() {
     String list = 'weekly',
   }) =>
       SqliteSharedListCache(accountId: user, listId: list, database: database);
+
+  test(
+    'corrupt metadata stays preserved without blocking healthy cached lists',
+    () async {
+      await cache().write(fixture());
+      await cache(list: 'broken').write(fixture(listId: 'broken'));
+      final db = await database.open();
+      await db.update(
+        'workspaces',
+        {'metadata': 'broken metadata'},
+        where: 'scope = ?',
+        whereArgs: [cache(list: 'broken').scope],
+      );
+      final shared = SharedWorkspace(
+        repository: HouseholdTestRepository(HouseholdTestData(), 'alice'),
+        isCurrentSession: () => true,
+        cacheFactory: (user, list) => cache(user: user, list: list),
+        cacheIndex: (user) =>
+            SqliteSharedListCache.listIds(user, database: database),
+      );
+      addTearDown(shared.dispose);
+      final catalog = await shared.inspectDeviceCopies();
+      expect(catalog.copies.single.header.id, 'weekly');
+      expect(catalog.unreadableListIds, ['broken']);
+      expect(
+        (await db.query(
+          'workspaces',
+          where: 'scope = ?',
+          whereArgs: [cache(list: 'broken').scope],
+        )).single['metadata'],
+        'broken metadata',
+      );
+    },
+  );
 
   test('reopening retains local edits, accepted base, recovery and revoked access separately', () async {
     await cache().write(

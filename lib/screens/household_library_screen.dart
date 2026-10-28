@@ -10,6 +10,7 @@ import '../sharing/shared_workspace.dart';
 import '../state/cart_store.dart';
 import 'household_list_details_dialog.dart';
 import 'household_list_screen.dart';
+import 'household_copies_screen.dart';
 
 class HouseholdLibraryScreen extends StatefulWidget {
   const HouseholdLibraryScreen({
@@ -28,6 +29,7 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
   List<SharedInvitation> _invitations = [];
   Set<String> _deviceOnly = {};
   Set<String> _recoveryIds = {};
+  List<String> _unreadableIds = [];
   bool _loading = true, _busy = false;
   String? _error;
   int _loadGeneration = 0;
@@ -49,7 +51,8 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
     final cached = <String, SharedListHeader>{};
     final knownLost = <String>{};
     try {
-      for (final value in await workspace.cachedLists()) {
+      final catalog = await workspace.inspectDeviceCopies();
+      for (final value in catalog.copies) {
         cached[value.header.id] = value.header;
         if (value.accessLost) knownLost.add(value.header.id);
       }
@@ -58,6 +61,8 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
         _lists = cached.values.toList();
         _deviceOnly = cached.keys.toSet();
         _recoveryIds = knownLost;
+        _unreadableIds = catalog.unreadableListIds;
+        if (_unreadableIds.isNotEmpty) _error = 'Some device copies could not be opened. They were kept; other copies remain available.';
       });
     } catch (_) {
       if (!_active || generation != _loadGeneration) return;
@@ -148,7 +153,25 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseholdListScreen(workspace: workspace, listId: id),
+        builder: (_) => HouseholdListScreen(
+          workspace: workspace,
+          listId: id,
+          privateStore: widget.privateStore,
+        ),
+      ),
+    );
+    if (_active) await _load();
+  }
+
+  Future<void> _unreadableCopy(String id) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HouseholdCopiesScreen(
+          workspace: workspace,
+          listId: id,
+          privateStore: widget.privateStore,
+        ),
       ),
     );
     if (_active) await _load();
@@ -381,7 +404,9 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
                           ),
                         ),
                       for (final list in _lists.where(
-                        (list) => !_recoveryIds.contains(list.id),
+                        (list) =>
+                            !_recoveryIds.contains(list.id) &&
+                            !_unreadableIds.contains(list.id),
                       ))
                         Card(
                           child: ListTile(
@@ -421,6 +446,33 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
                               onTap: _busy
                                   ? null
                                   : () => _run(() => _open(list.id)),
+                            ),
+                          ),
+                      ],
+                      if (_unreadableIds.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          'Unreadable device copies',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        for (final id in _unreadableIds)
+                          Card(
+                            child: ListTile(
+                              key: Key('household-unreadable-$id'),
+                              leading: const Icon(Icons.warning_amber_rounded),
+                              title: Text(
+                                _lists
+                                        .where((list) => list.id == id)
+                                        .firstOrNull
+                                        ?.name ??
+                                    'Unreadable saved copy',
+                              ),
+                              subtitle: const Text(
+                                'Stored data kept · review recovery options',
+                              ),
+                              onTap: _busy
+                                  ? null
+                                  : () => _run(() => _unreadableCopy(id)),
                             ),
                           ),
                       ],

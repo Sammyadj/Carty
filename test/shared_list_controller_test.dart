@@ -7,6 +7,7 @@ import 'package:carty_app/sharing/shared_list.dart';
 import 'package:carty_app/sharing/shared_list_cache.dart';
 import 'package:carty_app/sharing/shared_list_controller.dart';
 import 'package:carty_app/sharing/shared_repository.dart';
+import 'package:carty_app/sharing/shared_copy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 SharedContent basket(int quantity, {String name = 'Weekly shop'}) =>
@@ -94,6 +95,8 @@ class _Cache implements SharedListCache {
   final String accountId;
   String? encoded;
   bool fail = false;
+  bool failClear = false;
+  Future<void> Function()? beforeClear;
   Future<void> Function()? beforeWrite;
   @override
   Future<CachedSharedList?> read() async => encoded == null
@@ -112,6 +115,8 @@ class _Cache implements SharedListCache {
 
   @override
   Future<void> clear() async {
+    await beforeClear?.call();
+    if (failClear) throw const FileSystemException('Cannot clear');
     encoded = null;
   }
 }
@@ -137,6 +142,128 @@ void main() {
 
   Future<void> edit(SharedListController value, int quantity) =>
       value.edit(basket(quantity), expectedGeneration: value.generation);
+
+  test(
+    'unreadable cache removal is explicit and permits a fresh cloud download',
+    () async {
+      final cache = _Cache('alice')..encoded = 'broken';
+      final value = controller(cache: cache);
+      await value.refresh();
+      expect(value.status, SharedSyncStatus.storageError);
+      expect(cache.encoded, 'broken');
+      await value.removeUnreadableCopy(expectedGeneration: value.generation);
+      expect(cache.encoded, isNull);
+      await value.refresh();
+      expect(value.content!.items.single.quantity, 1);
+      expect(server.saves, 0);
+    },
+  );
+
+  test('staging an accepted copy preserves current edits and reviews newer household content', () async {
+    final value = controller();
+    await value.refresh();
+    await edit(value, 2);
+    final review = value.reviewCopy(SharedCopyKind.accepted)!;
+    await value.stageCopy(review);
+    expect(value.content!.items.single.quantity, 1);
+    expect(value.state!.recovery!.items.single.quantity, 2);
+    server.change(3);
+    await value.refresh();
+    expect(value.status, SharedSyncStatus.conflict);
+    expect(server.saves, 0);
+    await value.keepLocal(value.conflict!);
+    expect(server.content.items.single.quantity, 1);
+  });
+
+  test(
+    'stale recovery reviews and viewers cannot stage a replacement',
+    () async {
+      final value = controller();
+      await value.refresh();
+      await edit(value, 2);
+      final review = value.reviewCopy(SharedCopyKind.accepted)!;
+      await edit(value, 3);
+      await expectLater(
+        value.stageCopy(review),
+        throwsA(isA<AccountProblem>()),
+      );
+      expect(value.content!.items.single.quantity, 3);
+      final member = controller(user: 'bob');
+      await member.refresh();
+      await edit(member, 2);
+      server.roles['bob'] = SharedRole.viewer;
+      await member.refresh();
+      await expectLater(
+        member.stageCopy(member.reviewCopy(SharedCopyKind.accepted)!),
+        throwsA(isA<SharedAccessProblem>()),
+      );
+    },
+  );
+
+  test(
+    'removing a detached device copy never deletes or edits the household list',
+    () async {
+      final cache = _Cache('bob');
+      final value = controller(user: 'bob', cache: cache);
+      await value.refresh();
+      await edit(value, 2);
+      server.roles.remove('bob');
+      await value.retainWithoutAccess();
+      await value.removeDeviceCopy(expectedGeneration: value.generation);
+      expect(cache.encoded, isNull);
+      expect(value.state, isNull);
+      expect(server.content.items.single.quantity, 1);
+      expect(server.saves, 0);
+      expect(server.roles['alice'], SharedRole.owner);
+    },
+  );
+
+  test(
+    'stale removal review and failed clear keep the current device data',
+    () async {
+      final cache = _Cache('alice');
+      final value = controller(cache: cache);
+      await value.refresh();
+      final generation = value.generation;
+      await edit(value, 2);
+      await expectLater(
+        value.removeDeviceCopy(expectedGeneration: generation),
+        throwsA(isA<AccountProblem>()),
+      );
+      cache.failClear = true;
+      await expectLater(
+        value.removeDeviceCopy(expectedGeneration: value.generation),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(value.content!.items.single.quantity, 2);
+      expect(cache.encoded, isNotNull);
+      expect(value.canEdit, true);
+    },
+  );
+
+  test('device removal remains in the shutdown barrier until its disk operation ends', () async {
+    final cache = _Cache('alice');
+    final value = controller(cache: cache);
+    await value.refresh();
+    final entered = Completer<void>(), release = Completer<void>();
+    cache.beforeClear = () async {
+      entered.complete();
+      await release.future;
+    };
+    final removing = value.removeDeviceCopy(
+      expectedGeneration: value.generation,
+    );
+    await entered.future;
+    value.dispose();
+    var settled = false;
+    final barrier = value.writesSettled.then((_) => settled = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(settled, false);
+    release.complete();
+    await removing;
+    await barrier;
+    expect(cache.encoded, isNull);
+  });
 
   test('restored access cannot silently upload a retained copy even if the server is unchanged', () async {
     final cache = _Cache('bob');

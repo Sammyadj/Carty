@@ -139,19 +139,18 @@ class SqliteSharedListCache implements SharedListCache {
     final db = await (database ?? ShoppingDatabase.shared).open();
     final rows = await db.query(
       'workspaces',
-      columns: ['scope', 'metadata'],
+      columns: ['scope'],
       where: "owner_id = ? AND format = 'account' AND scope LIKE 'household:%'",
       whereArgs: [accountId],
     );
     final ids = <String>[];
     for (final row in rows) {
-      final meta = jsonDecode(row['metadata'] as String);
-      if (meta is! Map ||
-          meta['household'] is! Map ||
-          meta['household']['header'] is! Map) {
+      final scope = row['scope'] as String;
+      final pair = jsonDecode(scope.substring('household:'.length));
+      if (pair is! List || pair.length != 2 || pair[0] != accountId) {
         throw const FormatException('Invalid household cache index');
       }
-      final id = sharedText(meta['household']['header']['id']);
+      final id = sharedText(pair[1]);
       if (row['scope'] != 'household:${jsonEncode([accountId, id])}') {
         throw const FormatException('Foreign household cache index');
       }

@@ -7,6 +7,7 @@ import '../auth/account_gateway.dart';
 import '../cloud/cloud_workspace.dart';
 import 'shared_list.dart';
 import 'shared_list_cache.dart';
+import 'shared_copy.dart';
 import 'shared_repository.dart';
 
 enum SharedSyncStatus {
@@ -57,6 +58,116 @@ class SharedListController extends ChangeNotifier {
   SharedSyncStatus get status => _status;
   int get generation => _generation;
   bool get accessUnavailable => _denied;
+
+  SharedCopyReview? reviewCopy(SharedCopyKind kind) {
+    _requireActive();
+    final state = _state;
+    if (state == null) return null;
+    final content = switch (kind) {
+      SharedCopyKind.device => state.local,
+      SharedCopyKind.accepted => state.base,
+      SharedCopyKind.previous => state.recovery,
+    };
+    return content == null
+        ? null
+        : SharedCopyReview(
+            accountId: repository.accountId,
+            listId: listId,
+            generation: _generation,
+            kind: kind,
+            content: content,
+          );
+  }
+
+  Future<void> stageCopy(SharedCopyReview reviewed) async {
+    await initialize();
+    await _queue(() async {
+      if (!canEdit) throw const SharedAccessProblem();
+      final current = reviewCopy(reviewed.kind);
+      if (current == null ||
+          reviewed.accountId != repository.accountId ||
+          reviewed.listId != listId ||
+          reviewed.generation != _generation ||
+          !_same(reviewed.content, current.content)) {
+        throw const AccountProblem(
+          'This device copy changed. Review it again before restoring.',
+        );
+      }
+      final previous = _state!;
+      if (_same(reviewed.content, previous.local)) {
+        throw const AccountProblem('This copy is already on this device.');
+      }
+      await _persist(
+        CachedSharedList(
+          header: previous.header,
+          base: previous.base,
+          local: reviewed.content,
+          recovery: previous.local,
+          accessLost: previous.accessLost,
+          requiresReview: true,
+        ),
+      );
+      _conflict = null;
+      _statusChanged(SharedSyncStatus.pending);
+    });
+    _schedule();
+  }
+
+  Future<void> removeDeviceCopy({required int expectedGeneration}) async {
+    try {
+      await pauseForAccessChange();
+      await _queue(() async {
+        if (_generation != expectedGeneration) {
+          throw const AccountProblem(
+            'This list changed. Review its device copies again before removing them.',
+          );
+        }
+        try {
+          await cache.clear();
+        } catch (_) {
+          _statusChanged(SharedSyncStatus.storageError);
+          rethrow;
+        }
+        if (!_active) return;
+        _state = null;
+        _conflict = null;
+        _generation++;
+        _statusChanged(SharedSyncStatus.ready);
+      });
+    } finally {
+      resumeSync();
+    }
+  }
+
+  /// Separate confirmation is required because unreadable data cannot be
+  /// reviewed/exported first. Never invoke this as an automatic repair.
+  Future<void> removeUnreadableCopy({required int expectedGeneration}) async {
+    _requireActive();
+    if (_state != null || _status != SharedSyncStatus.storageError) {
+      throw const AccountProblem(
+        'The device-copy state changed. Open it again before removing it.',
+      );
+    }
+    _paused = true;
+    _timer?.cancel();
+    try {
+      await _queue(() async {
+        if (_generation != expectedGeneration || _state != null) {
+          throw const AccountProblem(
+            'This device copy changed. Review it again.',
+          );
+        }
+        await cache.clear();
+        if (!_active) return;
+        _initializing = Future.value();
+        _generation++;
+        _statusChanged(SharedSyncStatus.ready);
+      });
+    } finally {
+      resumeSync();
+    }
+  }
+
   bool get _active => !_disposed && isCurrentSession();
   bool get canEdit =>
       _active &&
@@ -327,7 +438,7 @@ class SharedListController extends ChangeNotifier {
           return;
         }
         if (current == null ||
-            !current.hasPendingEdits ||
+            (!current.hasPendingEdits && !current.requiresReview) ||
             _same(current.local, remote.content)) {
           await _persist(
             CachedSharedList(
