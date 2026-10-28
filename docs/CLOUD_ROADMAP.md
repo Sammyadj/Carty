@@ -6,11 +6,11 @@ Implemented: City as the selected interface, optional email-link sign-in, an edi
 
 Finishing a shop records the products marked as picked and their entered prices. It does not charge anyone, verify a receipt, or place an order. This preserves a useful history without inventing a retailer checkout integration.
 
-The first backend stores one private workspace per account. Before larger histories or collaboration, migrate to individual list, item, trip, and membership records with stable IDs, per-record revision checks, pagination, resumable migrations, and export. Preserve current local data through that change. Cloud saving still needs a local cache, so it is not a way to remove all shopping data from the device.
+The first backend's snapshot is retained as a migration fallback. Protocol 2 now stores separate private records with stable IDs and row revisions, paginated downloads, delta writes, and atomic head revision checks. Existing accounts migrate transactionally and old writers are gated after adoption. Local SQLite and reviewed export/restore are implemented. Conflict review remains whole-workspace; membership records and shared-list conflict handling are the next phase. See [cloud record details](CLOUD_RECORDS.md).
 
 ## Phase two: release readiness and richer planning
 
-Validate email delivery and two-device behavior, configure production SMTP, complete store/privacy work, and replace Android debug signing. Add export/restore and practical history/list management after testing typical data volumes. Decide whether a completed trip can seed a new basket, keeping the historical record immutable. Planned versus paid totals should be explicit before spending reports are added.
+Validate email delivery and two-device behavior, configure production SMTP, complete store/privacy work, and replace Android debug signing. Export/restore, list/history management, trip-to-plan reuse, and separate planned/picked totals are implemented. These keep historical records immutable. Further receipt-based paid totals and spending reports remain later integrations.
 
 ## Phase three: shared shopping lists
 

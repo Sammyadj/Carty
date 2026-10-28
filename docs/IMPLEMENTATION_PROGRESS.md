@@ -17,7 +17,7 @@ separate action when authorised.
   and frequent-product access. Verify workspace/account isolation and persistence.
 - [x] List/history management: search, sorting, favourites, archive/unarchive, and
   copying a completed trip into a new planned list without changing history.
-- [ ] Durable data: structured local storage with migration/recovery, export and
+- [x] Durable data: structured local storage with migration/recovery, export and
   reviewed import/restore, and separate cloud records that can grow without
   rewriting one limited workspace blob. Verify failure/rollback, existing data,
   account separation, offline edits, and concurrent writes.
@@ -36,10 +36,9 @@ integrations, not promises of this implementation.
 
 ## Current milestone
 
-Structured local storage, reviewed export/restore, and previous-device-save
-recovery are implemented. Separate cloud records are next, followed by household
-sharing and release preparation. The durable-data requirement stays open until
-the cloud migration is complete. The full goal remains active.
+Structured local storage, reviewed export/restore, previous-device-save recovery,
+and separate private cloud records are implemented. Household sharing is next,
+followed by release preparation. The full goal remains active.
 
 ## Evidence
 
@@ -70,6 +69,13 @@ the cloud migration is complete. The full goal remains active.
 
 ## Remaining external inputs and compatibility work
 
+- Private cloud records: migration `20261028063541` is applied. All 280 app tests
+  pass and analysis is clean. Live rollback-only SQL checks cover ownership,
+  migration, old-writer gating, CAS, invalid-patch rollback, deletion, all nested
+  record kinds, and growth to 10,000 records beyond the former blob limit.
+  New records use paging and delta writes; conflict review remains whole-workspace
+  and full client hydration remains a documented bound. See [cloud records](CLOUD_RECORDS.md).
+
 - Local SQLite and portable backups: all 275 tests pass; analysis is clean.
   Real SQLite transactions test migration races, rollback, separate scopes,
   malformed/future records, bounded row changes, and recovery. Restore tests
@@ -85,11 +91,11 @@ the cloud migration is complete. The full goal remains active.
 - A question about an existing email provider/verified sender domain is pending.
   Never request passwords or private API keys in chat. Public mail delivery needs
   provider/domain configuration and an actual delivery check.
-- Existing development snapshots still use version 3 with additive fields. The
-  structured-storage/cloud migration must preserve every new field and gate old
-  writers before public release. No database DDL has been applied in this goal.
+- Portable shopping snapshots remain version 3. Cloud protocol 2 separately gates
+  older writers after an account's transactional migration; nested new fields are
+  preserved. The original cloud snapshot remains a migration fallback.
 - Supabase project `igytgwdxljbnxfjtufui` was rechecked: ACTIVE_HEALTHY, Postgres
-  17.11, two existing migrations. Its current changelog was fetched and scanned;
-  new tables require explicit API grants and RLS. Review current docs before DDL.
+  17.11, three migrations. Current changelog/docs were consulted. New tables have
+  explicit grants and RLS; security/performance advisors add no new findings.
 - Physical-device acceptance, production signing, and store/provider ownership
   still require real external verification. Build success is not release approval.

@@ -25,10 +25,11 @@ Apply the migrations in order when provisioning another project:
 
 1. `supabase/migrations/20261027190000_private_cloud_workspaces.sql`
 2. `supabase/migrations/20261027191000_require_workspace_fields.sql`
+3. `supabase/migrations/20261028063541_structured_cloud_records.sql`
 
-Both are already applied to the Carty project. Profiles and workspaces have row-level security. The authenticated user can read only their own records and update only their own profile. A workspace is a version-3 JSON snapshot, limited to 2 MiB, containing basket, budget, named lists, active-list link, and completed trips. It has a monotonically increasing revision.
+All three are applied to Carty. The first two local files have earlier draft timestamps than their recorded live versions (`20261027202715` and `20261027205714`); do not reapply them to the existing project. Profiles and private shopping records have RLS. Authenticated users can read only their own records and update only their own profile. [Cloud protocol 2](CLOUD_RECORDS.md) stores separate records with an atomic head revision, paginated downloads, and delta uploads; the original 2 MiB workspace remains a migration fallback.
 
-Workspace writes go through `carty_save_workspace(expected_revision, snapshot)`. It derives ownership from `auth.uid()` and updates only the matching revision. A stale write returns no row and becomes a visible conflict. Direct table writes are not granted to clients. JSON shape constraints reject missing required arrays, including PostgreSQL CHECK expressions that would otherwise evaluate to null. The Flutter model validates complete item/list/history records before accepting cloud data.
+Updated apps use `carty_bootstrap_records()` and `carty_save_record_delta(...)`. Ownership comes from `auth.uid()`; stale writes return no row and become visible conflicts. Direct table writes are not granted. Flutter validates the reconstructed workspace, including all item/list/history records. The original `carty_save_workspace(expected_revision, snapshot)` works only until that account adopts protocol 2, then rejects old writers so they cannot overwrite newer fields.
 
 `carty_delete_my_account()` takes no owner argument, deletes only `auth.uid()`, and cascades that user's profile and workspace. Both functions reject anonymous callers and use an empty SQL search path. They deliberately use `SECURITY DEFINER` with authenticated EXECUTE grants. Supabase's advisor reports [authenticated SECURITY DEFINER execution](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) for these two functions. These grants are intentional, narrowly scoped, and covered by cross-account tests; do not silence the warning by granting broader table access.
 
@@ -47,7 +48,7 @@ Verified on 27–28 October 2026 with Flutter 3.47.8 / Dart 3.13.7:
 | Check | Result |
 | --- | --- |
 | Dart formatting and Flutter analysis | Pass |
-| Full regression suite, including SQLite, portable backups, planning, categories, personal controls, and library management | 275 tests pass |
+| Full regression suite, including cloud records, SQLite, portable backups, planning, categories, personal controls, and library management | 280 tests pass |
 | Phone previews, including larger text | Rendered and reviewed |
 | iOS Simulator Debug build, Xcode 27.1 | Pass |
 | Android Debug build, Java 21 | Pass |

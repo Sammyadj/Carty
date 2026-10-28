@@ -68,9 +68,10 @@ review/confirm/cancel, rescue export, Settings navigation, and narrow screens
 with doubled text size. Native file picker presentation still needs physical
 iOS and Android acceptance testing.
 
-Local storage is structured. The existing private cloud backend still uses one
-revisioned snapshot capped at 2 MiB and whole-workspace conflicts. Moving the
-cloud to separate records and then adding household sharing remain in the
+Local and upgraded cloud storage use separate records. Cloud protocol 2 pages
+downloads and sends row deltas under atomic revision checks; whole-workspace
+conflict review remains. See [cloud record storage](CLOUD_RECORDS.md) for migration,
+limits, and verification. Household sharing remains in the
 [active implementation checklist](IMPLEMENTATION_PROGRESS.md).
 
 ## Review screens

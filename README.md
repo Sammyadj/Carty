@@ -256,7 +256,7 @@ Open the Home **Settings** gear → **Data & backups** to export a readable JSON
 
 Save failures show a **Retry** action; keep the app open while resolving them. If saved data cannot be read, Carty preserves it and blocks replacement writes. **Retry** can try loading it again before local edits are made. A confirmed **Reset saved data** allows the current basket and lists to replace the unreadable snapshot.
 
-Phase one uses one private, revisioned workspace per account, capped at 2 MiB in the database. It is intended for personal lists and modest history, not unlimited records or collaborative editing. Split data into individual list/trip records and add pagination before implementing sharing or large histories. [The cloud roadmap](docs/CLOUD_ROADMAP.md) records the deferred decisions.
+Cloud protocol 2 stores private shopping records separately, downloads them in 500-row pages, and uploads only changed or deleted rows under an atomic revision check. Accounts migrate when opened by the updated app; their original cloud snapshot is retained, and older apps cannot save over the upgraded account. The former 2 MiB whole-workspace limit no longer applies to upgraded accounts. Conflict review still chooses a whole workspace, and the app currently holds that workspace in memory; this is not unlimited history or collaborative editing. See [cloud record storage](docs/CLOUD_RECORDS.md) for bounds, migration, and verification.
 
 ## Product direction and release preparation
 
