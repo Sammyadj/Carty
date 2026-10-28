@@ -3,8 +3,8 @@
 ## Current status
 
 The backend permission/invitation foundation, typed Flutter repository and
-account-scoped SQLite cache are implemented and verified. The app's
-household library, editing screens, offline controller, reconnect/conflict flow,
+account-scoped SQLite cache and offline sync controller are implemented and
+verified. The app's household library, editing screens, conflict-review UI,
 and recipient notification delivery remain to be implemented. Household sharing
 is **not yet available as a completed app feature**. The account-delete dialog
 now explicitly warns that owned shared lists disappear for everyone.
@@ -90,9 +90,8 @@ before normal traffic; retain them for recipient lookup and account deletion.
 
 ## Required next work
 
-Build the role-aware shared-list controller, reviewable offline conflicts,
-revoked-access handling, and account-switch/deletion lifecycle integration.
-Then add the household library, owner invite and
+Wire the role-aware shared-list controller into account-switch/deletion lifecycle
+management and the app. Add the household library, owner invite and
 member controls, recipient accept/decline flow, read-only viewer UI, and shared
 shopping controls that preserve estimates and picked quantities. Add adapter,
 offline/reconnect, two-user, and large-text regression checks. Verify real devices
@@ -142,3 +141,32 @@ Before connecting household controllers to account deletion, stop their network
 callbacks and await pending device writes before erasing those scopes. This
 lifecycle integration is still required; database isolation alone cannot stop a
 live controller from issuing a later write.
+
+## Offline controller verification
+
+`SharedListController` serialises device saves separately from network requests.
+It publishes a local edit only after its device save succeeds. Reconnect compares
+the accepted server base before submitting, uses the server revision guard, and
+keeps edits made during an upload pending against that exact submission. Failed
+downloads never replace the local copy; corrupt cache data is preserved for
+explicit recovery. Automatic sync is debounced after local edits.
+
+Conflicts retain both copies. The UI must present the returned `SharedConflict`
+for review and pass that same review to `keepLocal` or `useRemote`. New local
+edits invalidate old forms/reviews. Keeping local checks the current server
+revision again; choosing remote retains the discarded local content as recovery.
+No quantities are silently combined. Downgraded viewers cannot submit pending
+edits, and revoked access persists across restart while retaining unsynced work.
+
+Fourteen controller tests cover offline restart/reconnect, two independent
+shoppers, competing writes, both conflict choices, edits during upload, stale
+forms/reviews, role downgrade, revocation, post-fetch permission denial, device
+write failure, corrupt caches, automatic sync, and late callbacks after account
+switch/disposal. They use synthetic repositories and caches; server checks and
+real SQLite are tested separately. Physical-device acceptance is still required.
+
+`dispose()` stops callbacks and future queued edits; lifecycle integration must
+then await `writesSettled` before erasing an account's cache. The controller API
+exists, but AppSession does not yet own household controllers, and shared screens
+are not yet accessible. Keep this requirement open until those flows are wired
+and verified together.
