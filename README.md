@@ -1,5 +1,8 @@
 # Carty
 
+Development follows [focused feature branches and pull requests](CONTRIBUTING.md)
+from `main`, with City as the selected design.
+
 **City** is Carty’s selected design: bold typography, a focused budget card, and lime accents. The earlier three-design experiment remains available on the [`codex/ui-exploration` branch](https://github.com/Sammyadj/Carty/tree/codex/ui-exploration).
 
 Carty is a Flutter shopping companion for keeping track of the cost of a basket and staying within a budget. It is being developed in small, understandable stages: a dependable manual shopping flow first, then useful automation.

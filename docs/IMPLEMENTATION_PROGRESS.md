@@ -45,8 +45,12 @@ Lists. Member management, revocation and leaving/deleting shared lists are wired
 with retained read-only device copies. Shared-copy export, independent private
 copies, confirmed removal and reviewed restoration are implemented. Production
 notification delivery and physical acceptance remain, followed by store release
-preparation. Broad development is paused at the user's request for physical
-Release-build testing. See [the handoff](RELEASE_TEST_HANDOFF.md) before resuming.
+preparation. Development resumed after the physical Release build was installed
+and launched on Panda. Integrate the selected City baseline through a pull
+request, then continue each feature from updated `main` on a focused branch.
+The user has no email provider or sender domain yet; public delivery remains
+unconfigured. See [the checkpoint](RELEASE_TEST_HANDOFF.md) and
+[the development workflow](../CONTRIBUTING.md).
 
 ## Evidence
 

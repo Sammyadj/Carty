@@ -1,7 +1,13 @@
 # Release-test checkpoint — 28 October 2026
 
+Development has since resumed by user request. This document records the test
+checkpoint; the current scope is tracked in `IMPLEMENTATION_PROGRESS.md`.
+City is being integrated into `main`; subsequent development uses focused
+feature branches and pull requests as described in `../CONTRIBUTING.md`.
+The user confirmed there is no email provider or sender domain yet.
+
 The user asked to wrap up, commit/push important work and test a physical iPhone
-Release build before authorising further development. Stop feature work here.
+Release build before authorising further development, which is now authorised.
 An older interface-reference reply names Uber Eats; it does not reopen the UI
 exploration task. City remains the selected app design.
 
