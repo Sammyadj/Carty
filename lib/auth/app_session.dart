@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import '../cloud/cloud_cart_storage.dart';
 import '../cloud/cloud_workspace.dart';
 import '../data/cart_storage.dart';
+import '../data/sqlite_cart_storage.dart';
 import '../state/cart_store.dart';
 import 'account_gateway.dart';
 
@@ -17,13 +18,9 @@ class AppSession extends ChangeNotifier {
     CartStore? guestStore,
     AccountCacheFactory? cacheFactory,
     this.autoSync = true,
-  }) : guest = guestStore ?? CartStore(storage: SharedPreferencesCartStorage()),
+  }) : guest = guestStore ?? CartStore(storage: SqliteCartStorage.guest()),
        _ownsGuest = guestStore == null,
-       _cacheFactory =
-           cacheFactory ??
-           ((id) => SharedPreferencesCartStorage(
-             storageKey: 'carty.account.$id.v1',
-           ));
+       _cacheFactory = cacheFactory ?? SqliteCartStorage.account;
 
   final AccountGateway? gateway;
   final CloudWorkspaceRepository? repository;
@@ -147,12 +144,23 @@ class AppSession extends ChangeNotifier {
     await gateway!.deleteAccount();
     final workspace = _accounts.remove(id);
     workspace?.cloud.dispose();
-    await workspace?.cloud.eraseLocalAccount();
-    workspace?.store.dispose();
+    var cleanupFailed = false;
     try {
-      await gateway!.signOut();
+      await workspace?.cloud.eraseLocalAccount();
+    } catch (_) {
+      cleanupFailed = true;
     } finally {
-      await _select(null);
+      workspace?.store.dispose();
+      try {
+        await gateway!.signOut();
+      } finally {
+        await _select(null);
+      }
+    }
+    if (cleanupFailed) {
+      throw const AccountProblem(
+        'Your cloud account was deleted and you have been signed out. Some device data could not be removed. Remove Carty’s app data before giving this device to someone else.',
+      );
     }
   }
 

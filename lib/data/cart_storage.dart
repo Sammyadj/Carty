@@ -9,6 +9,10 @@ abstract interface class ErasableCartStorage implements CartStorage {
   Future<void> clear();
 }
 
+abstract interface class RecoverableCartStorage implements CartStorage {
+  Future<String?> readPreviousSnapshot();
+}
+
 class SharedPreferencesCartStorage implements ErasableCartStorage {
   SharedPreferencesCartStorage({this._storageKey = 'carty.cart.v1'});
   final String _storageKey;

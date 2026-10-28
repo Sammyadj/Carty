@@ -36,6 +36,7 @@ class CartStore extends ChangeNotifier {
   Future<void>? _loadOperation;
   Future<void> _writeTail = Future.value();
   int _nextId = 0;
+  int _editGeneration = 0;
 
   List<CartItem> get items => _items;
   List<SavedShoppingList> get savedLists => _savedLists;
@@ -375,7 +376,68 @@ class CartStore extends ChangeNotifier {
   void restoreFromCloud(String snapshot) {
     if (_disposed || _needsStorageReset) return;
     _restore(snapshot);
+    _editGeneration++;
     _notify();
+  }
+
+  static String normalizeSnapshot(String snapshot) {
+    final probe = CartStore(storage: InMemoryCartStorage());
+    try {
+      probe._restore(snapshot);
+      return probe.exportSnapshot();
+    } finally {
+      probe.dispose();
+    }
+  }
+
+  Future<String?> readPreviousSnapshot() async {
+    await load();
+    await _writeTail;
+    if (_disposed || _storage is! RecoverableCartStorage) return null;
+    return _storage.readPreviousSnapshot();
+  }
+
+  /// Saves a reviewed restore before publishing. A stale review never replaces
+  /// edits or a cloud update made while the review or disk write was in flight.
+  Future<bool> replaceFromBackup(
+    String snapshot, {
+    required String expectedCurrent,
+  }) async {
+    if (!isValidSnapshot(snapshot)) {
+      throw const FormatException('Invalid backup');
+    }
+    final normalized = normalizeSnapshot(snapshot);
+    await load();
+    if (_disposed || exportSnapshot() != expectedCurrent) return false;
+    final generation = _editGeneration;
+    var restored = false;
+    final operation = _writeTail.then((_) async {
+      if (_disposed ||
+          _editGeneration != generation ||
+          exportSnapshot() != expectedCurrent) {
+        return;
+      }
+      try {
+        await _storage.write(normalized);
+        if (_disposed) return;
+        if (_editGeneration != generation) {
+          await _storage.write(exportSnapshot());
+          return;
+        }
+        _restore(normalized);
+        _editGeneration++;
+        _needsStorageReset = false;
+        _storageError = null;
+        _hasLocalEdits = true;
+        restored = true;
+      } catch (_) {
+        _storageError = 'The backup could not be restored. Your current workspace has been kept. Retry saving before leaving Carty.';
+      }
+      _notify();
+    });
+    _writeTail = operation;
+    await operation;
+    return restored;
   }
 
   Future<void> completeShopping(String name) async {
@@ -926,6 +988,7 @@ class CartStore extends ChangeNotifier {
   }
 
   Future<void> _commit() {
+    _editGeneration++;
     _updateActiveList();
     _hasLocalEdits = true;
     _notify();

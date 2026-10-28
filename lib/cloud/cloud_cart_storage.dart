@@ -11,7 +11,8 @@ enum CloudSyncStatus { idle, syncing, synced, pending, conflict, error }
 
 /// Device writes finish before cloud work begins. The payload and its last
 /// accepted cloud revision live in one account-scoped local envelope.
-class CloudCartStorage extends ChangeNotifier implements CartStorage {
+class CloudCartStorage extends ChangeNotifier
+    implements CartStorage, RecoverableCartStorage {
   CloudCartStorage({
     required this.ownerId,
     required this.local,
@@ -40,6 +41,14 @@ class CloudCartStorage extends ChangeNotifier implements CartStorage {
   Future<void> _localTail = Future.value();
   Timer? _timer;
   String? get recoverySnapshot => _backup;
+  @override
+  Future<String?> readPreviousSnapshot() async {
+    await _initialize();
+    await _localTail;
+    if (!_active || local is! RecoverableCartStorage) return null;
+    return (local as RecoverableCartStorage).readPreviousSnapshot();
+  }
+
   bool get _active => !_disposed && isCurrentSession();
 
   Future<void> _initialize() => _load ??= () async {

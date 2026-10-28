@@ -25,6 +25,41 @@ Future<void> settleSession(AppSession session) async {
 
 void main() {
   test(
+    'successful remote deletion still signs out when local cleanup fails',
+    () async {
+      final auth = FakeAccountGateway()..identity = alice;
+      final cache = _CannotClearCache();
+      final session = AppSession(
+        gateway: auth,
+        repository: FakeCloudRepository(),
+        guestStore: emptyGuest(),
+        autoSync: false,
+        cacheFactory: (_) => cache,
+      );
+      addTearDown(session.dispose);
+      addTearDown(auth.dispose);
+      await session.initialize();
+      await session.store.addItem(name: 'Private milk', unitPricePence: 125);
+      await expectLater(
+        session.deleteAccount(),
+        throwsA(
+          isA<AccountProblem>().having(
+            (problem) => problem.message,
+            'message',
+            contains('cloud account was deleted'),
+          ),
+        ),
+      );
+      expect(auth.deleted, ['alice']);
+      expect(auth.currentUser, isNull);
+      expect(session.user, isNull);
+      expect(session.cloud, isNull);
+      expect(session.store, same(session.guest));
+      expect(session.store.items, isEmpty);
+    },
+  );
+
+  test(
     'accounts and guest data use separate caches without automatic import',
     () async {
       final auth = FakeAccountGateway()..identity = alice;
@@ -215,4 +250,9 @@ class _DelayedProfile extends FakeAccountGateway {
     }
     return 'Bob name';
   }
+}
+
+class _CannotClearCache extends InMemoryCartStorage {
+  @override
+  Future<void> clear() async => throw StateError('Local cleanup failed');
 }
