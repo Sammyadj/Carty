@@ -26,6 +26,7 @@ import 'cart_full_screen.dart';
 import 'account_screen.dart';
 import 'product_library_screen.dart';
 import 'settings_screen.dart';
+import 'household_library_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.store});
@@ -45,6 +46,26 @@ class _HomePageState extends State<HomePage> {
     context,
     MaterialPageRoute<void>(builder: (_) => CartFullScreen(store: store)),
   );
+
+  void _openHouseholds() {
+    final session = AccountScope.maybeOf(context);
+    if (session == null) return;
+    final workspace = session.sharing;
+    if (workspace == null) {
+      Navigator.push<void>(
+        context,
+        MaterialPageRoute(builder: (_) => AccountScreen(session: session)),
+      );
+      return;
+    }
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            HouseholdLibraryScreen(workspace: workspace, privateStore: store),
+      ),
+    );
+  }
 
   Future<void> _reuseList(SavedShoppingList list) async {
     final reused = await showReuseList(
@@ -189,6 +210,7 @@ class _HomePageState extends State<HomePage> {
                   child: switch (_tab) {
                     1 => SavedListsView(
                       store: store,
+                      onHouseholdLists: _openHouseholds,
                       onNewList: () async {
                         final started = await showNewList(
                           context: context,

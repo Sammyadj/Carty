@@ -20,12 +20,14 @@ class SavedListsView extends StatefulWidget {
     required this.onCreateList,
     required this.onDeleteList,
     required this.onNewList,
+    this.onHouseholdLists,
   });
 
   final CartStore store;
   final ValueChanged<SavedShoppingList> onUseList;
   final VoidCallback onCreateList;
   final VoidCallback onNewList;
+  final VoidCallback? onHouseholdLists;
   final ValueChanged<SavedShoppingList> onDeleteList;
 
   @override
@@ -61,14 +63,27 @@ class _SavedListsViewState extends State<SavedListsView> {
               key: const PageStorageKey('saved-lists-scroll'),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
-                Text(
-                  'Your saved lists',
-                  style: TextStyle(
-                    fontSize: 26,
-                    height: 1.2,
-                    fontWeight: FontWeight.w800,
-                    color: CartyDesign.of(context).textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Your saved lists',
+                        style: TextStyle(
+                          fontSize: 26,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
+                          color: CartyDesign.of(context).textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (widget.onHouseholdLists != null)
+                      IconButton(
+                        key: const Key('household-open'),
+                        tooltip: 'Household lists',
+                        onPressed: widget.onHouseholdLists,
+                        icon: const Icon(Icons.groups_2_outlined),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 9),
                 Text(

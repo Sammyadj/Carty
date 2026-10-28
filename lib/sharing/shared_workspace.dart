@@ -8,6 +8,7 @@ typedef SharedCacheFactory = SharedListCache Function(
   String listId,
 );
 typedef SharedRepositoryFactory = SharedRepository Function(String accountId);
+typedef SharedCacheIndex = Future<List<String>> Function(String accountId);
 
 /// One login lifetime owns its household controllers. Re-entering the same
 /// account creates a fresh lifetime after old device writes have drained.
@@ -16,18 +17,49 @@ class SharedWorkspace {
     required this.repository,
     required this.isCurrentSession,
     SharedCacheFactory? cacheFactory,
+    SharedCacheIndex? cacheIndex,
     this.autoSync = true,
-  }) : _cacheFactory =
+  }) : _cacheIndex = cacheIndex ?? SqliteSharedListCache.listIds,
+       _cacheFactory =
            cacheFactory ??
            ((account, list) =>
                SqliteSharedListCache(accountId: account, listId: list));
   final SharedRepository repository;
   final bool Function() isCurrentSession;
   final SharedCacheFactory _cacheFactory;
+  final SharedCacheIndex _cacheIndex;
   final bool autoSync;
   final _controllers = <String, SharedListController>{};
   bool _closed = false;
   bool get isActive => !_closed && isCurrentSession();
+
+  void _requireActive() {
+    if (!isActive) {
+      throw const AccountProblem(
+        'Sign in again before opening household lists.',
+      );
+    }
+  }
+
+  Future<List<CachedSharedList>> cachedLists() async {
+    _requireActive();
+    final ids = await _cacheIndex(repository.accountId);
+    _requireActive();
+    final result = <CachedSharedList>[];
+    for (final id in ids) {
+      final cached = await _cacheFactory(repository.accountId, id).read();
+      _requireActive();
+      if (cached != null) {
+        CachedSharedList.decode(
+          cached.encode(repository.accountId),
+          accountId: repository.accountId,
+          listId: id,
+        );
+        result.add(cached);
+      }
+    }
+    return result;
+  }
 
   SharedListController openList(String listId) {
     if (!isActive) {

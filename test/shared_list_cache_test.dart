@@ -187,6 +187,13 @@ void main() {
     await cache().write(fixture(recovery: basket('Recovery')));
     await cache(list: 'second').write(fixture(listId: 'second'));
     await cache(user: 'bob').write(fixture());
+    expect(
+      await SqliteSharedListCache.listIds('alice', database: database),
+      unorderedEquals(['weekly', 'second']),
+    );
+    expect(await SqliteSharedListCache.listIds('bob', database: database), [
+      'weekly',
+    ]);
     final guest = SqliteCartStorage(
       database: database,
       scope: 'guest',
@@ -200,6 +207,10 @@ void main() {
       legacy: InMemoryCartStorage(),
     );
     await account.clear();
+    expect(
+      await SqliteSharedListCache.listIds('alice', database: database),
+      isEmpty,
+    );
     expect(await cache().read(), isNull);
     expect(await cache(list: 'second').read(), isNull);
     expect(await cache(user: 'bob').read(), isNotNull);

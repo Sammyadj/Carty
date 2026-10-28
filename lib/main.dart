@@ -152,7 +152,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           repository: _products,
           cameraBuilder: widget.cameraBuilder,
           child: MaterialApp(
-            key: ValueKey(_session.user?.id ?? 'guest'),
+            key: ValueKey((
+              _session.user?.id ?? 'guest',
+              _session.loginGeneration,
+            )),
             debugShowCheckedModeBanner: false,
             title: 'Carty',
             theme: buildDesignTheme(CartyDesign.city),

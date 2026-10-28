@@ -18,6 +18,7 @@ class AppSession extends ChangeNotifier {
     this.repository,
     this.sharingRepositoryFactory,
     this.sharedCacheFactory,
+    this.sharedCacheIndex,
     CartStore? guestStore,
     AccountCacheFactory? cacheFactory,
     this.autoSync = true,
@@ -29,6 +30,7 @@ class AppSession extends ChangeNotifier {
   final CloudWorkspaceRepository? repository;
   final SharedRepositoryFactory? sharingRepositoryFactory;
   final SharedCacheFactory? sharedCacheFactory;
+  final SharedCacheIndex? sharedCacheIndex;
   SharedWorkspace? _sharing;
   Future<void> _sharingShutdown = Future.value();
   final CartStore guest;
@@ -45,6 +47,7 @@ class AppSession extends ChangeNotifier {
   String displayName = '';
   String? profileError;
   AccountIdentity? get user => _user;
+  int get loginGeneration => _generation;
   bool get isLoading => _loading;
   bool get cloudAvailable => gateway != null && repository != null;
   CartStore get store => _accounts[_user?.id]?.store ?? guest;
@@ -112,6 +115,7 @@ class AppSession extends ChangeNotifier {
         _sharing = SharedWorkspace(
           repository: sharedRepository,
           cacheFactory: sharedCacheFactory,
+          cacheIndex: sharedCacheIndex,
           autoSync: autoSync,
           isCurrentSession: () =>
               !_disposed &&

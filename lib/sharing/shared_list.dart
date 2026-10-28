@@ -10,6 +10,11 @@ enum SharedRole {
   viewer;
 
   bool get canEdit => this != viewer;
+  String get label => switch (this) {
+    owner => 'Owner',
+    editor => 'Editor',
+    viewer => 'Viewer',
+  };
 
   static SharedRole member(Object? value) => switch (value) {
     'editor' => editor,
