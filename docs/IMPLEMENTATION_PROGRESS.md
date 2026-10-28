@@ -39,7 +39,7 @@ integrations, not promises of this implementation.
 Structured local storage, reviewed export/restore, previous-device-save recovery,
 and separate private cloud records are implemented. Household sharing's backend
 permission/invitation foundation, typed Flutter repository and isolated device
-caches and an offline sync controller are verified;
+caches, an offline sync controller and account lifecycle integration are verified;
 its app/offline flows and mail
 delivery remain, followed by release preparation. The full goal remains active.
 
@@ -71,6 +71,12 @@ delivery remain, followed by release preparation. The full goal remains active.
   reviewed, including the larger-text archive flow.
 
 ## Remaining external inputs and compatibility work
+
+- Household account lifecycle: production startup now creates account-bound
+  sharing workspaces. All 320 tests pass and analysis is clean. Seven new session tests cover controller ownership,
+  sign-out/switch isolation, rapid re-entry during a save, deletion barriers,
+  and delayed account actions. Open household controllers refresh on app resume.
+  Household screens and real-device acceptance remain required.
 
 - Household offline controller: all 313 tests pass and analysis is clean.
   Fourteen new tests verify reconnect, two-shopper conflicts, reviewed choices,

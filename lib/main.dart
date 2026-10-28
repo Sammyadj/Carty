@@ -13,6 +13,7 @@ import 'screens/barcode_scanner_screen.dart';
 import 'screens/carty_loading_screen.dart';
 import 'screens/home.dart';
 import 'state/cart_store.dart';
+import 'sharing/supabase_shared_repository.dart';
 import 'widgets/product_catalog_scope.dart';
 
 void main() {
@@ -32,7 +33,12 @@ Future<AppSession?> _initializeCloudSession() async {
     ),
   );
   final gateway = SupabaseGateway(supabase.client);
-  return AppSession(gateway: gateway, repository: gateway);
+  return AppSession(
+    gateway: gateway,
+    repository: gateway,
+    sharingRepositoryFactory: (accountId) =>
+        SupabaseSharedRepository(supabase.client, accountId: accountId),
+  );
 }
 
 /// Draw the loading screen before SDK initialization or local restoration.
@@ -130,7 +136,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) unawaited(_session.cloud?.sync());
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_session.cloud?.sync());
+      unawaited(_session.sharing?.refreshOpenLists());
+    }
   }
 
   @override

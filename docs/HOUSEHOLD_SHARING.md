@@ -3,8 +3,8 @@
 ## Current status
 
 The backend permission/invitation foundation, typed Flutter repository and
-account-scoped SQLite cache and offline sync controller are implemented and
-verified. The app's household library, editing screens, conflict-review UI,
+account-scoped SQLite cache, offline sync controller and account lifecycle
+integration are implemented and verified. The app's household library, editing screens, conflict-review UI,
 and recipient notification delivery remain to be implemented. Household sharing
 is **not yet available as a completed app feature**. The account-delete dialog
 now explicitly warns that owned shared lists disappear for everyone.
@@ -90,8 +90,7 @@ before normal traffic; retain them for recipient lookup and account deletion.
 
 ## Required next work
 
-Wire the role-aware shared-list controller into account-switch/deletion lifecycle
-management and the app. Add the household library, owner invite and
+Add the household library, owner invite and
 member controls, recipient accept/decline flow, read-only viewer UI, and shared
 shopping controls that preserve estimates and picked quantities. Add adapter,
 offline/reconnect, two-user, and large-text regression checks. Verify real devices
@@ -137,10 +136,9 @@ Removing an account cache now transactionally clears its private and household
 records, bases, recovery copies and metadata while retaining guest/other-account
 data. Tombstones prevent legacy private data from being imported again.
 
-Before connecting household controllers to account deletion, stop their network
-callbacks and await pending device writes before erasing those scopes. This
-lifecycle integration is still required; database isolation alone cannot stop a
-live controller from issuing a later write.
+Account deletion stops household callbacks and awaits pending device writes
+before erasing those scopes. Database isolation alone cannot stop a live
+controller from issuing a later write; preserve the session shutdown barrier.
 
 ## Offline controller verification
 
@@ -165,8 +163,23 @@ write failure, corrupt caches, automatic sync, and late callbacks after account
 switch/disposal. They use synthetic repositories and caches; server checks and
 real SQLite are tested separately. Physical-device acceptance is still required.
 
-`dispose()` stops callbacks and future queued edits; lifecycle integration must
-then await `writesSettled` before erasing an account's cache. The controller API
-exists, but AppSession does not yet own household controllers, and shared screens
-are not yet accessible. Keep this requirement open until those flows are wired
+`dispose()` stops callbacks and future queued edits. AppSession owns a
+`SharedWorkspace` for each login lifetime and awaits `writesSettled` before
+account erasure or creating a replacement lifetime. Shared screens are not yet
+accessible; keep the sharing requirement open until the user flows are wired
 and verified together.
+
+## Account lifecycle verification
+
+Production startup now supplies an account-bound sharing repository. Each login
+owns one controller per opened household list; reopening a screen should reuse
+that controller rather than disposing it from the screen. App resume refreshes
+opened household lists. Sign-out/account changes close the old lifetime while
+retaining its offline cache. A quick return to the same account waits for old
+writes, then creates fresh controllers which read the preserved cache.
+
+Seven session regressions verify sign-out, isolated account caches, late network
+callbacks, rapid return during a device write, deletion waiting for shared saves,
+failed remote deletion preserving access, and late sign-out/deletion actions not
+affecting a different account. The tests use synthetic account/repository/cache
+adapters; physical two-account device acceptance remains outstanding.

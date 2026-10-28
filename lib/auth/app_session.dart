@@ -7,6 +7,7 @@ import '../cloud/cloud_workspace.dart';
 import '../data/cart_storage.dart';
 import '../data/sqlite_cart_storage.dart';
 import '../state/cart_store.dart';
+import '../sharing/shared_workspace.dart';
 import 'account_gateway.dart';
 
 typedef AccountCacheFactory = CartStorage Function(String ownerId);
@@ -15,6 +16,8 @@ class AppSession extends ChangeNotifier {
   AppSession({
     this.gateway,
     this.repository,
+    this.sharingRepositoryFactory,
+    this.sharedCacheFactory,
     CartStore? guestStore,
     AccountCacheFactory? cacheFactory,
     this.autoSync = true,
@@ -24,6 +27,10 @@ class AppSession extends ChangeNotifier {
 
   final AccountGateway? gateway;
   final CloudWorkspaceRepository? repository;
+  final SharedRepositoryFactory? sharingRepositoryFactory;
+  final SharedCacheFactory? sharedCacheFactory;
+  SharedWorkspace? _sharing;
+  Future<void> _sharingShutdown = Future.value();
   final CartStore guest;
   final bool _ownsGuest;
   final AccountCacheFactory _cacheFactory;
@@ -42,6 +49,7 @@ class AppSession extends ChangeNotifier {
   bool get cloudAvailable => gateway != null && repository != null;
   CartStore get store => _accounts[_user?.id]?.store ?? guest;
   CloudCartStorage? get cloud => _accounts[_user?.id]?.cloud;
+  SharedWorkspace? get sharing => _sharing;
 
   Future<void> initialize() => _initialization ??= () async {
     await guest.load();
@@ -61,12 +69,15 @@ class AppSession extends ChangeNotifier {
   Future<void> _select(AccountIdentity? identity) async {
     if (_disposed) return;
     if (!_loading && identity?.id == _user?.id) return;
+    final stoppedSharing = _stopSharing();
     final generation = ++_generation;
     _loading = true;
     _user = identity;
     displayName = '';
     profileError = null;
     _notify();
+    await stoppedSharing;
+    if (_disposed || generation != _generation) return;
     if (identity == null) {
       _loading = false;
       _notify();
@@ -93,6 +104,22 @@ class AppSession extends ChangeNotifier {
       }
       await workspace.store.load();
       if (_disposed || generation != _generation) return;
+      if (sharingRepositoryFactory != null) {
+        final sharedRepository = sharingRepositoryFactory!(identity.id);
+        if (sharedRepository.accountId != identity.id) {
+          throw StateError('Household repository belongs to another account');
+        }
+        _sharing = SharedWorkspace(
+          repository: sharedRepository,
+          cacheFactory: sharedCacheFactory,
+          autoSync: autoSync,
+          isCurrentSession: () =>
+              !_disposed &&
+              generation == _generation &&
+              _user?.id == identity.id &&
+              gateway?.currentUser?.id == identity.id,
+        );
+      }
       _loading = false;
       _notify();
       if (!workspace.store.needsStorageReset) unawaited(workspace.cloud.sync());
@@ -129,21 +156,34 @@ class AppSession extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    final id = _user?.id;
     if (!await store.waitForPendingSave()) {
       throw const AccountProblem(
         'Save your changes on this device before signing out.',
       );
     }
+    if (_user?.id != id || gateway?.currentUser?.id != id) {
+      throw const AccountProblem(
+        'Your account changed. Review it before signing out.',
+      );
+    }
     await gateway?.signOut();
-    await _select(null);
+    await _select(gateway?.currentUser);
   }
 
   Future<void> deleteAccount() async {
     final id = _user?.id;
     if (id == null) return;
+    if (gateway?.currentUser?.id != id) {
+      throw const AccountProblem(
+        'Your account changed. Review it before deleting an account.',
+      );
+    }
     await gateway!.deleteAccount();
+    final stoppedSharing = _stopSharing(accountId: id);
     final workspace = _accounts.remove(id);
     workspace?.cloud.dispose();
+    await stoppedSharing;
     var cleanupFailed = false;
     try {
       await workspace?.cloud.eraseLocalAccount();
@@ -152,14 +192,14 @@ class AppSession extends ChangeNotifier {
     } finally {
       workspace?.store.dispose();
       try {
-        await gateway!.signOut();
+        if (gateway!.currentUser?.id == id) await gateway!.signOut();
       } finally {
-        await _select(null);
+        if (_user?.id == id) await _select(null);
       }
     }
     if (cleanupFailed) {
       throw const AccountProblem(
-        'Your cloud account was deleted and you have been signed out. Some device data could not be removed. Remove Carty’s app data before giving this device to someone else.',
+        'Your cloud account was deleted. Some device data could not be removed. Remove Carty’s app data before giving this device to someone else.',
       );
     }
   }
@@ -173,10 +213,23 @@ class AppSession extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  Future<void> _stopSharing({String? accountId}) {
+    final current = _sharing;
+    if (current != null &&
+        (accountId == null || current.repository.accountId == accountId)) {
+      _sharing = null;
+      current.dispose();
+      _sharingShutdown = Future.wait([_sharingShutdown, current.writesSettled])
+          .then((_) {});
+    }
+    return _sharingShutdown;
+  }
+
   @override
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    unawaited(_stopSharing());
     unawaited(_auth?.cancel());
     for (final workspace in _accounts.values) {
       workspace.cloud.dispose();
