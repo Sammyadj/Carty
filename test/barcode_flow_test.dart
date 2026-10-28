@@ -124,6 +124,37 @@ Future<String> _value(WidgetTester tester, String key) async {
 }
 
 void main() {
+  for (final source in [
+    ProductSource.openBeautyFacts,
+    ProductSource.openPetFoodFacts,
+    ProductSource.openProductsFacts,
+  ]) {
+    testWidgets(
+      '${source.name} review keeps its attribution and requires a shelf price',
+      (tester) async {
+        final repository = _Repository(
+          ProductLookupResult(
+            product: ProductDetails(
+              barcode: _barcode,
+              name: 'Sample product',
+              source: source,
+            ),
+            status: ProductLookupStatus.found,
+          ),
+        );
+        final store = await _open(tester, repository);
+        expect(
+          find.text('Product data: ${source.label} · ODbL'),
+          findsOneWidget,
+        );
+        expect(await _value(tester, 'scan-product-price'), isEmpty);
+        await _enter(tester, 'scan-product-price', '2.49');
+        await _tap(tester, 'scan-product-add');
+        expect(store.items.single.product!.source, source);
+        expect(store.totalPence, 249);
+      },
+    );
+  }
   testWidgets(
     'barcode editing validates and cancellation preserves the review',
     (tester) async {

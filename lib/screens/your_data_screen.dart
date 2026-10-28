@@ -60,7 +60,7 @@ class YourDataScreen extends StatelessWidget {
                   icon: Icons.qr_code_scanner_rounded,
                   title: 'When you scan a barcode',
                   paragraphs: [
-                    'Camera images are processed on your device. Online lookups send the barcode to Open Food Facts (openfoodfacts.org), then UPCitemdb (upcitemdb.com) if needed. These providers do not receive your basket, budget or typed item names.',
+                    'Camera images are processed on your device. Online lookups send the barcode to the open Facts catalogs: Food, Beauty, Pet Food and Products (openfoodfacts.org). UPCitemdb (upcitemdb.com) is a limited free fallback, used only if needed. These providers do not receive your basket, budget or typed item names.',
                     'Online services receive ordinary network request information, including your IP address. Product matches are cached on the device; you can also enter product details manually.',
                   ],
                 ),

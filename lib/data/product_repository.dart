@@ -7,31 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/retail_barcode.dart';
 import '../models/product_details.dart';
 import 'cart_storage.dart';
+import 'barcode_catalogs.dart';
+import 'open_facts_provider.dart';
+import 'product_lookup.dart';
 
-enum ProductLookupStatus { found, notFound, unavailable, rateLimited }
+export 'product_lookup.dart';
 
-class ProductLookupResult {
-  final ProductDetails? product;
-  final ProductLookupStatus status;
-  final bool fromCache;
-
-  const ProductLookupResult({
-    this.product,
-    required this.status,
-    this.fromCache = false,
-  });
-}
-
-abstract interface class ProductRepository {
-  Future<ProductLookupResult> lookup(String barcode, {bool refresh = false});
-  void dispose();
-}
-
-abstract interface class ProductMemory {
-  Future<void> remember(ProductDetails product);
-}
-
-/// Food lookup first, followed by the key-free general-retail trial service.
+/// Cache → four open-data catalogs → quota-limited free retail lookup.
 class RetailProductRepository extends OpenFoodFactsProductRepository {
   RetailProductRepository({
     super.client,
@@ -74,6 +56,10 @@ class OpenFoodFactsProductRepository
   final bool _enableRetailFallback;
   DateTime? _lastRetailRequestAt;
   DateTime? _retailBlockedUntil;
+  DateTime? _factsBlockedUntil;
+  String? _retailRequestDay;
+  int _retailRequestsToday = 0;
+  static const maxFreeRetailRequestsPerDay = 100;
   bool _retailBusy = false;
   int _confirmedRevision = 0;
 
@@ -133,22 +119,36 @@ class OpenFoodFactsProductRepository
 
   Future<ProductLookupResult> _fetch(String barcode) async {
     final revision = _confirmedRevision;
-    final food = await _fetchFood(barcode, revision);
-    if (!_enableRetailFallback || _disposed || food.product != null) {
-      return food;
+    ProductLookupResult? last;
+    for (final stage in BarcodeCatalogs.stages) {
+      if (!_enableRetailFallback && stage.access == BarcodeAccess.limitedFree) {
+        break;
+      }
+      if (_disposed) return _unavailable;
+      final result = await switch (stage.id) {
+        BarcodeStageKind.openFacts => _fetchFood(barcode, revision),
+        BarcodeStageKind.upcitemdbFree => _fetchRetail(barcode, revision),
+      };
+      if (result.product != null) return result;
+      // A later miss must not hide an earlier outage or rate-limit status.
+      if (result.status != ProductLookupStatus.notFound ||
+          last == null ||
+          last.status == ProductLookupStatus.notFound) {
+        last = result;
+      }
     }
-    final retail = await _fetchRetail(barcode, revision);
-    if (retail.product != null) return retail;
-    if (retail.status == ProductLookupStatus.notFound &&
-        food.status != ProductLookupStatus.notFound) {
-      return food;
-    }
-    return retail;
+    return last ?? _unavailable;
   }
 
   Future<ProductLookupResult> _fetchRetail(String barcode, int revision) async {
     final now = _now();
+    final day = now.toUtc().toIso8601String().substring(0, 10);
+    if (_retailRequestDay != day) {
+      _retailRequestDay = day;
+      _retailRequestsToday = 0;
+    }
     if (_retailBusy ||
+        _retailRequestsToday >= maxFreeRetailRequestsPerDay ||
         (_lastRetailRequestAt != null &&
             now.difference(_lastRetailRequestAt!) <
                 const Duration(seconds: 10)) ||
@@ -157,12 +157,14 @@ class OpenFoodFactsProductRepository
     }
     _retailBusy = true;
     _lastRetailRequestAt = now;
+    _retailRequestsToday++;
     try {
+      // Persist before dispatch: restarting the app does not reset its allowance.
+      await _persistCache();
+      if (_disposed) return _unavailable;
       final response = await _client
           .get(
-            Uri.https('api.upcitemdb.com', '/prod/trial/lookup', {
-              'upc': barcode,
-            }),
+            BarcodeCatalogs.limitedFreeUri(barcode),
             headers: {
               'Accept': 'application/json',
               'User-Agent': 'Carty/1.0.0 (https://github.com/Sammyadj/Carty)',
@@ -225,72 +227,24 @@ class OpenFoodFactsProductRepository
   }
 
   Future<ProductLookupResult> _fetchFood(String barcode, int revision) async {
-    try {
-      final uri = Uri.https(
-        'world.openfoodfacts.org',
-        '/api/v3/product/$barcode',
-        {'fields': 'code,product_name,product_name_en,brands,quantity'},
-      );
-      final response = await _client
-          .get(
-            uri,
-            headers: {
-              'User-Agent': 'Carty/1.0.0 (https://github.com/Sammyadj/Carty)',
-              'Accept': 'application/json',
-            },
-          )
-          .timeout(_timeout);
-      if (_disposed) return _unavailable;
-      if (response.statusCode == 404) {
-        return const ProductLookupResult(status: ProductLookupStatus.notFound);
-      }
-      if (response.statusCode == 429) {
-        return const ProductLookupResult(
-          status: ProductLookupStatus.rateLimited,
-        );
-      }
-      if (response.statusCode != 200 ||
-          response.bodyBytes.length > _maxPayloadLength) {
-        return _unavailable;
-      }
-      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-      if (decoded is! Map<String, dynamic>) return _unavailable;
-      final rawProduct = decoded['product'];
-      if (rawProduct == null) {
-        return const ProductLookupResult(status: ProductLookupStatus.notFound);
-      }
-      if (rawProduct is! Map<String, dynamic>) return _unavailable;
-      final codes = [decoded['code'], rawProduct['code']].whereType<Object>();
-      if (codes.isEmpty ||
-          codes.any(
-            (code) =>
-                code is! String ||
-                RetailBarcode.normalize(code) == null ||
-                RetailBarcode.key(code) != RetailBarcode.key(barcode),
-          )) {
-        return _unavailable;
-      }
-      final name =
-          _boundedText(rawProduct['product_name']) ??
-          _boundedText(rawProduct['product_name_en']);
-      if (name == null) {
-        return const ProductLookupResult(status: ProductLookupStatus.notFound);
-      }
-      final product = ProductDetails(
-        barcode: barcode,
-        name: name,
-        brand: _boundedText(rawProduct['brands']),
-        packSize: _boundedText(rawProduct['quantity']),
-        fromOpenFoodFacts: true,
-      );
-      if (revision == _confirmedRevision) await _cacheProduct(product);
-      return ProductLookupResult(
-        product: product,
-        status: ProductLookupStatus.found,
-      );
-    } catch (_) {
-      return _unavailable;
+    if (_factsBlockedUntil != null && _now().isBefore(_factsBlockedUntil!)) {
+      return const ProductLookupResult(status: ProductLookupStatus.rateLimited);
     }
+    final result = await OpenFactsProvider(
+      client: _client,
+      timeout: _timeout,
+      now: _now,
+      allCatalogs: _enableRetailFallback,
+    ).lookup(barcode);
+    if (_disposed) return _unavailable;
+    if (result.retryAt != null) {
+      _factsBlockedUntil = result.retryAt;
+      await _persistCache();
+    }
+    if (result.product != null && revision == _confirmedRevision) {
+      await _cacheProduct(result.product!);
+    }
+    return result;
   }
 
   static String? _boundedText(Object? value) {
@@ -336,6 +290,24 @@ class OpenFoodFactsProductRepository
           _retailBlockedUntil = until;
         }
       }
+      final factsBlocked = decoded['factsBlockedUntil'];
+      if (factsBlocked is String) {
+        final until = DateTime.tryParse(factsBlocked);
+        if (until != null &&
+            until.isAfter(_now()) &&
+            until.difference(_now()) <= const Duration(days: 1)) {
+          _factsBlockedUntil = until;
+        }
+      }
+      final day = decoded['retailRequestDay'];
+      final count = decoded['retailRequestsToday'];
+      if (day == _now().toUtc().toIso8601String().substring(0, 10) &&
+          count is int &&
+          count >= 0 &&
+          count <= maxFreeRetailRequestsPerDay) {
+        _retailRequestDay = day as String;
+        _retailRequestsToday = count;
+      }
       final products = decoded['products'];
       if (products is! List || products.length > maxCacheEntries) return;
       final restored = <String, ProductDetails>{};
@@ -356,6 +328,12 @@ class OpenFoodFactsProductRepository
       'version': 1,
       if (_retailBlockedUntil != null)
         'retailBlockedUntil': _retailBlockedUntil!.toIso8601String(),
+      if (_factsBlockedUntil != null)
+        'factsBlockedUntil': _factsBlockedUntil!.toIso8601String(),
+      if (_retailRequestDay != null) ...{
+        'retailRequestDay': _retailRequestDay,
+        'retailRequestsToday': _retailRequestsToday,
+      },
       'products': _cache.values.map((product) => product.toJson()).toList(),
     });
     _writeQueue = _writeQueue.then((_) async {

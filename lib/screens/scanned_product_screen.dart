@@ -385,10 +385,10 @@ class _ScannedProductScreenState extends State<ScannedProductScreen> {
               color: CartyDesign.of(context).textSecondary,
             ),
           ),
-          if (product?.fromOpenFoodFacts == true) ...[
+          if (product?.source.isOpenFacts == true) ...[
             const SizedBox(height: 6),
             Text(
-              'Product data: Open Food Facts · ODbL',
+              'Product data: ${product!.source.label} · ODbL',
               style: TextStyle(
                 fontSize: 12,
                 color: CartyDesign.of(context).textSecondary,

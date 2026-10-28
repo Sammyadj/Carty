@@ -77,7 +77,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'Barcode lookups use Open Food Facts (openfoodfacts.org), then UPCitemdb (upcitemdb.com) if needed. Open Food Facts data is under the Open Database License (opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data has its own terms. Camera images stay on your device. Prices are entered by you.',
+                      'Barcode lookups search Open Food Facts, Open Beauty Facts, Open Pet Food Facts and Open Products Facts through their open-data service, then UPCitemdb’s limited free service if needed. The Facts databases use the Open Database License (opendatacommons.org/licenses/odbl/1-0/); UPCitemdb data has its own terms (upcitemdb.com/terms). Camera images stay on your device. Prices are entered by you.',
                     ),
                   ],
                 ),
