@@ -19,6 +19,9 @@ import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/product_avatar.dart';
 import 'household_conflict_screen.dart';
 import 'household_list_details_dialog.dart';
+import 'household_members_screen.dart';
+
+enum _HouseholdAction { details, people }
 
 class HouseholdListScreen extends StatefulWidget {
   const HouseholdListScreen({
@@ -292,6 +295,24 @@ class _HouseholdListScreenState extends State<HouseholdListScreen>
     }
   }
 
+  Future<void> _managePeople() async {
+    final removed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HouseholdMembersScreen(
+          workspace: widget.workspace,
+          listId: widget.listId,
+        ),
+      ),
+    );
+    if (!mounted || !widget.workspace.isActive) return;
+    if (removed == true && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      await controller.refresh();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.workspace.isActive) {
@@ -343,11 +364,32 @@ class _HouseholdListScreenState extends State<HouseholdListScreen>
                 onPressed: _busy ? null : () => controller.refresh(),
                 icon: const Icon(Icons.refresh_rounded),
               ),
-              if (controller.canEdit)
-                IconButton(
-                  tooltip: 'List details',
-                  onPressed: editable ? () => _run(_details) : null,
-                  icon: const Icon(Icons.tune_rounded),
+              if (content != null && !controller.accessUnavailable)
+                PopupMenuButton<_HouseholdAction>(
+                  key: const Key('household-options'),
+                  tooltip: 'Household options',
+                  enabled: !_busy,
+                  onSelected: (action) => _run(
+                    action == _HouseholdAction.details
+                        ? _details
+                        : _managePeople,
+                  ),
+                  itemBuilder: (_) => [
+                    if (controller.canEdit)
+                      const PopupMenuItem(
+                        value: _HouseholdAction.details,
+                        child: Text('List details'),
+                      ),
+                    PopupMenuItem(
+                      key: const Key('household-manage'),
+                      value: _HouseholdAction.people,
+                      child: Text(
+                        controller.state?.header.role == SharedRole.owner
+                            ? 'Manage people'
+                            : 'Your access',
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -400,11 +442,13 @@ class _HouseholdListScreenState extends State<HouseholdListScreen>
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '${controller.state!.header.role.name == 'owner'
-                                        ? 'Owner'
-                                        : controller.state!.header.role.name == 'editor'
-                                        ? 'Editor'
-                                        : 'Viewer · read only'} · GBP',
+                                    controller.accessUnavailable
+                                        ? 'Device recovery copy · read only'
+                                        : '${controller.state!.header.role.name == 'owner'
+                                              ? 'Owner'
+                                              : controller.state!.header.role.name == 'editor'
+                                              ? 'Editor'
+                                              : 'Viewer · read only'} · GBP',
                                     style: TextStyle(
                                       color: CartyDesign.of(context).heroInk,
                                     ),

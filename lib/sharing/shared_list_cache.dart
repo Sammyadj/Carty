@@ -14,6 +14,7 @@ class CachedSharedList {
     required this.local,
     this.recovery,
     this.accessLost = false,
+    this.requiresReview = false,
   }) {
     if (header.name != base.name ||
         header.budgetPence != base.budgetPence ||
@@ -27,6 +28,7 @@ class CachedSharedList {
   final SharedContent base, local;
   final SharedContent? recovery;
   final bool accessLost;
+  final bool requiresReview;
   bool get hasPendingEdits =>
       canonicalSnapshot(jsonEncode(base.toArguments())) !=
       canonicalSnapshot(jsonEncode(local.toArguments()));
@@ -52,6 +54,7 @@ class CachedSharedList {
       'localName': local.name,
       'recoveryName': recovery?.name,
       'accessLost': accessLost,
+      'requiresReview': requiresReview,
     },
   });
 
@@ -67,6 +70,9 @@ class CachedSharedList {
         meta['header'] is! Map<String, dynamic> ||
         meta['accessLost'] is! bool) {
       throw const FormatException('Invalid household cache');
+    }
+    if (meta.containsKey('requiresReview') && meta['requiresReview'] is! bool) {
+      throw const FormatException('Invalid household review state');
     }
     final role = meta['role'] == 'owner'
         ? SharedRole.owner
@@ -102,6 +108,7 @@ class CachedSharedList {
               recovery,
             ),
       accessLost: meta['accessLost'] as bool,
+      requiresReview: meta['requiresReview'] as bool? ?? false,
     );
   }
 }

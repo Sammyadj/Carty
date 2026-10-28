@@ -138,6 +138,106 @@ void main() {
   Future<void> edit(SharedListController value, int quantity) =>
       value.edit(basket(quantity), expectedGeneration: value.generation);
 
+  test('restored access cannot silently upload a retained copy even if the server is unchanged', () async {
+    final cache = _Cache('bob');
+    final value = controller(user: 'bob', cache: cache);
+    await value.refresh();
+    await edit(value, 2);
+    await value.pauseForAccessChange();
+    server.roles.remove('bob');
+    await value.retainWithoutAccess();
+    value.resumeSync();
+    server.roles['bob'] = SharedRole.editor;
+    await value.refresh();
+    expect(value.status, SharedSyncStatus.conflict);
+    expect(value.state!.requiresReview, true);
+    await edit(value, 3);
+    await value.refresh();
+    expect(value.status, SharedSyncStatus.conflict);
+    expect(server.saves, 0);
+    final restarted = controller(user: 'bob', cache: cache);
+    await restarted.refresh();
+    expect(restarted.status, SharedSyncStatus.conflict);
+    expect(server.saves, 0);
+    await restarted.keepLocal(restarted.conflict!);
+    expect(server.content.items.single.quantity, 3);
+    expect(restarted.state!.requiresReview, false);
+  });
+
+  test(
+    'access changes pause new writes and wait for an upload already in flight',
+    () async {
+      final value = controller();
+      await value.refresh();
+      await edit(value, 2);
+      final entered = Completer<void>(), release = Completer<void>();
+      server.beforeSave = () async {
+        entered.complete();
+        await release.future;
+      };
+      final syncing = value.refresh();
+      await entered.future;
+      var paused = false;
+      final barrier = value.pauseForAccessChange().then((value) {
+        paused = true;
+        return value;
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(value.canEdit, false);
+      expect(paused, false);
+      await expectLater(edit(value, 3), throwsA(isA<SharedAccessProblem>()));
+      await value.refresh();
+      expect(server.saves, 1);
+      release.complete();
+      await syncing;
+      final saved = await barrier;
+      expect(saved!.local.items.single.quantity, 2);
+      expect(saved.hasPendingEdits, false);
+      value.resumeSync();
+      expect(value.canEdit, true);
+    },
+  );
+
+  test(
+    'ending access retains pending work as a read-only copy across restart',
+    () async {
+      final cache = _Cache('bob');
+      final value = controller(user: 'bob', cache: cache);
+      await value.refresh();
+      await edit(value, 2);
+      await value.pauseForAccessChange();
+      server.roles.remove('bob');
+      await value.retainWithoutAccess();
+      value.resumeSync();
+      expect(value.canEdit, false);
+      expect(value.state!.accessLost, true);
+      expect(value.state!.hasPendingEdits, true);
+      final restarted = controller(user: 'bob', cache: cache);
+      await restarted.initialize();
+      expect(restarted.canEdit, false);
+      expect(restarted.content!.items.single.quantity, 2);
+      expect(server.saves, 0);
+    },
+  );
+
+  test(
+    'cancelled access review resumes pending edits without changing their copy',
+    () async {
+      final value = controller();
+      await value.refresh();
+      await edit(value, 2);
+      final before = value.content!.toBasketSnapshot();
+      final saved = await value.pauseForAccessChange();
+      expect(saved!.hasPendingEdits, true);
+      await value.refresh();
+      expect(server.saves, 0);
+      value.resumeSync();
+      await edit(value, 3);
+      expect(saved.local.toBasketSnapshot(), before);
+      expect(value.content!.items.single.quantity, 3);
+    },
+  );
+
   test(
     'a failed permission-cache update invalidates an older conflict review',
     () async {
@@ -327,6 +427,13 @@ void main() {
     await restarted.initialize();
     expect(restarted.canEdit, false);
     expect(restarted.content!.items.single.quantity, 2);
+    server.roles['bob'] = SharedRole.editor;
+    await restarted.refresh();
+    expect(restarted.status, SharedSyncStatus.conflict);
+    expect(server.saves, 0);
+    await restarted.useRemote(restarted.conflict!);
+    expect(restarted.content!.items.single.quantity, 1);
+    expect(restarted.state!.recovery!.items.single.quantity, 2);
   });
 
   test('revocation persists read-only access loss and pending edits across restart', () async {

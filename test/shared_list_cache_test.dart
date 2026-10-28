@@ -34,6 +34,7 @@ CachedSharedList fixture({
   SharedContent? local,
   SharedContent? recovery,
   bool accessLost = false,
+  bool requiresReview = false,
 }) {
   final base = basket('Weekly shop');
   return CachedSharedList(
@@ -51,6 +52,7 @@ CachedSharedList fixture({
     local: local ?? base,
     recovery: recovery,
     accessLost: accessLost,
+    requiresReview: requiresReview,
   );
 }
 
@@ -83,6 +85,7 @@ void main() {
         local: basket('My edits', quantity: 2),
         recovery: basket('Before review', quantity: 0),
         accessLost: true,
+        requiresReview: true,
       ),
     );
     await database.close();
@@ -100,6 +103,7 @@ void main() {
     expect(saved.local.items.single.priceConfirmed, true);
     expect(saved.recovery!.items.single.quantity, 0);
     expect(saved.accessLost, true);
+    expect(saved.requiresReview, true);
     expect(
       saved.header.role,
       SharedRole.editor,
@@ -137,6 +141,26 @@ void main() {
 
   test('private data and inconsistent cache metadata are rejected without a replacement', () async {
     await cache().write(fixture());
+    final reviewState =
+        jsonDecode(fixture().encode('alice')) as Map<String, dynamic>;
+    reviewState['household']['requiresReview'] = 'false';
+    expect(
+      () => CachedSharedList.decode(
+        jsonEncode(reviewState),
+        accountId: 'alice',
+        listId: 'weekly',
+      ),
+      throwsFormatException,
+    );
+    (reviewState['household'] as Map).remove('requiresReview');
+    expect(
+      CachedSharedList.decode(
+        jsonEncode(reviewState),
+        accountId: 'alice',
+        listId: 'weekly',
+      ).requiresReview,
+      false,
+    );
     final encoded =
         jsonDecode(fixture().encode('alice')) as Map<String, dynamic>;
     final payload =

@@ -27,6 +27,7 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
   List<SharedListHeader> _lists = [];
   List<SharedInvitation> _invitations = [];
   Set<String> _deviceOnly = {};
+  Set<String> _recoveryIds = {};
   bool _loading = true, _busy = false;
   String? _error;
   int _loadGeneration = 0;
@@ -46,14 +47,17 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
       _error = null;
     });
     final cached = <String, SharedListHeader>{};
+    final knownLost = <String>{};
     try {
       for (final value in await workspace.cachedLists()) {
         cached[value.header.id] = value.header;
+        if (value.accessLost) knownLost.add(value.header.id);
       }
       if (!_active || generation != _loadGeneration) return;
       setState(() {
         _lists = cached.values.toList();
         _deviceOnly = cached.keys.toSet();
+        _recoveryIds = knownLost;
       });
     } catch (_) {
       if (!_active || generation != _loadGeneration) return;
@@ -76,6 +80,7 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
         }.values.toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
         _deviceOnly = cached.keys.toSet()
           ..removeAll(online.map((item) => item.id));
+        _recoveryIds = _deviceOnly.toSet();
         _invitations = invitations
             .where((item) => item.isPending(DateTime.now()))
             .toList();
@@ -115,6 +120,31 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
 
   Future<void> _open(String id) async {
     if (!_active) return;
+    if (_recoveryIds.contains(id)) {
+      final controller = workspace.openList(id);
+      Object? retentionError;
+      try {
+        await controller.pauseForAccessChange();
+        await controller.retainWithoutAccess();
+      } catch (error) {
+        retentionError = error;
+      } finally {
+        controller.resumeSync();
+      }
+      if (!mounted || !workspace.isActive) return;
+      if (retentionError != null) {
+        if (controller.content == null || controller.canEdit) {
+          throw retentionError;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'The device copy could not be updated. Its saved products are available read only.',
+            ),
+          ),
+        );
+      }
+    }
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
@@ -340,14 +370,19 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 12),
-                      if (!_loading && _lists.isEmpty)
+                      if (!_loading &&
+                          !_lists.any(
+                            (list) => !_recoveryIds.contains(list.id),
+                          ))
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 24),
                           child: Text(
                             'Create a shared list or accept an invitation sent to your sign-in email.',
                           ),
                         ),
-                      for (final list in _lists)
+                      for (final list in _lists.where(
+                        (list) => !_recoveryIds.contains(list.id),
+                      ))
                         Card(
                           child: ListTile(
                             key: Key('household-list-${list.id}'),
@@ -357,9 +392,38 @@ class _HouseholdLibraryScreenState extends State<HouseholdLibraryScreen> {
                               '${list.role.label} · ${list.budgetPence == null ? 'No budget' : Money.format(list.budgetPence!)}${_deviceOnly.contains(list.id) ? '\nSaved device copy · access checked when opened' : ''}',
                             ),
                             trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: _busy ? null : () => _open(list.id),
+                            onTap: _busy
+                                ? null
+                                : () => _run(() => _open(list.id)),
                           ),
                         ),
+                      if (_recoveryIds.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          'Device recovery copies',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Read-only copies kept after access ended. Open a copy to review the products saved on this device.',
+                        ),
+                        const SizedBox(height: 12),
+                        for (final list in _lists.where(
+                          (list) => _recoveryIds.contains(list.id),
+                        ))
+                          Card(
+                            child: ListTile(
+                              key: Key('household-recovery-${list.id}'),
+                              leading: const Icon(Icons.restore_rounded),
+                              title: Text(list.name),
+                              subtitle: const Text('Device copy · read only'),
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                              onTap: _busy
+                                  ? null
+                                  : () => _run(() => _open(list.id)),
+                            ),
+                          ),
+                      ],
                     ],
                   ),
                 ),

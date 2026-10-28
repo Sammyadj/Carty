@@ -24,6 +24,9 @@ class HouseholdTestData {
   );
   int revision = 1, saves = 0;
   bool offline = false, exists = true;
+  bool conflictOnDelete = false;
+  String ownerId = 'alice';
+  Future<void> Function(String)? beforeRevoke;
   final roles = <String, SharedRole>{
     'alice': SharedRole.owner,
     'bob': SharedRole.editor,
@@ -45,7 +48,7 @@ class HouseholdTestData {
   );
   SharedListHeader header(String account) => SharedListHeader(
     id: 'weekly',
-    ownerId: 'alice',
+    ownerId: ownerId,
     name: content.name,
     budgetPence: content.budgetPence,
     isPlanning: content.isPlanning,
@@ -60,10 +63,12 @@ class HouseholdTestData {
 
 class HouseholdTestCache implements SharedListCache {
   CachedSharedList? value;
+  bool failWrites = false;
   @override
   Future<CachedSharedList?> read() async => value;
   @override
   Future<void> write(CachedSharedList value) async {
+    if (failWrites) throw const FileSystemException('Device save failed');
     this.value = value;
   }
 
@@ -80,7 +85,7 @@ class HouseholdTestRepository implements SharedRepository {
   final String accountId;
   void owner() {
     data.check();
-    if (data.roles[accountId] != SharedRole.owner) {
+    if (!data.exists || data.roles[accountId] != SharedRole.owner) {
       throw const SharedAccessProblem();
     }
   }
@@ -106,7 +111,10 @@ class HouseholdTestRepository implements SharedRepository {
     data.check();
     data.created = content;
     data.content = content;
-    data.roles[accountId] = SharedRole.owner;
+    data.ownerId = accountId;
+    data.roles
+      ..clear()
+      ..[accountId] = SharedRole.owner;
     data.exists = true;
     data.revision = 1;
     return SharedSaveReceipt('weekly', 1, content);
@@ -190,6 +198,80 @@ class HouseholdTestRepository implements SharedRepository {
     data.check();
     data.invitations.singleWhere((row) => row['id'] == id)['revoked_at'] =
         DateTime.now().toUtc().toIso8601String();
+  }
+
+  @override
+  Future<List<SharedMember>> members(String listId) async {
+    owner();
+    return [
+      for (final entry in data.roles.entries)
+        if (entry.value != SharedRole.owner)
+          SharedMember.fromRow({
+            'list_id': listId,
+            'user_id': entry.key,
+            'role': entry.value.name,
+          }),
+    ];
+  }
+
+  @override
+  Future<void> changeMember(
+    String listId,
+    String userId,
+    SharedRole? role,
+  ) async {
+    owner();
+    if (userId == data.ownerId || role == SharedRole.owner) {
+      throw const SharedAccessProblem();
+    }
+    if (role == null) {
+      data.roles.remove(userId);
+    } else if (data.roles.containsKey(userId)) {
+      data.roles[userId] = role;
+    }
+    for (final row in data.invitations) {
+      if (row['recipient_email'] == '$userId@example.invalid' &&
+          row['accepted_at'] == null &&
+          row['revoked_at'] == null) {
+        row['revoked_at'] = DateTime.now().toUtc().toIso8601String();
+      }
+    }
+  }
+
+  @override
+  Future<void> revoke(String invitationId) async {
+    owner();
+    await data.beforeRevoke?.call(invitationId);
+    final row = data.invitations.singleWhere(
+      (row) => row['id'] == invitationId,
+    );
+    if (row['accepted_at'] == null) {
+      row['revoked_at'] = DateTime.now().toUtc().toIso8601String();
+    }
+  }
+
+  @override
+  Future<void> leave(String listId) async {
+    data.check();
+    if (data.roles[accountId] == null ||
+        data.roles[accountId] == SharedRole.owner) {
+      throw const SharedAccessProblem();
+    }
+    data.roles.remove(accountId);
+  }
+
+  @override
+  Future<bool> delete(String listId, int revision) async {
+    owner();
+    if (data.conflictOnDelete) {
+      data.revision++;
+      return false;
+    }
+    if (revision != data.revision) return false;
+    data.exists = false;
+    data.roles.clear();
+    data.invitations.clear();
+    return true;
   }
 
   @override

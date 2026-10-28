@@ -48,7 +48,7 @@ class SharedListController extends ChangeNotifier {
   Future<void>? _initializing, _syncing;
   Future<void> _writes = Future.value();
   Timer? _timer;
-  bool _disposed = false, _denied = false;
+  bool _disposed = false, _denied = false, _paused = false;
   SharedRole? _observedRole;
   int _generation = 0;
   CachedSharedList? get state => _state;
@@ -56,9 +56,11 @@ class SharedListController extends ChangeNotifier {
   SharedConflict? get conflict => _conflict;
   SharedSyncStatus get status => _status;
   int get generation => _generation;
+  bool get accessUnavailable => _denied;
   bool get _active => !_disposed && isCurrentSession();
   bool get canEdit =>
       _active &&
+      !_paused &&
       !_denied &&
       _state != null &&
       (_observedRole ?? _state!.header.role).canEdit;
@@ -147,6 +149,8 @@ class SharedListController extends ChangeNotifier {
           base: previous.base,
           local: value,
           recovery: previous.recovery,
+          accessLost: previous.accessLost,
+          requiresReview: previous.requiresReview,
         ),
       );
       if (_conflict != null) {
@@ -165,7 +169,10 @@ class SharedListController extends ChangeNotifier {
 
   void _schedule() {
     _timer?.cancel();
-    if (autoSync && _active && _status == SharedSyncStatus.pending) {
+    if (autoSync &&
+        _active &&
+        !_paused &&
+        _status == SharedSyncStatus.pending) {
       _timer = Timer(
         const Duration(milliseconds: 900),
         () => unawaited(refresh()),
@@ -174,6 +181,35 @@ class SharedListController extends ChangeNotifier {
   }
 
   Future<void> refresh() => _startSync();
+
+  /// Stop new edits/uploads and drain work already in flight before a leave or
+  /// delete confirmation. A failed/cancelled action must call resumeSync.
+  Future<CachedSharedList?> pauseForAccessChange() async {
+    await initialize();
+    _requireActive();
+    _paused = true;
+    _timer?.cancel();
+    _statusChanged(_status);
+    await _syncing;
+    await _writes;
+    _requireActive();
+    return _state;
+  }
+
+  void resumeSync() {
+    if (!_active) return;
+    _paused = false;
+    _statusChanged(_status);
+    _schedule();
+  }
+
+  /// Server access ended; keep unsynced content as a read-only device copy.
+  Future<void> retainWithoutAccess() async {
+    await initialize();
+    _requireActive();
+    await _lostAccess();
+  }
+
   Future<void> keepLocal(SharedConflict reviewed) {
     if (!identical(reviewed, _conflict) || reviewed.generation != _generation) {
       return Future.error(
@@ -186,7 +222,7 @@ class SharedListController extends ChangeNotifier {
   }
 
   Future<void> _startSync({SharedConflict? reviewed}) {
-    if (!_active) return Future.value();
+    if (!_active || _paused) return Future.value();
     if (_syncing != null) return _syncing!;
     _timer?.cancel();
     return _syncing = _synchronize(reviewed).whenComplete(() {
@@ -203,12 +239,14 @@ class SharedListController extends ChangeNotifier {
     CachedSharedList value,
     SharedRole role, {
     bool lost = false,
+    bool? requiresReview,
   }) => CachedSharedList(
     header: SharedListHeader.fromRow(value.header.toRow(), role),
     base: value.base,
     local: value.local,
     recovery: value.recovery,
     accessLost: lost,
+    requiresReview: requiresReview ?? value.requiresReview,
   );
 
   void _observe(SharedListDocument remote) {
@@ -225,7 +263,14 @@ class SharedListController extends ChangeNotifier {
     _conflict = null;
     final current = _state;
     if (current != null) {
-      await _persist(_withPermission(current, current.header.role, lost: true));
+      await _persist(
+        _withPermission(
+          current,
+          current.header.role,
+          lost: true,
+          requiresReview: current.requiresReview || current.hasPendingEdits,
+        ),
+      );
     }
     _statusChanged(SharedSyncStatus.accessLost);
   });
@@ -235,7 +280,9 @@ class SharedListController extends ChangeNotifier {
     await _queue(() async {
       final current = _state;
       if (current == null) return;
-      await _persist(_withPermission(current, remote.header.role));
+      await _persist(
+        _withPermission(current, remote.header.role, requiresReview: true),
+      );
       _conflict = SharedConflict(remote, _state!.local, _generation);
       _statusChanged(SharedSyncStatus.conflict);
     });
@@ -267,7 +314,13 @@ class SharedListController extends ChangeNotifier {
             (reviewed.generation != _generation ||
                 reviewed.remote.header.revision != remote.header.revision)) {
           if (current != null) {
-            await _persist(_withPermission(current, remote.header.role));
+            await _persist(
+              _withPermission(
+                current,
+                remote.header.role,
+                requiresReview: true,
+              ),
+            );
             _conflict = SharedConflict(remote, _state!.local, _generation);
             _statusChanged(SharedSyncStatus.conflict);
           }
@@ -289,8 +342,14 @@ class SharedListController extends ChangeNotifier {
           return;
         }
         if (!remote.header.role.canEdit ||
-            (reviewed == null && !_same(current.base, remote.content))) {
-          await _persist(_withPermission(current, remote.header.role));
+            (reviewed == null &&
+                (current.requiresReview ||
+                    current.accessLost ||
+                    current.header.role == SharedRole.viewer ||
+                    !_same(current.base, remote.content)))) {
+          await _persist(
+            _withPermission(current, remote.header.role, requiresReview: true),
+          );
           _conflict = SharedConflict(remote, _state!.local, _generation);
           _statusChanged(SharedSyncStatus.conflict);
           return;
@@ -363,6 +422,11 @@ class SharedListController extends ChangeNotifier {
   }
 
   Future<void> useRemote(SharedConflict reviewed) => _queue(() async {
+    if (_paused) {
+      throw const AccountProblem(
+        'Finish the household access action before reviewing changes.',
+      );
+    }
     if (!identical(reviewed, _conflict) || reviewed.generation != _generation) {
       throw const AccountProblem(
         'The conflict review is out of date. Review both copies again.',
