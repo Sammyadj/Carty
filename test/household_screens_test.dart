@@ -185,6 +185,48 @@ void main() {
   });
 
   testWidgets(
+    'shared budget status follows picked or planned totals and warns above budget',
+    (tester) async {
+      data.content = SharedContent(
+        name: data.content.name,
+        budgetPence: 100,
+        isPlanning: false,
+        items: data.content.items,
+      );
+      await show(
+        tester,
+        HouseholdListScreen(workspace: workspace('alice'), listId: 'weekly'),
+      );
+      final remaining = find.byKey(const Key('household-budget-remaining'));
+      expect(
+        find.descendant(of: remaining, matching: find.text('£0.75')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('household-budget-status')), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Plan'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('Plan'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Plan'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        remaining,
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: remaining, matching: find.text('£3.50')),
+        findsOneWidget,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
     'editor changes picked quantity and adds an item without altering private data',
     (tester) async {
       await privateStore.addItem(name: 'Private bread', unitPricePence: 250);
@@ -195,6 +237,7 @@ void main() {
         HouseholdListScreen(workspace: shared, listId: 'weekly'),
       );
       await tester.ensureVisible(find.byTooltip('Increase quantity of Milk'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Increase quantity of Milk'));
       await tester.pumpAndSettle();
       expect(shared.openList('weekly').content!.items.single.quantity, 2);

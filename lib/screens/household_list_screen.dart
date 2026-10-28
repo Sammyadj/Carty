@@ -305,6 +305,27 @@ class _HouseholdListScreenState extends State<HouseholdListScreen>
       builder: (context, _) {
         final content = controller.content;
         final editable = controller.canEdit && !_busy;
+        final estimated =
+            content?.items.fold<int>(
+              0,
+              (sum, item) => sum + item.estimatedTotalPence,
+            ) ??
+            0;
+        final picked =
+            content?.items.fold<int>(0, (sum, item) => sum + item.totalPence) ??
+            0;
+        final spent = content?.isPlanning == true ? estimated : picked;
+        final remaining = content?.budgetPence == null
+            ? null
+            : content!.budgetPence! - spent;
+        final over = remaining != null && remaining < 0;
+        final near =
+            remaining != null && !over && spent / content!.budgetPence! >= .8;
+        final budgetColor = over
+            ? const Color(0xFFFFBAB6)
+            : near
+            ? const Color(0xFFFFD891)
+            : CartyDesign.of(context).heroAccent;
         return Scaffold(
           appBar: AppBar(
             title: const Text('Household list'),
@@ -393,25 +414,49 @@ class _HouseholdListScreenState extends State<HouseholdListScreen>
                                     spacing: 24,
                                     runSpacing: 12,
                                     children: [
-                                      _Total(
-                                        'Estimated',
-                                        content.items.fold(
-                                          0,
-                                          (sum, item) =>
-                                              sum + item.estimatedTotalPence,
-                                        ),
-                                      ),
-                                      _Total(
-                                        'Picked',
-                                        content.items.fold(
-                                          0,
-                                          (sum, item) => sum + item.totalPence,
-                                        ),
-                                      ),
+                                      _Total('Estimated', estimated),
+                                      _Total('Picked', picked),
                                       if (content.budgetPence != null)
                                         _Total('Budget', content.budgetPence!),
+                                      if (remaining != null)
+                                        _Total(
+                                          over
+                                              ? 'Over budget'
+                                              : content.isPlanning
+                                              ? 'Left in plan'
+                                              : 'Left to spend',
+                                          remaining.abs(),
+                                          key: const Key(
+                                            'household-budget-remaining',
+                                          ),
+                                          amountColor: budgetColor,
+                                        ),
                                     ],
                                   ),
+                                  if (remaining != null) ...[
+                                    const SizedBox(height: 16),
+                                    LinearProgressIndicator(
+                                      value: (spent / content.budgetPence!)
+                                          .clamp(0.0, 1.0),
+                                      color: budgetColor,
+                                      backgroundColor: CartyDesign.of(context)
+                                          .heroInk
+                                          .withValues(alpha: .15),
+                                      semanticsLabel: 'Budget used',
+                                      semanticsValue:
+                                          '${(spent * 100 / content.budgetPence!).round().clamp(0, 100)}%',
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      over
+                                          ? 'Over budget'
+                                          : near
+                                          ? 'Near budget'
+                                          : 'Within budget',
+                                      key: const Key('household-budget-status'),
+                                      style: TextStyle(color: budgetColor),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -644,9 +689,10 @@ class _InviteDialogState extends State<_InviteDialog> {
 }
 
 class _Total extends StatelessWidget {
-  const _Total(this.label, this.amount);
+  const _Total(this.label, this.amount, {super.key, this.amountColor});
   final String label;
   final int amount;
+  final Color? amountColor;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -655,7 +701,7 @@ class _Total extends StatelessWidget {
       Text(
         Money.format(amount),
         style: Theme.of(context).textTheme.titleLarge
-            ?.copyWith(color: CartyDesign.of(context).heroInk),
+            ?.copyWith(color: amountColor ?? CartyDesign.of(context).heroInk),
       ),
     ],
   );
