@@ -33,12 +33,14 @@ void main() {
     for (var i = 0; i < 2; i++) {
       await store.addItem(name: 'Milk', unitPricePence: 165);
       await store.addItem(name: 'Bread', unitPricePence: 210);
+      await store.addItem(name: 'Oats', unitPricePence: 145);
       await store.completeShopping('Weekly shop $i');
     }
     await store.addItem(name: 'Eggs', unitPricePence: 285);
     await store.addItem(name: 'Oats', unitPricePence: 145);
     await store.completeShopping('Top-up shop');
     await store.addItem(name: 'Bananas', unitPricePence: 125);
+    await store.addItem(name: 'Oranges', unitPricePence: 175);
     await store.saveList('Fruit top-up');
     await store.startNewList();
     await store.addItem(name: 'Milk', unitPricePence: 165);
@@ -52,6 +54,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      for (final row in tester.widgetList<SingleChildScrollView>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is SingleChildScrollView &&
+              widget.scrollDirection == Axis.horizontal,
+        ),
+      )) {
+        expect(row.controller!.offset, 0);
+      }
       final section = find.byKey(const Key('recommendations-section'));
       await tester.scrollUntilVisible(
         section,
@@ -60,6 +71,15 @@ void main() {
       );
       await Scrollable.ensureVisible(tester.element(section), alignment: 0);
       await tester.pumpAndSettle();
+      for (final row in tester.widgetList<SingleChildScrollView>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is SingleChildScrollView &&
+              widget.scrollDirection == Axis.horizontal,
+        ),
+      )) {
+        expect(row.controller!.offset, 0);
+      }
     }
 
     Future<void> capture(String name) async {
@@ -78,6 +98,12 @@ void main() {
 
     await open(store, 'personal');
     await capture('personal');
+    await tester.drag(
+      find.byKey(const PageStorageKey('recommendation-scroll-pickedTogether')),
+      const Offset(-260, 0),
+    );
+    await tester.pumpAndSettle();
+    await capture('scrolled');
     final review = find.byKey(const Key('recommendation-review-bread'));
     await tester.ensureVisible(review);
     await tester.tap(review);

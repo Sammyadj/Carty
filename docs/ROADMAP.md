@@ -41,7 +41,7 @@ Introduce normalized pack sizes and units before unit-price comparisons such as 
 
 ## Stage 4: optional assistance and sharing
 
-Home now has an offline recommendation engine using the current basket, saved lists, and completed shops. It explains recurring picks and products picked together, separates generic starting ideas from personal evidence, filters known estimates against remaining budget, and requires review before adding. This is personal ranking from recorded shopping activity; shared popularity, retailer catalogs, and AI-generated substitutions remain future work.
+Home now has an offline recommendation engine using the current basket, saved lists, and completed shops. It explains recurring picks and products picked together, separates generic starting ideas from personal evidence, filters known estimates against remaining budget, and requires review before adding. Products appear in horizontal category rows, each with independent swipe browsing and previous/next controls. This is personal ranking from recorded shopping activity; shared popularity, retailer catalogs, and AI-generated substitutions remain future work.
 
 AI can suggest substitutions, remind someone about products they often buy, or explain spending patterns once Carty has suitable data. Make it optional, explain what data leaves the device, and let the user accept each suggestion. Do not automatically add products, change quantities, or make purchases.
 

@@ -58,7 +58,9 @@ See [personal suggestions](docs/previews/suggestions-personal.png), [a reused es
 
 ## Recommendations for your shop
 
-**You might need** on Home suggests up to three products before you start typing. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
+**You might need** on Home groups recommendations into horizontal rows: **Picked together**, **Your regulars**, **From your saved lists**, **Pick up again**, **Pairing ideas**, and **Everyday essentials**. Only categories with suggestions appear, with up to six products in each row. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
+
+Swipe a category sideways or use its next/back buttons. Each row scrolls independently, with a glimpse of the next card on phone screens. Illustrated cards use Carty's City palette and original icon artwork; their review controls and explanations grow with larger text. Navigation buttons respect Reduce Motion. A product appears in one category rather than being repeated across rows.
 
 The on-device engine prioritises products picked together with items in the current basket, then recurring picks, saved-list products, and previous-shop items. Completed shops supply the evidence for labels such as **Picked with Milk in 2 past shops** or **Picked in 3 of your last 3 shops**. Planned products in saved lists are labelled separately. Without personal history, common essentials and curated pairing ideas provide starting suggestions; they never claim that other customers bought something or that you have bought it before.
 
@@ -68,7 +70,7 @@ Items already in the basket, including quantity-zero products, are excluded. Gen
 
 Matching uses the latest 40 completed shops and the existing bounded personal-name index. Duplicate lines or high quantities in one shop do not count as repeated shopping occasions. Pairing evidence requires at least two completed shops and a recurring association; common pairing ideas are labelled as ideas. Recommendations update as the basket and shopping records change, remain within the current guest/account workspace, and create no additional cloud records or AI requests.
 
-See [personal recommendations](docs/previews/recommendations-personal.png), [starter ideas](docs/previews/recommendations-starter.png), and [the review form](docs/previews/recommendations-review.png). Regenerate the real Flutter previews with `flutter test tool/render_recommendation_previews.dart`.
+See [personal recommendation rows](docs/previews/recommendations-personal.png), [a swiped row](docs/previews/recommendations-scrolled.png), [starter ideas](docs/previews/recommendations-starter.png), and [the review form](docs/previews/recommendations-review.png). Regenerate the real Flutter previews with `flutter test tool/render_recommendation_previews.dart`.
 
 ## Barcode scanning
 
