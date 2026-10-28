@@ -83,6 +83,15 @@ unconfigured. See [the checkpoint](RELEASE_TEST_HANDOFF.md) and
 
 ## Remaining external inputs and compatibility work
 
+- Barcode lookup now uses the open multi-project Facts API, preserving Food,
+  Beauty, Pet Food and Products source labels, before the limited free UPCitemdb
+  service. Its daily attempt allowance and rate-limit cooldowns persist across
+  restarts. All 380 app tests pass; new checks cover source attribution, review,
+  quotas, restart and saved-list/history/backup round trips. The shared validator
+  migration is applied and the live rollback security tests pass. See
+  [catalog details](BARCODE_CATALOGS.md) for enabled no-cost services and
+  services excluded or deferred for paid/keyed access.
+
 - Settings now includes **Your data**, an offline explanation of device/cloud
   storage, barcode providers, sharing, exports and account deletion, with links
   to backup/account controls. The [data inventory](DATA_DISCLOSURES.md) records

@@ -21,7 +21,7 @@ need confirmation.
 | Household products, prices, quantities, budget, progress | Shared Supabase records for authorised owner/editors/viewers | Only selected content is shared; private history/preferences are excluded; owners manage access |
 | Invitation email and membership | Verified-email invitations and role records | Recipient accepts/declines in app; owner revokes/removes; no notification email is currently sent |
 | Camera frames | Processed on device by the scanner | Camera requested through the scan flow; manual barcode entry/details are available |
-| Barcode lookups | Barcode and normal HTTP metadata to Open Food Facts, with UPCitemdb fallback; app User-Agent identifies Carty/version | Cache can serve matches locally; providers do not receive basket, prices, budget or typed item names |
+| Barcode lookups | Barcode and normal HTTP metadata to the Food, Beauty, Pet Food and Products Facts family; limited free UPCitemdb is last; app User-Agent identifies Carty/version | Cache serves stored matches locally; providers do not receive basket, prices, budget or typed item names; quota/cooldowns persist |
 | Backup files | Readable JSON saved through the system picker | User chooses location; credentials excluded; files are not encrypted and are not removed by deleting an account |
 
 Account deletion removes the private cloud workspace/profile and cascades owned
