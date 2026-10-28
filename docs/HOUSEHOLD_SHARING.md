@@ -2,9 +2,9 @@
 
 ## Current status
 
-The backend permission/invitation foundation and typed Flutter repository are
-implemented and verified. The app's
-household library, editing screens, local/offline cache, reconnect/conflict flow,
+The backend permission/invitation foundation, typed Flutter repository and
+account-scoped SQLite cache are implemented and verified. The app's
+household library, editing screens, offline controller, reconnect/conflict flow,
 and recipient notification delivery remain to be implemented. Household sharing
 is **not yet available as a completed app feature**. The account-delete dialog
 now explicitly warns that owned shared lists disappear for everyone.
@@ -90,9 +90,9 @@ before normal traffic; retain them for recipient lookup and account deletion.
 
 ## Required next work
 
-Build the role-aware shared-list controller, account-scoped
-SQLite caches, reviewable offline conflicts, revoked-access handling, and safe
-account-switch/deletion cleanup. Then add the household library, owner invite and
+Build the role-aware shared-list controller, reviewable offline conflicts,
+revoked-access handling, and account-switch/deletion lifecycle integration.
+Then add the household library, owner invite and
 member controls, recipient accept/decline flow, read-only viewer UI, and shared
 shopping controls that preserve estimates and picked quantities. Add adapter,
 offline/reconnect, two-user, and large-text regression checks. Verify real devices
@@ -121,3 +121,24 @@ Server authorisation remains covered separately by the live rollback SQL tests.
 These adapter checks do not prove offline UI or two-device acceptance; those
 remain required above. Library refreshes currently hydrate each accessible
 header separately; optimise that if household counts justify batching.
+
+## Device cache verification
+
+`SqliteSharedListCache` stores each account/list pair in a separate structured
+database scope. It retains the accepted server base, pending local content,
+an explicit recovery copy and last-known header/role. Private lists/history and
+preferences are rejected. A remembered role is not current permission: the
+controller must recheck membership on reconnect and respect persisted access
+loss. No offline screen is wired yet.
+
+Six real SQLite tests in `test/shared_list_cache_test.dart` cover database
+reopening, pending estimates/quantities, account/list isolation, malformed
+metadata, transactional rollback, single-list removal, and account-wide erasure.
+Removing an account cache now transactionally clears its private and household
+records, bases, recovery copies and metadata while retaining guest/other-account
+data. Tombstones prevent legacy private data from being imported again.
+
+Before connecting household controllers to account deletion, stop their network
+callbacks and await pending device writes before erasing those scopes. This
+lifecycle integration is still required; database isolation alone cannot stop a
+live controller from issuing a later write.

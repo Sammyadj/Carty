@@ -54,7 +54,11 @@ class SqliteCartStorage implements ErasableCartStorage, RecoverableCartStorage {
   Future<String?> readPreviousSnapshot() => recoverySnapshot();
   @override
   Future<void> clear() async {
-    await database.clear(scope, ownerId);
+    if (ownerId == null) {
+      await database.clear(scope, ownerId);
+    } else {
+      await database.clearAccountScopes(ownerId!);
+    }
     await legacy.clear();
   }
 }

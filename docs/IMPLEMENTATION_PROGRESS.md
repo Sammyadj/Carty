@@ -38,7 +38,8 @@ integrations, not promises of this implementation.
 
 Structured local storage, reviewed export/restore, previous-device-save recovery,
 and separate private cloud records are implemented. Household sharing's backend
-permission/invitation foundation and typed Flutter repository are verified;
+permission/invitation foundation, typed Flutter repository and isolated device
+caches are verified;
 its app/offline flows and mail
 delivery remain, followed by release preparation. The full goal remains active.
 
@@ -70,6 +71,13 @@ delivery remain, followed by release preparation. The full goal remains active.
   reviewed, including the larger-text archive flow.
 
 ## Remaining external inputs and compatibility work
+
+- Household client foundation: typed models/repository and isolated SQLite
+  caches are implemented. All 299 tests pass and analysis is clean. Adapter tests
+  verify paging, revision/role changes, invitation scoping and late account-switch
+  responses. Real SQLite tests verify reopen, pending/base/recovery separation,
+  rollback and account-wide cache erasure. The UI, reconnect controller and
+  controller shutdown before account erasure remain required.
 
 - Household backend: migrations `20261028065421` and `20261028065707` are applied.
   Rollback-only live tests verify owner/editor/viewer roles, actual verified-email

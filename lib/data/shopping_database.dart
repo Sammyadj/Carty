@@ -292,15 +292,45 @@ class ShoppingDatabase {
   Future<void> clear(String scope, String? ownerId) async {
     final db = await open();
     await db.transaction((txn) async {
-      await _workspace(txn, scope, ownerId);
-      await txn.delete('workspaces', where: 'scope = ?', whereArgs: [scope]);
-      // A tombstone prevents an old preference file from being imported again.
-      await txn.insert('workspaces', {
-        'scope': scope,
-        'owner_id': ownerId,
-        'format': 'cleared',
-        'metadata': '{}',
-      });
+      await _clearScope(txn, scope, ownerId);
+    });
+  }
+
+  /// Call after account controllers and pending device writes have stopped.
+  /// Includes household copies while retaining other accounts and guest data.
+  Future<void> clearAccountScopes(String ownerId) async {
+    if (ownerId.isEmpty) throw ArgumentError.value(ownerId);
+    final db = await open();
+    await db.transaction((txn) async {
+      final scopes = await txn.query(
+        'workspaces',
+        columns: ['scope'],
+        where: 'owner_id = ?',
+        whereArgs: [ownerId],
+      );
+      final all = {
+        'account:$ownerId',
+        ...scopes.map((row) => row['scope'] as String),
+      };
+      for (final scope in all) {
+        await _clearScope(txn, scope, ownerId);
+      }
+    });
+  }
+
+  Future<void> _clearScope(
+    DatabaseExecutor db,
+    String scope,
+    String? ownerId,
+  ) async {
+    await _workspace(db, scope, ownerId);
+    await db.delete('workspaces', where: 'scope = ?', whereArgs: [scope]);
+    // A tombstone prevents an old preference file from being imported again.
+    await db.insert('workspaces', {
+      'scope': scope,
+      'owner_id': ownerId,
+      'format': 'cleared',
+      'metadata': '{}',
     });
   }
 

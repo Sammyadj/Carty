@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../core/money.dart';
 import '../models/cart_item.dart';
+import '../state/cart_store.dart';
 
 enum SharedRole {
   owner,
@@ -49,6 +50,33 @@ class SharedContent {
   final bool isPlanning;
   final List<CartItem> items;
 
+  factory SharedContent.fromBasketSnapshot(String name, String snapshot) {
+    if (!CartStore.isValidSnapshot(snapshot)) {
+      throw const FormatException('Invalid shared basket');
+    }
+    final data = jsonDecode(snapshot) as Map<String, dynamic>;
+    if (data['version'] != 3 ||
+        data['activeListId'] != null ||
+        data['isPlanning'] is! bool ||
+        [
+          'savedLists',
+          'history',
+          'productPreferences',
+        ].any((key) => data[key] is! List || (data[key] as List).isNotEmpty)) {
+      throw const FormatException(
+        'Private data cannot be stored in a household list',
+      );
+    }
+    return SharedContent(
+      name: name,
+      budgetPence: data['budgetPence'] as int?,
+      isPlanning: data['isPlanning'] as bool,
+      items: (data['items'] as List).map(
+        (row) => CartItem.fromJson(row as Map<String, dynamic>)!,
+      ),
+    );
+  }
+
   Map<String, Object?> toArguments() => {
     'name': name,
     'budgetPence': budgetPence,
@@ -88,6 +116,17 @@ class SharedListHeader {
   final int revision;
   final DateTime updatedAt;
   final SharedRole role;
+
+  Map<String, Object?> toRow() => {
+    'id': id,
+    'owner_id': ownerId,
+    'name': name,
+    'budget_pence': budgetPence,
+    'is_planning': isPlanning,
+    'revision': revision,
+    'updated_at': updatedAt.toUtc().toIso8601String(),
+    'currency': 'GBP',
+  };
 
   factory SharedListHeader.fromRow(Map<String, dynamic> row, SharedRole role) {
     final budget = row['budget_pence'];
