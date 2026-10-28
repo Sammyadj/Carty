@@ -37,8 +37,9 @@ integrations, not promises of this implementation.
 ## Current milestone
 
 Structured local storage, reviewed export/restore, previous-device-save recovery,
-and separate private cloud records are implemented. Household sharing is next,
-followed by release preparation. The full goal remains active.
+and separate private cloud records are implemented. Household sharing's backend
+permission/invitation foundation is verified; its app/offline flows and mail
+delivery remain, followed by release preparation. The full goal remains active.
 
 ## Evidence
 
@@ -69,6 +70,13 @@ followed by release preparation. The full goal remains active.
 
 ## Remaining external inputs and compatibility work
 
+- Household backend: migrations `20261028065421` and `20261028065707` are applied.
+  Rollback-only live tests verify owner/editor/viewer roles, actual verified-email
+  invitation binding, viewer write denial, immediate downgrade/revocation, CAS,
+  leaving, owner-deletion cascades, and cross-household isolation. The account
+  deletion warning and cancellation pass their UI regression. App/offline sharing
+  and notification delivery are still open; see [sharing details](HOUSEHOLD_SHARING.md).
+
 - Private cloud records: migration `20261028063541` is applied. All 280 app tests
   pass and analysis is clean. Live rollback-only SQL checks cover ownership,
   migration, old-writer gating, CAS, invalid-patch rollback, deletion, all nested
@@ -95,7 +103,8 @@ followed by release preparation. The full goal remains active.
   older writers after an account's transactional migration; nested new fields are
   preserved. The original cloud snapshot remains a migration fallback.
 - Supabase project `igytgwdxljbnxfjtufui` was rechecked: ACTIVE_HEALTHY, Postgres
-  17.11, three migrations. Current changelog/docs were consulted. New tables have
-  explicit grants and RLS; security/performance advisors add no new findings.
+  17.11, five migrations. Current changelog/docs were consulted. New tables have
+  explicit grants and RLS. Advisor results are documented per milestone;
+  household invitation indexes have expected unused-index information initially.
 - Physical-device acceptance, production signing, and store/provider ownership
   still require real external verification. Build success is not release approval.

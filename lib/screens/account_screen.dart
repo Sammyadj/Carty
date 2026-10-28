@@ -414,7 +414,7 @@ class _AccountScreenState extends State<AccountScreen> {
             : () async {
                 if (!await _confirm(
                       'Delete your account?',
-                      'Permanently delete your account, profile, cloud lists, shopping history and this account’s cache on this device. Guest data stays. This cannot be undone.',
+                      'Permanently delete your account, profile, private cloud lists, shopping history and this account’s cache on this device. Shared lists you own will also be deleted for everyone, including their products, invitations and memberships. Lists owned by someone else and guest data stay. This cannot be undone.',
                       'Delete account',
                     ) ||
                     !mounted) {

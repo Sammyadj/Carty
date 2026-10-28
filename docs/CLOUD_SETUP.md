@@ -26,8 +26,10 @@ Apply the migrations in order when provisioning another project:
 1. `supabase/migrations/20261027190000_private_cloud_workspaces.sql`
 2. `supabase/migrations/20261027191000_require_workspace_fields.sql`
 3. `supabase/migrations/20261028063541_structured_cloud_records.sql`
+4. `supabase/migrations/20261028065421_household_sharing.sql`
+5. `supabase/migrations/20261028065707_index_household_invitation_members.sql`
 
-All three are applied to Carty. The first two local files have earlier draft timestamps than their recorded live versions (`20261027202715` and `20261027205714`); do not reapply them to the existing project. Profiles and private shopping records have RLS. Authenticated users can read only their own records and update only their own profile. [Cloud protocol 2](CLOUD_RECORDS.md) stores separate records with an atomic head revision, paginated downloads, and delta uploads; the original 2 MiB workspace remains a migration fallback.
+All five are applied to Carty. The first two local files have earlier draft timestamps than their recorded live versions (`20261027202715` and `20261027205714`); do not reapply them to the existing project. Profiles and private shopping records have RLS. Authenticated users can read only their own private records and update only their own profile. [Cloud protocol 2](CLOUD_RECORDS.md) stores separate records with an atomic head revision, paginated downloads, and delta uploads; the original 2 MiB workspace remains a migration fallback. The [household backend](HOUSEHOLD_SHARING.md) has separate membership policies; its app/offline flows and notification delivery remain unfinished.
 
 Updated apps use `carty_bootstrap_records()` and `carty_save_record_delta(...)`. Ownership comes from `auth.uid()`; stale writes return no row and become visible conflicts. Direct table writes are not granted. Flutter validates the reconstructed workspace, including all item/list/history records. The original `carty_save_workspace(expected_revision, snapshot)` works only until that account adopts protocol 2, then rejects old writers so they cannot overwrite newer fields.
 

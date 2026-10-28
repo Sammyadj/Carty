@@ -42,6 +42,40 @@ Future<void> enter(WidgetTester tester, String key, String value) async {
 }
 
 void main() {
+  testWidgets(
+    'account deletion warns that owned shared lists disappear for everyone and can be cancelled',
+    (tester) async {
+      final auth = FakeAccountGateway()
+        ..identity = const AccountIdentity(
+          id: 'alice',
+          email: 'alice@example.invalid',
+        );
+      final session = AppSession(
+        gateway: auth,
+        repository: FakeCloudRepository(),
+        guestStore: emptyGuest(),
+        autoSync: false,
+        cacheFactory: (_) => InMemoryCartStorage(),
+      );
+      addTearDown(session.dispose);
+      addTearDown(auth.dispose);
+      await tester.pumpWidget(MyApp(session: session));
+      await tester.pumpAndSettle();
+      await tap(tester, 'account-open');
+      await tap(tester, 'account-delete');
+      expect(
+        find.textContaining(
+          'Shared lists you own will also be deleted for everyone',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      expect(auth.deleted, isEmpty);
+      expect(session.user!.id, 'alice');
+    },
+  );
+
   test('only the registered Carty callback is accepted for authentication', () {
     expect(
       SupabaseConfig.isAuthCallback(
