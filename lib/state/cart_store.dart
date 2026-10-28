@@ -10,6 +10,8 @@ import '../models/product_details.dart';
 import '../models/saved_shopping_list.dart';
 import '../models/shopping_trip.dart';
 import '../models/grocery_category.dart';
+import '../models/product_preference.dart';
+import '../data/item_suggestions.dart';
 
 /// One source of truth for the active basket and named shopping lists.
 ///
@@ -22,6 +24,7 @@ class CartStore extends ChangeNotifier {
   List<CartItem> _items = const [];
   List<SavedShoppingList> _savedLists = const [];
   List<ShoppingTrip> _history = const [];
+  List<ProductPreference> _productPreferences = const [];
   int? _budgetPence;
   String? _activeListId;
   bool _isPlanning = false;
@@ -37,16 +40,98 @@ class CartStore extends ChangeNotifier {
   List<CartItem> get items => _items;
   List<SavedShoppingList> get savedLists => _savedLists;
   List<ShoppingTrip> get history => _history;
+  List<ProductPreference> get productPreferences => _productPreferences;
   bool get hasData =>
       _items.isNotEmpty ||
       _savedLists.isNotEmpty ||
       _history.isNotEmpty ||
+      _productPreferences.isNotEmpty ||
       _budgetPence != null;
   int? get budgetPence => _budgetPence;
   bool get isLoading => _isLoading;
   String? get storageError => _storageError;
   SavedShoppingList? get activeList => _savedListForId(_activeListId);
   bool get isPlanning => _isPlanning;
+
+  ProductPreference? preferenceFor(String name) {
+    final key = ItemSuggestions.normalize(name);
+    for (final preference in _productPreferences) {
+      if (ItemSuggestions.normalize(preference.name) == key) return preference;
+    }
+    return null;
+  }
+
+  Future<ProductPreference?> setProductPreference({
+    required String name,
+    int? unitPricePence,
+    GroceryCategory? category,
+    bool? favourite,
+    bool? hidden,
+    bool? lessOften,
+  }) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty ||
+        trimmed.length > CartItem.maxNameLength ||
+        (unitPricePence != null &&
+            (unitPricePence <= 0 || unitPricePence > Money.maxPence))) {
+      throw ArgumentError.value(name, 'productPreference');
+    }
+    await load();
+    if (_disposed) return null;
+    final old = preferenceFor(trimmed);
+    final reduceFrequency = lessOften ?? old?.lessOften ?? false;
+    final preference = ProductPreference(
+      name: trimmed,
+      unitPricePence: unitPricePence ?? old?.unitPricePence,
+      category: category ?? old?.category ?? GroceryCategory.automatic,
+      favourite: favourite ?? old?.favourite ?? false,
+      hidden: hidden ?? old?.hidden ?? false,
+      lessOften: reduceFrequency,
+      updatedAt: reduceFrequency && old?.lessOften == true
+          ? old!.updatedAt
+          : DateTime.now(),
+    );
+    final key = ItemSuggestions.normalize(trimmed);
+    _productPreferences = List.unmodifiable([
+      if (preference.favourite || preference.hidden || preference.lessOften)
+        preference,
+      ..._productPreferences.where(
+        (item) => ItemSuggestions.normalize(item.name) != key,
+      ),
+    ]);
+    await _commit();
+    return preference.favourite || preference.hidden || preference.lessOften
+        ? preference
+        : null;
+  }
+
+  /// Undo only the exact choice that was applied; never erase a newer choice.
+  Future<bool> restoreProductPreference({
+    required String name,
+    required ProductPreference? previous,
+    required ProductPreference? expected,
+  }) async {
+    await load();
+    if (_disposed ||
+        jsonEncode(preferenceFor(name)?.toJson()) !=
+            jsonEncode(expected?.toJson())) {
+      return false;
+    }
+    final key = ItemSuggestions.normalize(name);
+    if (previous != null &&
+        (ProductPreference.fromJson(previous.toJson()) == null ||
+            ItemSuggestions.normalize(previous.name) != key)) {
+      return false;
+    }
+    _productPreferences = List.unmodifiable([
+      if (previous != null) previous,
+      ..._productPreferences.where(
+        (item) => ItemSuggestions.normalize(item.name) != key,
+      ),
+    ]);
+    await _commit();
+    return true;
+  }
 
   /// A damaged or newer snapshot is kept until the user explicitly resets it.
   bool get needsStorageReset => _needsStorageReset;
@@ -199,6 +284,24 @@ class CartStore extends ChangeNotifier {
       savedLists.add(list);
     }
     final history = <ShoppingTrip>[];
+    final preferences = <ProductPreference>[];
+    final rawPreferences = decoded.containsKey('productPreferences')
+        ? decoded['productPreferences']
+        : const [];
+    if (rawPreferences is! List) {
+      throw const FormatException('Invalid preferences');
+    }
+    final preferenceNames = <String>{};
+    for (final raw in rawPreferences) {
+      final preference = raw is Map<String, dynamic>
+          ? ProductPreference.fromJson(raw)
+          : null;
+      if (preference == null ||
+          !preferenceNames.add(ItemSuggestions.normalize(preference.name))) {
+        throw const FormatException('Invalid product preference');
+      }
+      preferences.add(preference);
+    }
     final tripIds = <String>{};
     final rawHistory = decoded['version'] == 3 ? decoded['history'] : const [];
     if (rawHistory is! List) {
@@ -234,6 +337,7 @@ class CartStore extends ChangeNotifier {
     _activeListId = activeId as String?;
     _history = List.unmodifiable(history);
     _isPlanning = planning;
+    _productPreferences = List.unmodifiable(preferences);
   }
 
   String exportSnapshot() => jsonEncode({
@@ -244,6 +348,9 @@ class CartStore extends ChangeNotifier {
     'items': _items.map((item) => item.toJson()).toList(),
     'savedLists': _savedLists.map((list) => list.toJson()).toList(),
     'history': _history.map((trip) => trip.toJson()).toList(),
+    'productPreferences': _productPreferences
+        .map((item) => item.toJson())
+        .toList(),
   });
 
   static bool isValidSnapshot(String snapshot) {
@@ -352,6 +459,16 @@ class CartStore extends ChangeNotifier {
           completedAt: trip.completedAt,
         ),
       ..._history,
+    ]);
+    final ownPreferences = {
+      for (final item in _productPreferences)
+        ItemSuggestions.normalize(item.name),
+    };
+    _productPreferences = List.unmodifiable([
+      ..._productPreferences,
+      for (final item in guest.productPreferences)
+        if (!ownPreferences.contains(ItemSuggestions.normalize(item.name)))
+          item,
     ]);
     await _commit();
   }

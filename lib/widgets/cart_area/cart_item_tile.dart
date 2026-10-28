@@ -16,6 +16,8 @@ class CartItemTile extends StatelessWidget {
     required this.onDecrement,
     this.isPlanning = false,
     this.onTogglePicked,
+    this.onFavourite,
+    this.isFavourite = false,
   });
 
   final CartItem item;
@@ -25,6 +27,8 @@ class CartItemTile extends StatelessWidget {
   final VoidCallback onDecrement;
   final bool isPlanning;
   final VoidCallback? onTogglePicked;
+  final VoidCallback? onFavourite;
+  final bool isFavourite;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +202,19 @@ class CartItemTile extends StatelessWidget {
                         color: CartyDesign.of(context).textSecondary,
                         icon: const Icon(Icons.edit_outlined, size: 19),
                       ),
+                      if (onFavourite != null)
+                        IconButton(
+                          key: ValueKey('item-favourite-${item.id}'),
+                          tooltip: isFavourite
+                              ? 'Remove ${item.name} from favourites'
+                              : 'Favourite ${item.name}',
+                          onPressed: onFavourite,
+                          icon: Icon(
+                            isFavourite
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                          ),
+                        ),
                       IconButton(
                         key: Key('item-delete-${item.id}'),
                         tooltip: 'Remove ${item.name}',

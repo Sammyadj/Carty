@@ -370,7 +370,7 @@ class _AccountScreenState extends State<AccountScreen> {
               : () async {
                   if (!await _confirm(
                         'Copy guest shopping data?',
-                        'Copy this device’s guest lists, basket and history into this account. Existing account data and the guest originals stay.',
+                        'Copy this device’s guest lists, basket, history, favourites and suggestion choices into this account. Existing account choices take precedence and the guest originals stay.',
                         'Copy data',
                       ) ||
                       !mounted) {

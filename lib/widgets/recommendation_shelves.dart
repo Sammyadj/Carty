@@ -12,6 +12,8 @@ import '../state/cart_store.dart';
 import 'product_avatar.dart';
 import 'section_heading.dart';
 import 'grocery_category_filter.dart';
+import 'product_suggestion_actions.dart';
+import '../screens/product_library_screen.dart';
 
 class ShoppingRecommendationsSection extends StatefulWidget {
   const ShoppingRecommendationsSection({super.key, required this.store});
@@ -34,6 +36,7 @@ class _ShoppingRecommendationsSectionState
       savedLists: store.savedLists,
       history: store.history,
       remainingPence: store.remainingPence,
+      preferences: store.productPreferences,
     );
     if (groups.isEmpty) return const SizedBox.shrink();
     final filtered = [
@@ -53,7 +56,16 @@ class _ShoppingRecommendationsSectionState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionHeading(title: 'You might need'),
+          SectionHeading(
+            title: 'You might need',
+            actionLabel: 'Manage',
+            onAction: () => Navigator.push<void>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProductLibraryScreen(store: store),
+              ),
+            ),
+          ),
           Text(
             'Ideas for this basket. Saved prices are estimates.',
             style: Theme.of(context).textTheme.bodySmall,
@@ -83,6 +95,7 @@ class _ShoppingRecommendationsSectionState
 }
 
 String _title(RecommendationReason reason) => switch (reason) {
+  RecommendationReason.favourite => 'Your favourites',
   RecommendationReason.pickedTogether => 'Picked together',
   RecommendationReason.frequent => 'Your regulars',
   RecommendationReason.savedList => 'From your saved lists',
@@ -92,6 +105,7 @@ String _title(RecommendationReason reason) => switch (reason) {
 };
 
 Color _artColor(RecommendationReason reason) => switch (reason) {
+  RecommendationReason.favourite => const Color(0xFFFFE8EE),
   RecommendationReason.pickedTogether => const Color(0xFFEAF2D7),
   RecommendationReason.frequent => const Color(0xFFFFF0DF),
   RecommendationReason.savedList => const Color(0xFFFFF4D4),
@@ -330,11 +344,19 @@ class _RecommendationCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    item.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      ProductSuggestionActions(item: item, store: store),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(

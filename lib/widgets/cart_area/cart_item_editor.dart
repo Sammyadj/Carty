@@ -473,6 +473,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
       ItemSuggestionSource.basket => 'In your basket',
       ItemSuggestionSource.savedList => 'From saved lists',
       ItemSuggestionSource.history => 'From shopping history',
+      ItemSuggestionSource.favourite => 'From your favourites',
       ItemSuggestionSource.common => 'Common item',
     };
     final price = suggestion.unitPricePence;

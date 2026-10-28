@@ -270,6 +270,21 @@ class _CartFullScreenState extends State<CartFullScreen> {
                                 isPlanning: store.isPlanning,
                                 onTogglePicked: () =>
                                     store.togglePicked(item.id),
+                                isFavourite:
+                                    store.preferenceFor(item.name)?.favourite ??
+                                    false,
+                                onFavourite: () => store.setProductPreference(
+                                  name: item.name,
+                                  unitPricePence: store.isPlanning
+                                      ? item.estimatedUnitPricePence
+                                      : item.unitPricePence,
+                                  category: item.category,
+                                  favourite:
+                                      !(store
+                                              .preferenceFor(item.name)
+                                              ?.favourite ??
+                                          false),
+                                ),
                                 onEdit: () => showItemEditor(
                                   context: context,
                                   store: store,

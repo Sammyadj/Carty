@@ -4,7 +4,7 @@ import '../models/saved_shopping_list.dart';
 import '../models/shopping_trip.dart';
 import '../models/grocery_category.dart';
 
-enum ItemSuggestionSource { basket, savedList, history, common }
+enum ItemSuggestionSource { basket, savedList, history, favourite, common }
 
 class ItemSuggestion {
   const ItemSuggestion({

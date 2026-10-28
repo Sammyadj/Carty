@@ -24,6 +24,7 @@ import '../widgets/shopping_mode_panel.dart';
 import '../widgets/summary_area/summary_card.dart';
 import 'cart_full_screen.dart';
 import 'account_screen.dart';
+import 'product_library_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.store});
@@ -290,6 +291,15 @@ class _Dashboard extends StatelessWidget {
             item: item,
             isPlanning: store.isPlanning,
             onTogglePicked: () => store.togglePicked(item.id),
+            isFavourite: store.preferenceFor(item.name)?.favourite ?? false,
+            onFavourite: () => store.setProductPreference(
+              name: item.name,
+              unitPricePence: store.isPlanning
+                  ? item.estimatedUnitPricePence
+                  : item.unitPricePence,
+              category: item.category,
+              favourite: !(store.preferenceFor(item.name)?.favourite ?? false),
+            ),
             onEdit: () =>
                 showItemEditor(context: context, store: store, item: item),
             onDelete: () => store.removeItem(item.id),
@@ -301,14 +311,28 @@ class _Dashboard extends StatelessWidget {
                 : store.decrementQuantity(item.id),
           ),
         ),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: OutlinedButton.icon(
-          key: const Key('new-list-from-home'),
-          onPressed: () => showNewList(context: context, store: store),
-          icon: const Icon(Icons.playlist_add_rounded, size: 18),
-          label: const Text('Create new list'),
-        ),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          OutlinedButton.icon(
+            key: const Key('new-list-from-home'),
+            onPressed: () => showNewList(context: context, store: store),
+            icon: const Icon(Icons.playlist_add_rounded, size: 18),
+            label: const Text('Create new list'),
+          ),
+          OutlinedButton.icon(
+            key: const Key('products-open'),
+            onPressed: () => Navigator.push<void>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProductLibraryScreen(store: store),
+              ),
+            ),
+            icon: const Icon(Icons.star_border_rounded, size: 18),
+            label: const Text('Your products'),
+          ),
+        ],
       ),
       if (store.items.isNotEmpty)
         Wrap(

@@ -1,9 +1,11 @@
 import '../models/cart_item.dart';
 import '../models/saved_shopping_list.dart';
 import '../models/shopping_trip.dart';
+import '../models/product_preference.dart';
 import 'item_suggestions.dart';
 
 enum RecommendationReason {
+  favourite,
   pickedTogether,
   frequent,
   savedList,
@@ -43,6 +45,7 @@ class ShoppingRecommendations {
     List<ShoppingTrip> history = const [],
     int? remainingPence,
     int limit = 3,
+    List<ProductPreference> preferences = const [],
   }) {
     if (limit <= 0) return const [];
     return List.unmodifiable(
@@ -51,6 +54,7 @@ class ShoppingRecommendations {
         savedLists: savedLists,
         history: history,
         remainingPence: remainingPence,
+        preferences: preferences,
       ).take(limit.clamp(1, 6)),
     );
   }
@@ -60,12 +64,14 @@ class ShoppingRecommendations {
     List<SavedShoppingList> savedLists = const [],
     List<ShoppingTrip> history = const [],
     int? remainingPence,
+    List<ProductPreference> preferences = const [],
   }) {
     final ranked = _rankedForWorkspace(
       items: items,
       savedLists: savedLists,
       history: history,
       remainingPence: remainingPence,
+      preferences: preferences,
     );
     return List.unmodifiable([
       for (final reason in RecommendationReason.values)
@@ -85,6 +91,7 @@ class ShoppingRecommendations {
     required List<SavedShoppingList> savedLists,
     required List<ShoppingTrip> history,
     required int? remainingPence,
+    required List<ProductPreference> preferences,
   }) {
     if (remainingPence != null && remainingPence <= 0) {
       return const [];
@@ -104,6 +111,21 @@ class ShoppingRecommendations {
       for (final list in savedLists)
         for (final item in list.items) ItemSuggestions.normalize(item.name),
     };
+    final choices = {
+      for (final item in preferences)
+        ItemSuggestions.normalize(item.name): item,
+    };
+    for (final item in preferences.where((item) => item.favourite)) {
+      known.putIfAbsent(
+        ItemSuggestions.normalize(item.name),
+        () => ItemSuggestion(
+          name: item.name,
+          source: ItemSuggestionSource.favourite,
+          unitPricePence: item.unitPricePence,
+          category: item.category,
+        ),
+      );
+    }
     final sorted =
         history
             .where((trip) => trip.items.any((item) => item.quantity > 0))
@@ -142,6 +164,15 @@ class ShoppingRecommendations {
     ) {
       final key = ItemSuggestions.normalize(name);
       if (basket.containsKey(key)) return;
+      final choice = choices[key];
+      if (choice?.hidden == true) return;
+      if (choice?.lessOften == true) {
+        final tripsSinceChoice = history
+            .where((trip) => trip.completedAt.isAfter(choice!.updatedAt))
+            .length;
+        if (tripsSinceChoice < 3 || tripsSinceChoice % 3 != 0) return;
+        score -= 500;
+      }
       final remembered = known[key];
       final item =
           remembered ??
@@ -154,7 +185,8 @@ class ShoppingRecommendations {
           basket.keys.any((name) => _sameFamily(key, name))) {
         return;
       }
-      if ((candidates[key]?.score ?? -1) >= score) return;
+      final existing = candidates[key];
+      if (existing != null && existing.score >= score) return;
       candidates[key] = _RankedRecommendation(
         ShoppingRecommendation(
           item: item,
@@ -167,6 +199,14 @@ class ShoppingRecommendations {
 
     for (final entry in known.entries) {
       final key = entry.key;
+      if (choices[key]?.favourite == true) {
+        offer(
+          entry.value.name,
+          RecommendationReason.favourite,
+          'From your favourites',
+          4000,
+        );
+      }
       final count = frequency[key] ?? 0;
       final recency = maxHistory - (firstSeen[key] ?? maxHistory);
       final associations = (together[key]?.entries.toList() ?? [])
