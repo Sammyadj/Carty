@@ -2,7 +2,8 @@
 
 ## Current status
 
-The backend permission/invitation foundation is applied and verified. The app's
+The backend permission/invitation foundation and typed Flutter repository are
+implemented and verified. The app's
 household library, editing screens, local/offline cache, reconnect/conflict flow,
 and recipient notification delivery remain to be implemented. Household sharing
 is **not yet available as a completed app feature**. The account-delete dialog
@@ -89,10 +90,34 @@ before normal traffic; retain them for recipient lookup and account deletion.
 
 ## Required next work
 
-Build the typed repository and role-aware shared-list controller, account-scoped
+Build the role-aware shared-list controller, account-scoped
 SQLite caches, reviewable offline conflicts, revoked-access handling, and safe
 account-switch/deletion cleanup. Then add the household library, owner invite and
 member controls, recipient accept/decline flow, read-only viewer UI, and shared
 shopping controls that preserve estimates and picked quantities. Add adapter,
 offline/reconnect, two-user, and large-text regression checks. Verify real devices
 and notification delivery before marking the full sharing requirement complete.
+
+## Flutter repository verification
+
+`lib/sharing` provides immutable shared content, roles, invitations, members,
+and an account-bound Supabase adapter. Shared content contains only the selected
+basket, budget and Plan/Shop mode, preserving estimates and picked quantities.
+Private saved lists, history and recommendations are not included.
+
+Downloads page 500 products at a time, check exact row counts and ordering, and
+recheck both revision and membership before publishing. Role changes need this
+separate check because they do not advance the content revision. Revocation
+returns unavailable; conflicting content changes retry a bounded three times.
+Saves use the server's expected-revision check and acknowledge exactly the sent
+content rather than fetching and accidentally acknowledging a later edit.
+
+The 12 tests in `test/shared_repository_test.dart` exercise the real Supabase
+Dart request/response adapter with synthetic HTTP responses: 1,000 products,
+concurrent edits, unchanged-revision downgrades, revocation during download,
+partial/foreign/malformed responses, invitation scoping, expiry display,
+permission denial, account switches, and truthful in-app delivery status.
+Server authorisation remains covered separately by the live rollback SQL tests.
+These adapter checks do not prove offline UI or two-device acceptance; those
+remain required above. Library refreshes currently hydrate each accessible
+header separately; optimise that if household counts justify batching.

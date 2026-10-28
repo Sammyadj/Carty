@@ -38,7 +38,8 @@ integrations, not promises of this implementation.
 
 Structured local storage, reviewed export/restore, previous-device-save recovery,
 and separate private cloud records are implemented. Household sharing's backend
-permission/invitation foundation is verified; its app/offline flows and mail
+permission/invitation foundation and typed Flutter repository are verified;
+its app/offline flows and mail
 delivery remain, followed by release preparation. The full goal remains active.
 
 ## Evidence
