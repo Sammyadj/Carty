@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../state/cart_store.dart';
+import '../../core/money.dart';
 
 Future<void> showFinishShopping({
   required BuildContext context,
@@ -11,7 +12,9 @@ Future<void> showFinishShopping({
     context: context,
     builder: (_) => _FinishDialog(
       initialName: store.activeList?.name ?? 'Shopping trip',
-      pending: store.items.where((item) => item.quantity == 0).length,
+      pending: store.pendingCount,
+      unconfirmed: store.unconfirmedPriceCount,
+      pickedTotal: store.totalPence,
     ),
   );
   if (name == null || !context.mounted) return;
@@ -29,9 +32,16 @@ Future<void> showFinishShopping({
 }
 
 class _FinishDialog extends StatefulWidget {
-  const _FinishDialog({required this.initialName, required this.pending});
+  const _FinishDialog({
+    required this.initialName,
+    required this.pending,
+    required this.unconfirmed,
+    required this.pickedTotal,
+  });
   final String initialName;
   final int pending;
+  final int unconfirmed;
+  final int pickedTotal;
   @override
   State<_FinishDialog> createState() => _FinishDialogState();
 }
@@ -58,11 +68,17 @@ class _FinishDialogState extends State<_FinishDialog> {
           const Text(
             'Save the picked products and your entered total to History, then clear this basket and budget. Saved lists stay available. No payment is taken.',
           ),
+          const SizedBox(height: 12),
+          Text('Picked total: ${Money.format(widget.pickedTotal)}'),
+          if (widget.unconfirmed > 0)
+            Text(
+              '${widget.unconfirmed} picked prices are still estimates. You can go back to confirm them, or save them as entered.',
+            ),
           if (widget.pending > 0)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                '${widget.pending} products with quantity zero won’t be included in this record.',
+                '${widget.pending} products still need picking. Only picked quantities will be recorded; unpicked quantities won’t be included.',
               ),
             ),
           const SizedBox(height: 16),

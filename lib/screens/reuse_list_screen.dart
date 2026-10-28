@@ -209,7 +209,7 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
       _ReuseChoice(
         controlKey: const ValueKey('reuse-fresh'),
         title: 'Start fresh',
-        description: 'Keep products and prices. Set quantities to zero and clear the budget.',
+        description: 'Keep your planned quantities and estimates. Reset picked quantities and clear the budget.',
         value: SavedListMode.startFresh,
         groupValue: _mode,
       ),
@@ -261,7 +261,7 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
         _editing
             ? 'Your quantities, prices and budget are kept. You can edit them after opening the list.'
             : _startFresh
-            ? 'All quantities start at zero. Add them as you shop.'
+            ? 'Your plan is kept. Picked quantities start at zero and shelf prices need checking again.'
             : 'Your saved quantities and budget will be copied.',
         style: TextStyle(
           color: CartyDesign.of(context).textSecondary,
@@ -303,6 +303,16 @@ class _ReuseListScreenState extends State<ReuseListScreen> {
         child: Column(
           children: [
             _ReviewAmount(label: 'Starting total', value: Money.format(total)),
+            const SizedBox(height: 12),
+            _ReviewAmount(
+              label: 'Estimated plan total',
+              value: Money.format(
+                widget.list.items.fold<int>(
+                  0,
+                  (sum, item) => sum + item.estimatedTotalPence,
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             _ReviewAmount(
               label: 'Shopping budget',

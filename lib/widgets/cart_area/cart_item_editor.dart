@@ -9,11 +9,17 @@ import '../../data/item_suggestions.dart';
 import '../../models/cart_item.dart';
 
 class CartItemDraft {
-  const CartItemDraft(this.name, this.unitPricePence, this.quantity);
+  const CartItemDraft(
+    this.name,
+    this.unitPricePence,
+    this.quantity, {
+    this.priceConfirmed = false,
+  });
 
   final String name;
   final int unitPricePence;
   final int quantity;
+  final bool priceConfirmed;
 }
 
 /// A form owns temporary input. Only a validated draft reaches the cart store.
@@ -23,11 +29,13 @@ class CartItemEditor extends StatefulWidget {
     this.item,
     this.suggestions,
     this.initialSuggestion,
+    this.isPlanning = false,
   }) : assert(item == null || initialSuggestion == null);
 
   final CartItem? item;
   final ItemSuggestions? suggestions;
   final ItemSuggestion? initialSuggestion;
+  final bool isPlanning;
 
   @override
   State<CartItemEditor> createState() => _CartItemEditorState();
@@ -41,16 +49,25 @@ class _CartItemEditorState extends State<CartItemEditor> {
       widget.suggestions ?? ItemSuggestions.fromWorkspace();
   String? _suggestedPriceText;
   String? _suggestedPriceName;
+  late bool _priceConfirmed = widget.item?.priceConfirmed ?? false;
   late final _name = TextEditingController(
     text: widget.item?.name ?? widget.initialSuggestion?.name ?? '',
   );
   late final _price = TextEditingController(
     text: _formatPrice(
-      widget.item?.unitPricePence ?? widget.initialSuggestion?.unitPricePence,
+      (widget.isPlanning
+              ? widget.item?.estimatedUnitPricePence
+              : widget.item?.unitPricePence) ??
+          widget.initialSuggestion?.unitPricePence,
     ),
   );
   late final _quantity = TextEditingController(
-    text: (widget.item?.quantity ?? 1).toString(),
+    text:
+        ((widget.isPlanning
+                    ? widget.item?.plannedQuantity
+                    : widget.item?.quantity) ??
+                1)
+            .toString(),
   );
 
   @override
@@ -75,6 +92,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
 
   void _nameChanged(String name) {
     setState(() {
+      if (name.trim() != widget.item?.name) _priceConfirmed = false;
       if (_suggestedPriceName != null &&
           ItemSuggestions.normalize(name) != _suggestedPriceName) {
         // A price supplied for one suggested product must not follow a new name.
@@ -129,6 +147,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
         _name.text.trim(),
         Money.tryParsePence(_price.text)!,
         int.parse(_quantity.text),
+        priceConfirmed: _priceConfirmed,
       ),
     );
   }
@@ -236,6 +255,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   autofocus: widget.initialSuggestion != null,
                   focusNode: _priceFocus,
                   onChanged: (_) {
+                    setState(() => _priceConfirmed = false);
                     if (_suggestedPriceText != null) {
                       setState(() {
                         _suggestedPriceText = null;
@@ -249,7 +269,7 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   textInputAction: TextInputAction.next,
                   maxLength: 12,
                   decoration: _decoration(
-                    'Unit price',
+                    widget.isPlanning ? 'Estimated unit price' : 'Unit price',
                     prefixText: '£ ',
                     hintText: '0.00',
                   ),
@@ -270,6 +290,15 @@ class _CartItemEditorState extends State<CartItemEditor> {
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
+                if (!widget.isPlanning)
+                  CheckboxListTile(
+                    key: const Key('item-price-confirmed'),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('I checked the shelf price'),
+                    value: _priceConfirmed,
+                    onChanged: (value) =>
+                        setState(() => _priceConfirmed = value ?? false),
+                  ),
                 const SizedBox(height: 16),
                 TextFormField(
                   key: const Key('item-quantity-input'),
@@ -278,7 +307,9 @@ class _CartItemEditorState extends State<CartItemEditor> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _save(),
-                  decoration: _decoration('Quantity'),
+                  decoration: _decoration(
+                    widget.isPlanning ? 'Planned quantity' : 'Picked quantity',
+                  ),
                   validator: (value) {
                     final quantity = int.tryParse(value ?? '');
                     if (quantity == null ||
@@ -310,7 +341,9 @@ class _CartItemEditorState extends State<CartItemEditor> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Use 0 to keep an item on your list until you pick it up.',
+                          widget.isPlanning
+                              ? 'These quantities are a plan. They do not mark products as picked.'
+                              : 'Use 0 to keep an item on your list until you pick it up.',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: CartyDesign.of(context).primaryDark,
                             height: 1.5,

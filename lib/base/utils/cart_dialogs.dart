@@ -19,6 +19,7 @@ Future<void> showItemEditor({
 }) async {
   await store.load();
   if (!context.mounted) return;
+  final planning = store.isPlanning;
   final suggestions = item == null
       ? ItemSuggestions.fromWorkspace(
           items: store.items,
@@ -32,6 +33,7 @@ Future<void> showItemEditor({
       item: item,
       suggestions: suggestions,
       initialSuggestion: initialSuggestion,
+      isPlanning: planning,
     ),
   );
   if (draft == null || !context.mounted) return;
@@ -39,14 +41,21 @@ Future<void> showItemEditor({
     await store.addItem(
       name: draft.name,
       unitPricePence: draft.unitPricePence,
-      quantity: draft.quantity,
+      quantity: planning ? 0 : draft.quantity,
+      plannedQuantity: draft.quantity,
+      priceConfirmed: planning ? false : draft.priceConfirmed,
     );
   } else {
     await store.updateItem(
       item.copyWith(
         name: draft.name,
-        unitPricePence: draft.unitPricePence,
-        quantity: draft.quantity,
+        unitPricePence: planning ? item.unitPricePence : draft.unitPricePence,
+        quantity: planning ? item.quantity : draft.quantity,
+        plannedQuantity: planning ? draft.quantity : item.plannedQuantity,
+        estimatedUnitPricePence: planning
+            ? draft.unitPricePence
+            : item.estimatedUnitPricePence,
+        priceConfirmed: planning ? item.priceConfirmed : draft.priceConfirmed,
       ),
     );
   }

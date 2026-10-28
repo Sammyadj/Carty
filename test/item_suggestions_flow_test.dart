@@ -64,7 +64,9 @@ void main() {
       expect(store.items, isEmpty);
       await enter(tester, 'item-quantity-input', '3');
       await tap(tester, 'item-save');
-      expect(store.totalPence, 495);
+      expect(store.estimatedTotalPence, 495);
+      expect(store.totalPence, 0);
+      expect(store.items.single.plannedQuantity, 3);
       expect(store.items.single.name, 'Organic whole milk');
       expect(store.savedLists.single.items.single.quantity, 1);
     },

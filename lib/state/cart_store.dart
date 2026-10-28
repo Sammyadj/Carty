@@ -23,6 +23,7 @@ class CartStore extends ChangeNotifier {
   List<ShoppingTrip> _history = const [];
   int? _budgetPence;
   String? _activeListId;
+  bool _isPlanning = false;
   bool _isLoading = true;
   bool _disposed = false;
   bool _needsStorageReset = false;
@@ -44,6 +45,7 @@ class CartStore extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get storageError => _storageError;
   SavedShoppingList? get activeList => _savedListForId(_activeListId);
+  bool get isPlanning => _isPlanning;
 
   /// A damaged or newer snapshot is kept until the user explicitly resets it.
   bool get needsStorageReset => _needsStorageReset;
@@ -60,7 +62,9 @@ class CartStore extends ChangeNotifier {
     final current = contents(_items);
     return !_savedLists.any(
       (list) =>
-          list.budgetPence == _budgetPence && contents(list.items) == current,
+          list.budgetPence == _budgetPence &&
+          list.isPlanning == _isPlanning &&
+          contents(list.items) == current,
     );
   }
 
@@ -69,15 +73,69 @@ class CartStore extends ChangeNotifier {
     await load();
     if (_disposed) return;
     _activeListId = null;
+    _isPlanning = true;
     _items = const [];
     _budgetPence = null;
     await _commit();
   }
 
   int get totalPence => _items.fold(0, (sum, item) => sum + item.totalPence);
+  int get estimatedTotalPence =>
+      _items.fold(0, (sum, item) => sum + item.estimatedTotalPence);
+  int get budgetTotalPence => isPlanning ? estimatedTotalPence : totalPence;
+  int get pendingCount => _items.where((item) => item.needsPicking).length;
+  int get unconfirmedPriceCount =>
+      _items.where((item) => item.quantity > 0 && !item.priceConfirmed).length;
   int? get remainingPence =>
-      _budgetPence == null ? null : _budgetPence! - totalPence;
-  bool get isOverBudget => _budgetPence != null && totalPence > _budgetPence!;
+      _budgetPence == null ? null : _budgetPence! - budgetTotalPence;
+  bool get isOverBudget =>
+      _budgetPence != null && budgetTotalPence > _budgetPence!;
+
+  /// Changing the view never marks planned products as picked.
+  Future<void> setPlanning(bool value) async {
+    await load();
+    if (_disposed || value == _isPlanning) return;
+    _isPlanning = value;
+    await _commit();
+  }
+
+  Future<void> adjustPlannedQuantity(String id, int delta) async {
+    await load();
+    if (_disposed) return;
+    final item = _itemForId(id);
+    if (item == null) return;
+    final quantity = (item.plannedQuantity + delta).clamp(
+      0,
+      CartItem.maxQuantity,
+    );
+    _items = List.unmodifiable(
+      _items.map(
+        (current) => current.id == id
+            ? current.copyWith(plannedQuantity: quantity)
+            : current,
+      ),
+    );
+    await _commit();
+  }
+
+  Future<void> togglePicked(String id) async {
+    await load();
+    if (_disposed) return;
+    final item = _itemForId(id);
+    if (item == null) return;
+    _items = List.unmodifiable(
+      _items.map(
+        (current) => current.id == id
+            ? current.copyWith(
+                quantity: item.isFullyPicked
+                    ? 0
+                    : (item.plannedQuantity == 0 ? 1 : item.plannedQuantity),
+              )
+            : current,
+      ),
+    );
+    await _commit();
+  }
 
   Future<void> load() => _loadOperation ??= _load();
 
@@ -106,6 +164,10 @@ class CartStore extends ChangeNotifier {
       throw const FormatException('Unsupported cart snapshot');
     }
     final budget = decoded['budgetPence'];
+    final planning = decoded.containsKey('isPlanning')
+        ? decoded['isPlanning']
+        : false;
+    if (planning is! bool) throw const FormatException('Invalid shopping mode');
     if (budget != null &&
         (budget is! int || budget <= 0 || budget > Money.maxPence)) {
       throw const FormatException('Invalid budget');
@@ -156,7 +218,9 @@ class CartStore extends ChangeNotifier {
         throw const FormatException('Invalid active shopping list');
       }
       final active = savedLists.firstWhere((list) => list.id == activeId);
-      if (active.budgetPence != budget || !_sameItems(active.items, items)) {
+      if (active.budgetPence != budget ||
+          active.isPlanning != planning ||
+          !_sameItems(active.items, items)) {
         throw const FormatException(
           'Active shopping list does not match basket',
         );
@@ -168,10 +232,12 @@ class CartStore extends ChangeNotifier {
     _budgetPence = budget as int?;
     _activeListId = activeId as String?;
     _history = List.unmodifiable(history);
+    _isPlanning = planning;
   }
 
   String exportSnapshot() => jsonEncode({
     'version': 3,
+    'isPlanning': _isPlanning,
     'activeListId': _activeListId,
     'budgetPence': _budgetPence,
     'items': _items.map((item) => item.toJson()).toList(),
@@ -213,10 +279,12 @@ class CartStore extends ChangeNotifier {
       id: _newId(),
       name: trimmed,
       items: picked,
+      plannedItems: _items,
       budgetPence: _budgetPence,
       completedAt: DateTime.now(),
     );
     _history = List.unmodifiable([trip, ..._history]);
+    _isPlanning = false;
     _activeListId = null;
     _items = const [];
     _budgetPence = null;
@@ -242,6 +310,9 @@ class CartStore extends ChangeNotifier {
             name: item.name,
             unitPricePence: item.unitPricePence,
             quantity: item.quantity,
+            plannedQuantity: item.plannedQuantity,
+            estimatedUnitPricePence: item.estimatedUnitPricePence,
+            priceConfirmed: item.priceConfirmed,
             product: item.product,
           ),
         )
@@ -254,6 +325,7 @@ class CartStore extends ChangeNotifier {
           items: copyItems(list.items),
           budgetPence: list.budgetPence,
           savedAt: DateTime.now(),
+          isPlanning: list.isPlanning,
         ),
       if (guest.activeList == null &&
           (guest.items.isNotEmpty || guest.budgetPence != null))
@@ -263,6 +335,7 @@ class CartStore extends ChangeNotifier {
           items: copyItems(guest.items),
           budgetPence: guest.budgetPence,
           savedAt: DateTime.now(),
+          isPlanning: guest.isPlanning,
         ),
     ];
     _savedLists = List.unmodifiable([...copies, ..._savedLists]);
@@ -272,6 +345,7 @@ class CartStore extends ChangeNotifier {
           id: _newId(),
           name: trip.name,
           items: copyItems(trip.items),
+          plannedItems: copyItems(trip.plannedItems),
           budgetPence: trip.budgetPence,
           completedAt: trip.completedAt,
         ),
@@ -295,9 +369,24 @@ class CartStore extends ChangeNotifier {
     required String name,
     required int unitPricePence,
     int quantity = 1,
+    int? plannedQuantity,
+    int? estimatedUnitPricePence,
+    bool priceConfirmed = false,
   }) async {
     final trimmedName = name.trim();
     _validateItem(trimmedName, unitPricePence, quantity);
+    if (plannedQuantity != null &&
+        (plannedQuantity < 0 || plannedQuantity > CartItem.maxQuantity)) {
+      throw ArgumentError.value(plannedQuantity, 'plannedQuantity');
+    }
+    if (estimatedUnitPricePence != null &&
+        (estimatedUnitPricePence <= 0 ||
+            estimatedUnitPricePence > Money.maxPence)) {
+      throw ArgumentError.value(
+        estimatedUnitPricePence,
+        'estimatedUnitPricePence',
+      );
+    }
     await load();
     if (_disposed) return;
     _items = List.unmodifiable([
@@ -307,6 +396,9 @@ class CartStore extends ChangeNotifier {
         name: trimmedName,
         unitPricePence: unitPricePence,
         quantity: quantity,
+        plannedQuantity: plannedQuantity,
+        estimatedUnitPricePence: estimatedUnitPricePence,
+        priceConfirmed: priceConfirmed,
       ),
     ]);
     await _commit();
@@ -314,6 +406,9 @@ class CartStore extends ChangeNotifier {
 
   Future<void> updateItem(CartItem item) async {
     _validateItem(item.name, item.unitPricePence, item.quantity);
+    if (CartItem.fromJson(item.toJson()) == null) {
+      throw ArgumentError.value(item, 'item');
+    }
     if (item.product != null &&
         ProductDetails.fromJson(item.product!.toJson()) == null) {
       throw ArgumentError.value(item.product, 'product');
@@ -360,6 +455,7 @@ class CartStore extends ChangeNotifier {
           unitPricePence: unitPricePence,
           quantity: quantity,
           product: confirmedProduct,
+          priceConfirmed: true,
         ),
       ]);
     } else {
@@ -375,11 +471,13 @@ class CartStore extends ChangeNotifier {
                   unitPricePence: unitPricePence,
                   quantity: mergedQuantity,
                   product: confirmedProduct,
+                  priceConfirmed: true,
                 )
               : item,
         ),
       );
     }
+    _isPlanning = false;
     await _commit();
   }
 
@@ -459,6 +557,7 @@ class CartStore extends ChangeNotifier {
       items: _items,
       budgetPence: _budgetPence,
       savedAt: DateTime.now(),
+      isPlanning: _isPlanning,
     );
     _savedLists = List.unmodifiable([saved, ..._savedLists]);
     _activeListId = saved.id;
@@ -474,6 +573,7 @@ class CartStore extends ChangeNotifier {
     _items = saved.items;
     _budgetPence = saved.budgetPence;
     _activeListId = saved.id;
+    _isPlanning = saved.isPlanning;
     await _commit();
     return true;
   }
@@ -491,11 +591,15 @@ class CartStore extends ChangeNotifier {
           name: item.name,
           unitPricePence: item.unitPricePence,
           quantity: startFresh ? 0 : item.quantity,
+          plannedQuantity: item.plannedQuantity,
+          estimatedUnitPricePence: item.estimatedUnitPricePence,
+          priceConfirmed: startFresh ? false : item.priceConfirmed,
           product: item.product,
         ),
       ),
     );
     _budgetPence = startFresh ? null : savedList.budgetPence;
+    _isPlanning = startFresh || savedList.isPlanning;
     await _commit();
     return true;
   }
@@ -565,13 +669,18 @@ class CartStore extends ChangeNotifier {
     final active = activeList;
     if (active == null ||
         (active.budgetPence == _budgetPence &&
+            active.isPlanning == _isPlanning &&
             _sameItems(active.items, _items))) {
       return;
     }
     _savedLists = List.unmodifiable(
       _savedLists.map(
         (list) => list.id == active.id
-            ? list.updated(items: _items, budgetPence: _budgetPence)
+            ? list.updated(
+                items: _items,
+                budgetPence: _budgetPence,
+                isPlanning: _isPlanning,
+              )
             : list,
       ),
     );

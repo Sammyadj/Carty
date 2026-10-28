@@ -42,8 +42,10 @@ class CartStatusBar extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _StatusMetric(
-                          label: 'BASKET TOTAL',
-                          value: Money.format(store.totalPence),
+                          label: store.isPlanning
+                              ? 'ESTIMATED TOTAL'
+                              : 'PICKED TOTAL',
+                          value: Money.format(store.budgetTotalPence),
                           color: CartyDesign.of(context).textPrimary,
                         ),
                       ),

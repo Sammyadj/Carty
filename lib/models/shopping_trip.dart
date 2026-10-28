@@ -8,24 +8,28 @@ class ShoppingTrip {
     required this.id,
     required this.name,
     required List<CartItem> items,
+    List<CartItem>? plannedItems,
     required this.budgetPence,
     required this.completedAt,
-  }) : items = List.unmodifiable(items);
+  }) : items = List.unmodifiable(items),
+       plannedItems = List.unmodifiable(plannedItems ?? items);
 
   final String id;
   final String name;
   final List<CartItem> items;
+  final List<CartItem> plannedItems;
   final int? budgetPence;
   final DateTime completedAt;
   int get totalPence => items.fold(0, (sum, item) => sum + item.totalPence);
   int get estimatedTotalPence =>
-      items.fold(0, (sum, item) => sum + item.estimatedTotalPence);
+      plannedItems.fold(0, (sum, item) => sum + item.estimatedTotalPence);
   bool get allPricesConfirmed => items.every((item) => item.priceConfirmed);
 
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
     'items': items.map((item) => item.toJson()).toList(),
+    'plannedItems': plannedItems.map((item) => item.toJson()).toList(),
     'budgetPence': budgetPence,
     'completedAt': completedAt.toUtc().toIso8601String(),
     'currency': 'GBP',
@@ -59,10 +63,24 @@ class ShoppingTrip {
       if (item == null || item.quantity == 0 || !ids.add(item.id)) return null;
       items.add(item);
     }
+    final plannedItems = <CartItem>[];
+    if (json.containsKey('plannedItems')) {
+      final rawPlan = json['plannedItems'];
+      if (rawPlan is! List || rawPlan.isEmpty) return null;
+      final plannedIds = <String>{};
+      for (final raw in rawPlan) {
+        final item = raw is Map<String, dynamic>
+            ? CartItem.fromJson(raw)
+            : null;
+        if (item == null || !plannedIds.add(item.id)) return null;
+        plannedItems.add(item);
+      }
+    }
     return ShoppingTrip(
       id: id,
       name: name.trim(),
       items: items,
+      plannedItems: json.containsKey('plannedItems') ? plannedItems : items,
       budgetPence: budget as int?,
       completedAt: completed,
     );

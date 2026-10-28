@@ -14,6 +14,8 @@ class CartItemTile extends StatelessWidget {
     required this.onDelete,
     required this.onIncrement,
     required this.onDecrement,
+    this.isPlanning = false,
+    this.onTogglePicked,
   });
 
   final CartItem item;
@@ -21,11 +23,14 @@ class CartItemTile extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
+  final bool isPlanning;
+  final VoidCallback? onTogglePicked;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final design = CartyDesign.of(context);
+    final units = isPlanning ? item.plannedQuantity : item.quantity;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       color: Colors.white,
@@ -64,13 +69,17 @@ class CartItemTile extends StatelessWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            '${Money.format(item.unitPricePence)} each',
+                            '${Money.format(isPlanning ? item.estimatedUnitPricePence : item.unitPricePence)} each${isPlanning || !item.priceConfirmed ? ' · estimate' : ' · confirmed'}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: CartyDesign.of(context).textSecondary,
                             ),
                           ),
                           Text(
-                            Money.format(item.totalPence),
+                            Money.format(
+                              isPlanning
+                                  ? item.estimatedTotalPence
+                                  : item.totalPence,
+                            ),
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: CartyDesign.of(context).primaryDark,
@@ -78,11 +87,13 @@ class CartItemTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (item.quantity == 0)
+                      if (item.needsPicking || isPlanning)
                         Padding(
                           padding: const EdgeInsets.only(top: 5),
                           child: Text(
-                            'Not picked yet',
+                            item.quantity == 0
+                                ? 'Not picked yet · ${item.plannedQuantity} planned'
+                                : '${item.quantity} picked · ${item.plannedQuantity} planned',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: CartyDesign.of(context).warning,
                               fontWeight: FontWeight.w600,
@@ -117,7 +128,7 @@ class CartItemTile extends StatelessWidget {
                         IconButton(
                           key: Key('item-decrement-${item.id}'),
                           tooltip: 'Decrease quantity of ${item.name}',
-                          onPressed: item.quantity > 0 ? onDecrement : null,
+                          onPressed: units > 0 ? onDecrement : null,
                           constraints: const BoxConstraints(
                             minWidth: 44,
                             minHeight: 44,
@@ -128,9 +139,10 @@ class CartItemTile extends StatelessWidget {
                         ConstrainedBox(
                           constraints: const BoxConstraints(minWidth: 22),
                           child: Semantics(
-                            label: 'Quantity of ${item.name}: ${item.quantity}',
+                            label:
+                                '${isPlanning ? 'Planned' : 'Picked'} quantity of ${item.name}: $units',
                             child: Text(
-                              '${item.quantity}',
+                              '$units',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.labelLarge?.copyWith(
                                 color: CartyDesign.of(context).textPrimary,
@@ -142,7 +154,7 @@ class CartItemTile extends StatelessWidget {
                         IconButton(
                           key: Key('item-increment-${item.id}'),
                           tooltip: 'Increase quantity of ${item.name}',
-                          onPressed: item.quantity < CartItem.maxQuantity
+                          onPressed: units < CartItem.maxQuantity
                               ? onIncrement
                               : null,
                           constraints: const BoxConstraints(
@@ -163,6 +175,13 @@ class CartItemTile extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (!isPlanning && onTogglePicked != null)
+                        Checkbox(
+                          key: Key('item-picked-${item.id}'),
+                          semanticLabel: 'Picked ${item.name}',
+                          value: item.isFullyPicked,
+                          onChanged: (_) => onTogglePicked!(),
+                        ),
                       IconButton(
                         key: Key('item-edit-${item.id}'),
                         tooltip: 'Edit ${item.name}',

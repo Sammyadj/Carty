@@ -138,7 +138,7 @@ void main() {
     await _tapKey(tester, 'item-decrement-$id');
     expect(store.items.single.quantity, 0);
     expect(store.totalPence, 0);
-    expect(find.text('Not picked yet'), findsOneWidget);
+    expect(find.text('Not picked yet · 1 planned'), findsOneWidget);
 
     final decrement = find.byKey(ValueKey('item-decrement-$id'));
     expect(tester.widget<IconButton>(decrement).onPressed, isNull);

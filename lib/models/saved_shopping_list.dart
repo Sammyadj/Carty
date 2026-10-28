@@ -49,8 +49,9 @@ class SavedShoppingList {
     final budget = json['budgetPence'];
     final rawItems = json['items'];
     final rawDate = json['savedAt'];
-    if (json.containsKey('isPlanning') && json['isPlanning'] is! bool)
+    if (json.containsKey('isPlanning') && json['isPlanning'] is! bool) {
       return null;
+    }
     if (id is! String ||
         id.isEmpty ||
         name is! String ||

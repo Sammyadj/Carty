@@ -20,8 +20,8 @@ class ShoppingTips extends StatelessWidget {
   Widget build(BuildContext context) {
     final budget = store.budgetPence;
     final remaining = store.remainingPence;
-    final ratio = budget == null ? 0.0 : store.totalPence / budget;
-    final pending = store.items.where((item) => item.quantity == 0).length;
+    final ratio = budget == null ? 0.0 : store.budgetTotalPence / budget;
+    final pending = store.pendingCount;
     final alert = store.isOverBudget || ratio >= 0.8;
     final tips = <_Tip>[
       _Tip(
@@ -36,7 +36,7 @@ class ShoppingTips extends StatelessWidget {
             ? 'Set a budget, then add shelf prices as you shop. Your running total will do the rest.'
             : store.isOverBudget
             ? 'Your basket is ${Money.format(remaining!.abs())} over budget. Review your quantities before checkout.'
-            : 'You’ve used ${(ratio * 100).round()}% of your budget, with ${Money.format(remaining!)} left to spend.',
+            : '${store.isPlanning ? 'Your plan uses' : 'You’ve used'} ${(ratio * 100).round()}% of your budget, with ${Money.format(remaining!)} left${store.isPlanning ? ' in your plan' : ' to spend'}.',
         icon: alert
             ? Icons.notifications_active_outlined
             : Icons.lightbulb_outline_rounded,

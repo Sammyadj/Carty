@@ -20,6 +20,7 @@ import '../widgets/section_heading.dart';
 import '../widgets/shopping_tips.dart';
 import '../widgets/recommendation_shelves.dart';
 import '../widgets/storage_notice.dart';
+import '../widgets/shopping_mode_panel.dart';
 import '../widgets/summary_area/summary_card.dart';
 import 'cart_full_screen.dart';
 import 'account_screen.dart';
@@ -257,10 +258,13 @@ class _Dashboard extends StatelessWidget {
       const CloudSyncNotice(),
       ActiveListBanner(store: store),
       SummaryCard(
-        totalPence: store.totalPence,
+        totalPence: store.budgetTotalPence,
+        totalLabel: store.isPlanning ? 'Estimated total' : 'Picked total',
         budgetPence: store.budgetPence,
         onEditBudget: () => showBudgetEditor(context: context, store: store),
       ),
+      const SizedBox(height: 16),
+      ShoppingModePanel(store: store),
       const SizedBox(height: 20),
       SectionHeading(
         title: 'Your shopping list',
@@ -284,11 +288,17 @@ class _Dashboard extends StatelessWidget {
           child: CartItemTile(
             key: ValueKey(item.id),
             item: item,
+            isPlanning: store.isPlanning,
+            onTogglePicked: () => store.togglePicked(item.id),
             onEdit: () =>
                 showItemEditor(context: context, store: store, item: item),
             onDelete: () => store.removeItem(item.id),
-            onIncrement: () => store.incrementQuantity(item.id),
-            onDecrement: () => store.decrementQuantity(item.id),
+            onIncrement: () => store.isPlanning
+                ? store.adjustPlannedQuantity(item.id, 1)
+                : store.incrementQuantity(item.id),
+            onDecrement: () => store.isPlanning
+                ? store.adjustPlannedQuantity(item.id, -1)
+                : store.decrementQuantity(item.id),
           ),
         ),
       Align(

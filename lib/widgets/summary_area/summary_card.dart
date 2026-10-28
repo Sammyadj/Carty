@@ -10,11 +10,13 @@ class SummaryCard extends StatelessWidget {
     required this.totalPence,
     required this.budgetPence,
     required this.onEditBudget,
+    this.totalLabel = 'Picked total',
   });
 
   final int totalPence;
   final int? budgetPence;
   final VoidCallback onEditBudget;
+  final String totalLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +116,7 @@ class SummaryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _BudgetMetric(
-                    label: 'Spent',
+                    label: totalLabel,
                     value: Money.format(totalPence),
                     color: design.heroInk,
                     labelColor: design.heroInk.withValues(alpha: .65),

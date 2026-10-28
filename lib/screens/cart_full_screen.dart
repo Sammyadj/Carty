@@ -11,6 +11,7 @@ import '../widgets/cart_area/cart_item_tile.dart';
 import '../widgets/cart_area/empty_cart_message.dart';
 import '../widgets/cart_status_bar.dart';
 import '../widgets/storage_notice.dart';
+import '../widgets/shopping_mode_panel.dart';
 import '../widgets/summary_area/summary_card.dart';
 
 class CartFullScreen extends StatefulWidget {
@@ -41,12 +42,10 @@ class _CartFullScreenState extends State<CartFullScreen> {
           .where(
             (item) =>
                 item.name.toLowerCase().contains(query) &&
-                (!_pendingOnly || item.quantity == 0),
+                (!_pendingOnly || item.needsPicking),
           )
           .toList();
-      final pendingCount = store.items
-          .where((item) => item.quantity == 0)
-          .length;
+      final pendingCount = store.pendingCount;
       return Scaffold(
         appBar: AppBar(
           title: const Text('Your basket'),
@@ -90,13 +89,18 @@ class _CartFullScreenState extends State<CartFullScreen> {
                           const CloudSyncNotice(),
                           ActiveListBanner(store: store),
                           SummaryCard(
-                            totalPence: store.totalPence,
+                            totalPence: store.budgetTotalPence,
+                            totalLabel: store.isPlanning
+                                ? 'Estimated total'
+                                : 'Picked total',
                             budgetPence: store.budgetPence,
                             onEditBudget: () => showBudgetEditor(
                               context: context,
                               store: store,
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          ShoppingModePanel(store: store),
                           const SizedBox(height: 24),
                           Text(
                             'Everything for this shop',
@@ -209,14 +213,20 @@ class _CartFullScreenState extends State<CartFullScreen> {
                           child: CartItemTile(
                             key: ValueKey(item.id),
                             item: item,
+                            isPlanning: store.isPlanning,
+                            onTogglePicked: () => store.togglePicked(item.id),
                             onEdit: () => showItemEditor(
                               context: context,
                               store: store,
                               item: item,
                             ),
                             onDelete: () => store.removeItem(item.id),
-                            onIncrement: () => store.incrementQuantity(item.id),
-                            onDecrement: () => store.decrementQuantity(item.id),
+                            onIncrement: () => store.isPlanning
+                                ? store.adjustPlannedQuantity(item.id, 1)
+                                : store.incrementQuantity(item.id),
+                            onDecrement: () => store.isPlanning
+                                ? store.adjustPlannedQuantity(item.id, -1)
+                                : store.decrementQuantity(item.id),
                           ),
                         );
                       },

@@ -67,7 +67,7 @@ class _TripDetails extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
             children: [
               Text(
                 trip.name,
@@ -89,6 +89,13 @@ class _TripDetails extends StatelessWidget {
               ),
               if (trip.budgetPence != null)
                 Text('Budget: ${Money.format(trip.budgetPence!)}'),
+              Text(
+                'Original plan total: ${Money.format(trip.estimatedTotalPence)}',
+              ),
+              if (!trip.allPricesConfirmed)
+                const Text(
+                  'Some recorded prices were estimates, not confirmed shelf prices.',
+                ),
               const SizedBox(height: 12),
               const Text(
                 'Based on the item prices you entered. Carty did not take payment or verify a receipt.',
@@ -101,10 +108,25 @@ class _TripDetails extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                     title: Text(item.name),
                     subtitle: Text(
-                      '${item.quantity} × ${Money.format(item.unitPricePence)}',
+                      '${item.quantity} × ${Money.format(item.unitPricePence)} · ${item.priceConfirmed ? 'confirmed' : 'estimate'}',
                     ),
                     trailing: Text(Money.format(item.totalPence)),
                   ),
+                ),
+              if (trip.plannedItems.any((item) => item.needsPicking))
+                ExpansionTile(
+                  title: const Text('Unpicked parts of the plan'),
+                  children: [
+                    for (final item in trip.plannedItems.where(
+                      (item) => item.needsPicking,
+                    ))
+                      ListTile(
+                        title: Text(item.name),
+                        subtitle: Text(
+                          '${item.plannedQuantity} planned · ${item.quantity} picked',
+                        ),
+                      ),
+                  ],
                 ),
               TextButton(
                 key: const Key('history-delete-trip'),
