@@ -18,7 +18,7 @@ import '../widgets/saved_list_card.dart';
 import '../widgets/saved_lists_view.dart';
 import '../widgets/section_heading.dart';
 import '../widgets/shopping_tips.dart';
-import '../widgets/shopping_recommendations.dart';
+import '../widgets/recommendation_shelves.dart';
 import '../widgets/storage_notice.dart';
 import '../widgets/summary_area/summary_card.dart';
 import 'cart_full_screen.dart';
