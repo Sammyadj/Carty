@@ -8,6 +8,7 @@ Carty is a Flutter shopping companion for keeping track of the cost of a basket 
 
 - Add products with a name, unit price, and quantity; edit or remove them later.
 - Get offline item-name suggestions from the current basket, saved lists, and shopping history, with common grocery and household names for a new workspace. Reuse your own saved prices as planning estimates.
+- Discover items in Home's **You might need** section, with explanations based on recurring picks, products picked together, saved lists, or clearly labelled starting ideas.
 - Scan retail barcodes, look up products through Open Food Facts with a UPCitemdb general-retail fallback, then confirm the shelf price and quantity. Manual barcode entry and remembered product details cover missing matches.
 - See a live basket total, remaining budget, and progress. Near-budget feedback starts at 80% of the budget; spending above the budget has an explicit over-budget status.
 - Use the City design with product icon avatars and Home, Lists, Tips, and History navigation.
@@ -54,6 +55,20 @@ Choosing a suggestion does not add anything to the basket. **Save item** confirm
 Suggestions run entirely on the device, using an index of up to 200 recent distinct personal names and a small built-in list. Personal names and prices come only from the currently open guest/account workspace. Saved lists and completed shops retain familiar products after a restart or a new basket; removing all of their source records removes those personal suggestions. The device-wide barcode cache and other accounts are not searched. There is no extra suggestion-history database, AI subscription, or per-keystroke network lookup. Saving a signed-in basket still uses the existing private cloud sync.
 
 See [personal suggestions](docs/previews/suggestions-personal.png), [a reused estimate](docs/previews/suggestions-estimate.png), and [the larger-text layout](docs/previews/suggestions-large-text.png). Regenerate these actual Flutter renders with `flutter test tool/render_suggestion_previews.dart`; the keyboard previews reserve keyboard space without drawing native keyboard keys.
+
+## Recommendations for your shop
+
+**You might need** on Home suggests up to three products before you start typing. Autocomplete finds a name you are looking for; recommendations help you consider what to add next.
+
+The on-device engine prioritises products picked together with items in the current basket, then recurring picks, saved-list products, and previous-shop items. Completed shops supply the evidence for labels such as **Picked with Milk in 2 past shops** or **Picked in 3 of your last 3 shops**. Planned products in saved lists are labelled separately. Without personal history, common essentials and curated pairing ideas provide starting suggestions; they never claim that other customers bought something or that you have bought it before.
+
+Tap **Review & add** to open the item form with the proposed name and any saved unit price. Review the estimate and quantity, then select **Save item**. Unpriced ideas require your own price. Cancelling leaves the basket unchanged. Renaming a recommendation clears an untouched suggested price, while a price you edited yourself stays.
+
+Items already in the basket, including quantity-zero products, are excluded. Generic ideas also avoid basic variants already planned, such as Milk when Whole milk is present. Recommendations with a known saved unit price above the remaining budget are filtered out; the section is hidden when no budget remains. Unknown-price ideas may still appear while budget remains and need a price before adding. These are planning estimates, not a promise that the shop's current price or your final chosen quantity will fit.
+
+Matching uses the latest 40 completed shops and the existing bounded personal-name index. Duplicate lines or high quantities in one shop do not count as repeated shopping occasions. Pairing evidence requires at least two completed shops and a recurring association; common pairing ideas are labelled as ideas. Recommendations update as the basket and shopping records change, remain within the current guest/account workspace, and create no additional cloud records or AI requests.
+
+See [personal recommendations](docs/previews/recommendations-personal.png), [starter ideas](docs/previews/recommendations-starter.png), and [the review form](docs/previews/recommendations-review.png). Regenerate the real Flutter previews with `flutter test tool/render_recommendation_previews.dart`.
 
 ## Barcode scanning
 
