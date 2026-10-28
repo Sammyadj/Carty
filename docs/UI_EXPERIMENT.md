@@ -2,7 +2,8 @@
 
 City is the selected Carty interface: Manrope typography, black budget cards, lime accents, and compact shopping controls. The production interface has one design and no theme preview switcher.
 
-The earlier City, Fresh, and Pantry comparison is preserved on the [UI exploration branch](https://github.com/Sammyadj/Carty/tree/codex/ui-exploration). Fresh and Pantry, their fonts, and their preview assets are excluded from this implementation branch.
+The earlier interface study is retained on the `archive/interface-study` branch.
+Only the selected City design and its required assets are included in the app.
 
 ## Reference renders
 
@@ -10,8 +11,8 @@ These [City Home](previews/city-home.png) and [City basket](previews/city-basket
 
 Regenerate current City screens with `flutter test tool/render_design_previews.dart`. The capture uses bundled fonts and an in-memory basket, without reading or modifying a shopper’s data.
 
-## Provenance
+## Assets and licenses
 
-The original exploration inspected the public [Uber Eats grocery page](https://www.ubereats.com/near-me/grocery), [Deliveroo](https://deliveroo.co.uk/), and [Just Eat](https://www.just-eat.co.uk/). Carty’s layouts and vector grocery artwork are original adaptations. The [REA project](https://github.com/morluto/rea) was researched but was not used for native binary analysis.
+Carty uses its own layouts and vector grocery artwork.
 
 Manrope comes from [Google Fonts](https://github.com/google/fonts/tree/main/ofl/manrope). Its SIL Open Font License is bundled and available in the app’s license screen. No third-party logos, proprietary fonts, or catalog photography are bundled.
