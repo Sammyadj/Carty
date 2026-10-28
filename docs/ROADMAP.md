@@ -53,7 +53,7 @@ Private accounts and Supabase cloud saving include guest separation, offline syn
 
 Before public distribution:
 
-- Replace Android debug signing with the owner's production signing setup and verify iOS provisioning.
+- Configure the owner's Android upload key (Release builds now require explicit signing) and verify iOS provisioning. See [Android signing](ANDROID_SIGNING.md).
 - Confirm app identifiers, branding, icons, screenshots, and store metadata.
 - Test restart/restore, keyboard behavior, small screens, large text, screen readers, and long lists on real Android and iOS devices.
 - Document the data actually collected and transmitted by the final app and its plugins.

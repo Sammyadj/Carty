@@ -48,6 +48,8 @@ notification delivery and physical acceptance remain, followed by store release
 preparation. Development resumed after the physical Release build was installed
 and launched on Panda. Integrate the selected City baseline through a pull
 request, then continue each feature from updated `main` on a focused branch.
+The City baseline was merged in PR #1 after both GitHub checks passed. Local
+main is updated and its unrelated Xcode preferences were restored.
 The user has no email provider or sender domain yet; public delivery remains
 unconfigured. See [the checkpoint](RELEASE_TEST_HANDOFF.md) and
 [the development workflow](../CONTRIBUTING.md).
@@ -80,6 +82,14 @@ unconfigured. See [the checkpoint](RELEASE_TEST_HANDOFF.md) and
   reviewed, including the larger-text archive flow.
 
 ## Remaining external inputs and compatibility work
+
+- Android release signing now requires an explicit private upload keystore;
+  the debug-key fallback is removed on its focused release-signing branch.
+  Native verification passes for missing/incomplete inputs, an absent key file,
+  a Debug build without credentials and a Release APK whose certificate matches
+  a disposable fixture. The fixture and test APK are removed. A dedicated CI
+  workflow repeats this check. The owner's real upload key/Play configuration
+  and distribution acceptance still remain; see [signing](ANDROID_SIGNING.md).
 
 - `f396404`: household device-copy review, portable export, independent private
   copies, explicit removal and staged restoration are verified. All 367 app tests

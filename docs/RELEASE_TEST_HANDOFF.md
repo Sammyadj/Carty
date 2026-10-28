@@ -2,7 +2,7 @@
 
 Development has since resumed by user request. This document records the test
 checkpoint; the current scope is tracked in `IMPLEMENTATION_PROGRESS.md`.
-City is being integrated into `main`; subsequent development uses focused
+City was integrated into `main` in PR #1; subsequent development uses focused
 feature branches and pull requests as described in `../CONTRIBUTING.md`.
 The user confirmed there is no email provider or sender domain yet.
 
@@ -13,8 +13,9 @@ exploration task. City remains the selected app design.
 
 ## Resume context
 
-- Branch: `codex/city-cloud-phase-one`, remote `Sammyadj/Carty`. Keep `main`
-  unchanged until an explicit merge decision.
+- Remote: `Sammyadj/Carty`. The former `codex/city-cloud-phase-one` checkpoint
+  is merged into `main` at `7f9a563` through PR #1. Android signing continues on
+  `codex/chore-android-release-signing` from that baseline.
 - Workspace: `/Users/samueladjei/.codex/worktrees/carty-ui-exploration/Carty_app`.
 - Latest code milestone: `f396404` (household device-copy recovery), following
   `8df40de` (member/access controls) and `6caeaa1` (their documentation).
@@ -84,7 +85,8 @@ connection at this checkpoint. Release mode permits normal icon launch.
   and sender-domain question is already pending; do not ask for secrets in chat.
 - Finish real two-account/offline/file acceptance; review iOS signing/store
   privacy, screenshots, support/privacy URLs and Android production signing.
-  Android release still uses a debug key and is unsuitable for store submission.
+  Android Release now requires explicit upload-key configuration; the real
+  owner key and Play setup remain pending. See `ANDROID_SIGNING.md`.
 - Preserve the approved sharing defaults: email-addressed viewer/editor roles,
   only editors/owners change items, owner account deletion removes owned shared
   lists after a warning, GBP. Checkout/payments and retailer price integrations
