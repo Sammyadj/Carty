@@ -5,8 +5,8 @@ UI exploration branch is retained as historical reference.
 
 1. Fetch the remote and update a clean `main` with `git pull --ff-only`.
    Preserve local changes before switching or updating a checkout.
-2. Create one focused branch, for example `codex/feat-household-email`,
-   `codex/fix-barcode-review`, or `codex/chore-release-signing`.
+2. Create one focused branch, for example `feature/household-email`,
+   `fix/barcode-review`, or `chore/release-signing`.
 3. Implement small working milestones with their regression tests. Use
    Conventional Commits: `feat(scope): outcome`, `fix(scope): outcome`,
    `docs(scope): outcome`, `test(scope): outcome`, or `chore(scope): outcome`.

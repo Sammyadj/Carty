@@ -8,14 +8,13 @@ The user confirmed there is no email provider or sender domain yet.
 
 The user asked to wrap up, commit/push important work and test a physical iPhone
 Release build before authorising further development, which is now authorised.
-An older interface-reference reply names Uber Eats; it does not reopen the UI
-exploration task. City remains the selected app design.
+City remains the selected app design.
 
 ## Resume context
 
-- Branch: `codex/city-cloud-phase-one`, remote `Sammyadj/Carty`. Keep `main`
+- Branch: `archive/city-cloud-baseline`, remote `Sammyadj/Carty`. Keep `main`
   unchanged until an explicit merge decision.
-- Workspace: `/Users/samueladjei/.codex/worktrees/carty-ui-exploration/Carty_app`.
+- Workspace: `/Users/samueladjei/StudioProjects/Carty_app`.
 - Latest code milestone: `f396404` (household device-copy recovery), following
   `8df40de` (member/access controls) and `6caeaa1` (their documentation).
 - The complete scope remains in `IMPLEMENTATION_PROGRESS.md`. Planning/shopping,
