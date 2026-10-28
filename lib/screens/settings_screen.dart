@@ -4,6 +4,7 @@ import '../auth/app_session.dart';
 import '../state/cart_store.dart';
 import 'account_screen.dart';
 import 'data_management_screen.dart';
+import 'your_data_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, required this.store});
@@ -18,6 +19,21 @@ class SettingsScreen extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              ListTile(
+                key: const Key('settings-your-data'),
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: const Text('Your data'),
+                subtitle: const Text(
+                  'Storage, cloud saving, sharing and deletion',
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => YourDataScreen(store: store),
+                  ),
+                ),
+              ),
               ListTile(
                 key: const Key('settings-data'),
                 leading: const Icon(Icons.backup_outlined),

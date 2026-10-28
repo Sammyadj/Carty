@@ -83,6 +83,12 @@ unconfigured. See [the checkpoint](RELEASE_TEST_HANDOFF.md) and
 
 ## Remaining external inputs and compatibility work
 
+- Settings now includes **Your data**, an offline explanation of device/cloud
+  storage, barcode providers, sharing, exports and account deletion, with links
+  to backup/account controls. The [data inventory](DATA_DISCLOSURES.md) records
+  the remaining operator contact, public policy URL and processor-retention
+  decisions. These notes do not constitute completed store declarations.
+
 - Android release signing now requires an explicit private upload keystore;
   the debug-key fallback is removed on its focused release-signing branch.
   Native verification passes for missing/incomplete inputs, an absent key file,

@@ -298,6 +298,12 @@ Prices are stored as pence rather than floating-point pounds. Totals and remaini
 
 ## Local data and limitations
 
+Open **Settings → Your data** for an offline explanation of local storage,
+account sync, household sharing, barcode providers, exported files and deletion.
+The page links to the existing backup and account controls. The release-review
+[data inventory](docs/DATA_DISCLOSURES.md) records what still needs owner review
+before publishing a privacy policy or store declaration.
+
 Shopping data now uses an app-private SQLite database with transactional updates to separate basket, list, trip, item, and product-choice records. Signed-in workspaces have separate account scopes and retain the accepted cloud revision and recovery data for offline shopping. Cloud saving adds recovery across installations after successful sync; unsynced edits remain vulnerable to uninstalling, clearing app data, or device loss. It is not a financial ledger.
 
 Existing preference-based shopping data is validated and copied into SQLite on first use; its original preference value is kept as a migration backup. Saved lists do not become files in Documents automatically. The barcode product cache remains in separate preferences and can be discarded without changing shopping data. Portable version-3 snapshots retain history and the named list being edited; older versions remain readable without inventing past trips. Old saved lists become linked for ongoing updates when you explicitly choose **Continue editing**.
